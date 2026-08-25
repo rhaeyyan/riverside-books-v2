@@ -1077,7 +1077,9 @@ def write_json(seed: dict[str, Any], data_dir: Path) -> None:
     data_dir.mkdir(parents=True, exist_ok=True)
     for filename, payload in seed.items():
         path = data_dir / filename
-        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        temp_path = path.with_suffix(".tmp")
+        temp_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        temp_path.replace(path)
 
 
 def main() -> None:

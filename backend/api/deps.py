@@ -61,13 +61,16 @@ def release_expired_holds(
             # transaction when the database lands.
             order_repo.update_status(order.order_id, "expired")
             for item in order.items:
-                book_repo.adjust_reserved_count(item.isbn, -item.quantity)
+                try:
+                    book_repo.adjust_reserved_count(item.isbn, -item.quantity)
+                except Exception:
+                    logger.exception(
+                        "Failed to release stock for %s in order %s",
+                        item.isbn,
+                        order.order_id,
+                    )
         except Exception:
-            # Previously `pass`. Swallowing this silently meant a half-released
-            # hold — order expired, copies still reserved — looked exactly like
-            # a clean sweep, and the stock drift it causes is the precise bug
-            # §5.4 exists to prevent.
             logger.exception(
-                "Failed to release expired hold %s; reserved counts may be stale",
+                "Failed to expire order %s; stock not released",
                 order.order_id,
             )

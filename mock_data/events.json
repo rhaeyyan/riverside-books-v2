@@ -6,16 +6,16 @@
     "capacity": 45,
     "tickets_sold": 45,
     "description": "Join acclaimed novelist Zadie Smith for an intimate reading and discussion on contemporary fiction, identity, and the craft of storytelling.",
-    "starts_at": "2026-09-13T15:47:07Z"
+    "starts_at": "2026-09-13T16:34:12Z"
   },
   {
     "event_id": "event_002",
     "title": "Poetry Workshop & Open Mic Night",
-    "author_name": "Ada Lim\u00f3n",
+    "author_name": "Ada Limón",
     "capacity": 30,
     "tickets_sold": 18,
-    "description": "A guided generative poetry workshop led by U.S. Poet Laureate Ada Lim\u00f3n, followed by community open mic readings.",
-    "starts_at": "2026-09-19T14:47:07Z"
+    "description": "A guided generative poetry workshop led by U.S. Poet Laureate Ada Limón, followed by community open mic readings.",
+    "starts_at": "2026-09-19T15:34:12Z"
   },
   {
     "event_id": "event_003",
@@ -24,7 +24,7 @@
     "capacity": 40,
     "tickets_sold": 22,
     "description": "An illustrated lecture exploring the architectural, literary, and environmental heritage of the Hudson River Valley.",
-    "starts_at": "2026-09-26T13:47:07Z"
+    "starts_at": "2026-09-26T14:34:12Z"
   },
   {
     "event_id": "event_004",
@@ -33,7 +33,7 @@
     "capacity": 25,
     "tickets_sold": 14,
     "description": "Our community book club meets to discuss Gabrielle Zevin's bestselling novel about friendship, play, and creative collaboration.",
-    "starts_at": "2026-10-03T14:47:07Z"
+    "starts_at": "2026-10-03T15:34:12Z"
   },
   {
     "event_id": "event_005",
@@ -42,6 +42,6 @@
     "capacity": 35,
     "tickets_sold": 10,
     "description": "A family-friendly morning of live drawing, story reading, and interactive activities with picture book author Oliver Jeffers.",
-    "starts_at": "2026-10-11T06:47:07Z"
+    "starts_at": "2026-10-11T07:34:12Z"
   }
 ]

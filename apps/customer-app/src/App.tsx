@@ -3,6 +3,7 @@ import Home from './pages/Home';
 import BookDetail from './pages/BookDetail';
 import MyOrders from './pages/MyOrders';
 import LoyaltyCard from './pages/LoyaltyCard';
+import Support from './pages/Support';
 import ChatPanel from './components/ChatPanel';
 import './App.css';
 
@@ -16,6 +17,7 @@ function App() {
             <Link to="/">Browse Books</Link>
             <Link to="/orders">My Orders</Link>
             <Link to="/loyalty">Loyalty Card</Link>
+            <Link to="/support">Support</Link>
           </nav>
         </header>
         
@@ -25,6 +27,7 @@ function App() {
             <Route path="/book/:isbn" element={<BookDetail />} />
             <Route path="/orders" element={<MyOrders />} />
             <Route path="/loyalty" element={<LoyaltyCard />} />
+            <Route path="/support" element={<Support />} />
           </Routes>
         </main>
         

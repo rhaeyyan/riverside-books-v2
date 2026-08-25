@@ -14,7 +14,7 @@ export function useChatSession() {
   const [userInput, setUserInput] = useState("");
 
   const startChat = async () => {
-    if (history.length > 0) return;
+    if (history.length > 0 && history[0].text !== "Failed to connect. Please try again.") return;
     setIsLoading(true);
     try {
       const { data, error } = await client.POST("/api/chat/message", { body: { node_id: "root", input: null } });

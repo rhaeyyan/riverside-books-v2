@@ -626,8 +626,8 @@ restart:
 
 | # | Question | Needs answering by | Owner |
 |---|---|---|---|
-| Q1 | Do C and D ship as panels inside A and B, or as minimal standalone pages? Affects two products' scope | End of week 1 | All four |
-| Q2 | Who owns `backend/api/` and `mock_data/`? (§9) | Day 1 | All four |
+| Q1 | Do C and D ship as panels inside A and B, or as minimal standalone pages? Affects two products' scope | **Resolved:** C and D ship as panels inside A and B. | All four |
+| Q2 | Who owns `backend/api/` and `mock_data/`? (§9) | **Resolved:** Owned collectively in Phase 1 & 2, parallelized after. | All four |
 | Q3 | Is a stamp earned per **book** or per **order**? This PRD assumes per book, matching "buy 10 books, get 1 free" | Before 8.B.5 is built | A + B |
 | Q4 | Can staff manually adjust a customer's stamps to fix mistakes? Not currently specified | Week 2 | B |
 | Q5 | Should sold-out events accept a waitlist, or only display as sold out? §8.D assumes display only | Week 2 | D |

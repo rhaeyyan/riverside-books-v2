@@ -32,4 +32,28 @@ An internal tool that automatically generates social media captions and post ide
 - `mock_data/` - Mock JSON files acting as the store's central database for inventory, orders, and events
 
 ## Running Locally
-*(Instructions for starting the frontends and backend will be added as the scaffolding is completed).*
+
+To run the full suite locally, you will need three terminal windows:
+
+**1. Start the Backend API:**
+```bash
+uv run uvicorn backend.api.main:app --reload --host 127.0.0.1 --port 8000
+```
+This serves the API and the data layer from `mock_data/`.
+
+**2. Start Product A (Customer App):**
+```bash
+cd apps/customer-app
+npm install
+npm run dev
+```
+Runs on `http://localhost:5173`.
+
+**3. Start Product B (Staff Dashboard):**
+```bash
+cd apps/staff-dashboard
+npm install
+npm run dev
+```
+Runs on `http://localhost:5174`.
+

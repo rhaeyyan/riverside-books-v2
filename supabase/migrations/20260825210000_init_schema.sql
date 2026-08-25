@@ -27,7 +27,7 @@ create table books (
     blurb                text        not null default '',
     cover_image_url      text        not null default '',
     publisher            text        not null default '',
-    published_date       date,
+    published_date       date        not null,
 
     constraint books_isbn_is_13_digits    check (isbn ~ '^[0-9]{13}$'),
     constraint books_format_valid         check (format in ('hardcover', 'paperback')),
@@ -107,7 +107,7 @@ create index orders_status_idx   on orders (status);
 -- ---------------------------------------------------------------------------
 create table order_items (
     order_id  text    not null references orders (order_id) on delete cascade,
-    isbn      text    not null references books (isbn),
+    isbn      text    not null,
     quantity  integer not null,
 
     primary key (order_id, isbn),
@@ -116,7 +116,9 @@ create table order_items (
 
 comment on table order_items is
     'PRD §6.3 stored `items` as an inline array. The primary key collapses a '
-    'repeated ISBN into one row, which is what the API already did implicitly.';
+    'repeated ISBN into one row (which the API explicitly deduplicates). '
+    'isbn deliberately lacks a foreign key to books to support PRD §8.B: '
+    'an order whose book was deleted still renders, showing the ISBN.';
 
 -- ---------------------------------------------------------------------------
 -- events  (§6.4)

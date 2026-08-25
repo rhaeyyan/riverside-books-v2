@@ -46,22 +46,26 @@ def create_order(
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
+    items_map = {}
+    for item in payload.items:
+        items_map[item.isbn] = items_map.get(item.isbn, 0) + item.quantity
+
     items = []
     total_cents = 0
 
     # but we will check stock first.
-    for item in payload.items:
-        book = book_repo.get_by_isbn(item.isbn)
+    for isbn, quantity in items_map.items():
+        book = book_repo.get_by_isbn(isbn)
         if not book:
-            raise HTTPException(status_code=404, detail=f"Book not found: {item.isbn}")
+            raise HTTPException(status_code=404, detail=f"Book not found: {isbn}")
 
-        if book.available_count < item.quantity:
+        if book.available_count < quantity:
             raise HTTPException(
-                status_code=409, detail=f"Not enough available stock for {item.isbn}"
+                status_code=409, detail=f"Not enough available stock for {isbn}"
             )
 
-        total_cents += book.price_cents * item.quantity
-        items.append(OrderItem(isbn=book.isbn, quantity=item.quantity))
+        total_cents += book.price_cents * quantity
+        items.append(OrderItem(isbn=isbn, quantity=quantity))
 
     now = datetime.now(UTC)
     expires_at = now + timedelta(hours=48)
@@ -176,7 +180,10 @@ def force_release_expired(
         try:
             order_repo.update_status(order.order_id, "expired")
             for item in order.items:
-                book_repo.adjust_reserved_count(item.isbn, -item.quantity)
+                try:
+                    book_repo.adjust_reserved_count(item.isbn, -item.quantity)
+                except Exception:
+                    pass
         except Exception:
             pass
 

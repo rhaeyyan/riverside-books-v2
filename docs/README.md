@@ -8,6 +8,7 @@ products — they are not owned by any single product workstream.
 | [`PRD.md`](PRD.md) | Product requirements for the whole suite. §5–7 (shared architecture, data model, API contract) are **binding contracts** — changing a field name or endpoint shape there breaks another product silently, so those sections need agreement from all four owners. §8.A–8.D are owned one per teammate. | Authoritative |
 | [`implementation_plan.md`](implementation_plan.md) | The build order that turns the PRD into the working suite, phase by phase. The PRD is the spec; this is the sequence. | Completed |
 | [`market_strategy.md`](market_strategy.md) | Competitor and market research for Product D's marketing generator. | Research, see note below |
+| [`look_and_feel_references.md`](look_and_feel_references.md) | Collected weblinks used as visual-style inspiration for Products A–D. Inspiration to adapt, not implementations to copy. | Reference |
 
 The project brief the suite was built from is [`../Cycle 4_ Project briefs.md`](../Cycle%204_%20Project%20briefs.md).
 Repository layout and the toolchain rules live in [`../AGENTS.md`](../AGENTS.md);

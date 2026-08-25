@@ -8,10 +8,6 @@ type Message = components["schemas"]["Message"];
 export function Messages() {
   const [messages, setMessages] = useState<Message[]>([]);
 
-  useEffect(() => {
-    fetchMessages();
-  }, []);
-
   const fetchMessages = () => {
     client.GET("/api/messages", {}).then((res) => {
       if (res.data) {
@@ -19,6 +15,10 @@ export function Messages() {
       }
     });
   };
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
 
   const markAsRead = async (id: string) => {
     // Optimistic update

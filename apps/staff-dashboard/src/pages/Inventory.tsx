@@ -21,6 +21,12 @@ export function Inventory() {
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
+  const fetchBooks = () => {
+    client.GET("/api/books", {}).then((res) => {
+      if (res.data) setBooks(res.data);
+    });
+  };
+
   const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddError(null);
@@ -68,12 +74,6 @@ export function Inventory() {
   useEffect(() => {
     fetchBooks();
   }, []);
-
-  const fetchBooks = () => {
-    client.GET("/api/books", {}).then((res) => {
-      if (res.data) setBooks(res.data);
-    });
-  };
 
   const handleSort = (field: keyof Book) => {
     if (sortField === field) {

@@ -8,7 +8,7 @@ import './App.css';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.PROD ? '/shop' : undefined}>
       <div className="app-container">
         <header className="app-header">
           <h1>Riverside Books</h1>

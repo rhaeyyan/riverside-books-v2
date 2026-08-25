@@ -27,7 +27,7 @@ function Layout() {
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.PROD ? '/staff' : undefined}>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Inventory />} />

@@ -30,6 +30,7 @@ An internal tool that automatically generates social media captions and post ide
 - `backend/chatbot/` - Source code for Product C (Deterministic Chatbot)
 - `backend/marketing/` - Source code for Product D (Deterministic Content Generator)
 - `mock_data/` - Mock JSON files acting as the store's central database for inventory, orders, and events
+- `web/` - Static landing page for the unified gateway (see below)
 
 ## Running Locally
 
@@ -56,4 +57,27 @@ npm install
 npm run dev
 ```
 Runs on `http://localhost:5174`.
+
+## Unified Demo Mode
+
+For a demo or a quick look at the whole suite, you don't need three
+terminals or three ports. Build both frontends once:
+
+```bash
+cd apps/customer-app && npm install && npm run build && cd ../..
+cd apps/staff-dashboard && npm install && npm run build && cd ../..
+```
+
+Then start only the backend:
+
+```bash
+uv run uvicorn backend.api.main:app --host 127.0.0.1 --port 8000
+```
+
+and open **`http://127.0.0.1:8000/`** - a landing page linking to the
+storefront (`/shop/`), the staff dashboard (`/staff/`), and the API
+reference (`/docs`), all served by the one FastAPI process. This is
+static output, so it won't pick up frontend changes until you rebuild;
+for active frontend development, use the three-terminal setup above
+instead, which hot-reloads.
 

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riverside Books</title>
+  <style>
+    :root {
+      --bg: #fff;
+      --ink: #1a1a1a;
+      --muted: #666;
+      --border: #e2e2e2;
+      --accent: #007bff;
+      --accent-bg: #eef5ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 3rem;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin: 0 0 0.5rem;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin: 0;
+      max-width: 52ch;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    a.card {
+      display: block;
+      padding: 1.25rem 1.4rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    a.card:hover,
+    a.card:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 2px 10px rgba(0, 123, 255, 0.12);
+      outline: none;
+    }
+
+    a.card .eyebrow {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-bg);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.6rem;
+    }
+
+    a.card h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.15rem;
+      color: var(--ink);
+    }
+
+    a.card p {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    footer {
+      margin-top: 2.5rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Riverside Books</h1>
+      <p>One store, one backend, two apps. Pick where you're working.</p>
+    </header>
+
+    <div class="cards">
+      <a class="card" href="/shop/">
+        <span class="eyebrow">Customers</span>
+        <h2>Storefront</h2>
+        <p>Search the catalog, place a 48-hour hold, check your loyalty stamps, or ask the chatbot a question.</p>
+      </a>
+
+      <a class="card" href="/staff/">
+        <span class="eyebrow">Staff</span>
+        <h2>Staff Dashboard</h2>
+        <p>Live inventory, the pre-order board, the message inbox, and the marketing caption generator.</p>
+      </a>
+
+      <a class="card" href="/docs">
+        <span class="eyebrow">Reference</span>
+        <h2>API Docs</h2>
+        <p>The shared FastAPI backend both apps run on &mdash; every endpoint, live and interactive.</p>
+      </a>
+    </div>
+
+    <footer>
+      Local-only demo &middot; one FastAPI process, one JSON data store.
+    </footer>
+  </div>
+</body>
+</html>

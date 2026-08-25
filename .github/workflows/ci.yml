@@ -32,6 +32,12 @@ jobs:
       - name: Lint
         run: uv run ruff check .
 
+      - name: Seed
+        # Regenerates mock_data with run-time-relative timestamps (PRD §6.7).
+        # Also guards the seed script itself: it exits non-zero if the data it
+        # produces no longer meets the §6.7 minimums.
+        run: uv run python -m scripts.seed
+
       - name: Test
         run: uv run pytest
 

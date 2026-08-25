@@ -15,6 +15,7 @@ Backend (from the repo root, always through `uv`):
 
 ```bash
 uv sync                  # install/refresh the environment
+uv run python -m scripts.seed   # regenerate mock_data (see Gotchas)
 uv run pytest            # 75 tests, all green as of 2026-08-25
 uv run ruff check .      # lint; must be clean before a PR
 uv run ruff format .     # format
@@ -144,6 +145,11 @@ Anything needing more than 5 files is more than one task. Split it.
   `mock_data/*.json`, which is committed. A dev session or a demo leaves a dirty
   tree. Check `git status` before committing and do not sweep incidental seed
   drift into a feature commit.
+- **`scripts/seed.py` is the source of truth for seed data, not the JSON.**
+  Timestamps are generated relative to run time, so holds stay live and events
+  stay upcoming instead of ageing into the past. Edit the script and re-run it;
+  hand-editing `mock_data/*.json` gets overwritten. It refuses to write a seed
+  that fails the PRD §6.7 minimums, and CI runs it before pytest.
 - **The lint script is `oxlint`.** `AGENTS.md` says eslint; the `package.json`
   scripts and CI actually run oxlint, configured in each app's `.oxlintrc.json`.
   Trust the script.

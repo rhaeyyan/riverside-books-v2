@@ -1,310 +1,312 @@
-# Riverside Books (Product D): Implementation Plan
+# Implementation Plan — Riverside Books Suite (Cycle 4)
 
-Staff-facing marketing content generator. Select a current book or upcoming event, generate three Instagram or Facebook caption and post-idea variations, review and edit one, then copy it, save it as a draft, or mark it ready.
+**STATUS: COMPLETED**
 
-The build order below is driven by one judgment: fluent text is the easy part; protecting store facts while making the workflow faster than a blank page is the product. The model is therefore introduced only after the data boundary, deterministic generator, placeholder substitution, and review workflow are testable without it.
+# Implementation Plan — Riverside Books Suite (Cycle 4)
 
-## Phase 0: Walking skeleton, deployed
+## Context
 
-**Goal.** A teammate opens a real URL, selects one fixture book, and sees three deterministic caption cards.
+The repo currently contains five markdown files, five empty directories, and **zero
+commits**. `docs/PRD.md` (v0.2) now specifies the data model, API contract, and
+acceptance criteria in detail — but no code, no tooling config, and no seed data
+exist to build against.
 
-- Next.js App Router project, TypeScript, Tailwind, Vitest, ESLint, and the repository's Markdown checks.
-- Separate Vercel deployment for Product D, following the same deployable-at-every-phase rule as Products A and B.
-- One committed fixture book and one deterministic fake generator. No Supabase or live model dependency yet.
-- One server-rendered page with a record selector, Instagram/Facebook selector, Generate action, and three visibly different results.
-- The separate `ci-product-d` job runs lint, typecheck, tests, and build from `product-d/`; a push to `main` also deploys the Product D Vercel project.
+This plan turns that specification into a working suite: all four products, built
+solo, in an order where each phase is verifiable before the next depends on it.
 
-**Exit condition.** The `ci-product-d` run for the merged commit deploys successfully to production. A teammate then opens that URL on their phone, selects the fixture book, switches channels, and sees three deterministic variations. Refreshing or rebuilding produces the same outputs.
+**The PRD is the spec; this document is the build order.** Field names, endpoint
+shapes, and acceptance criteria are not restated here — implement against
+`docs/PRD.md` §6 (data model), §7 (API contract), and §8 (per-product criteria).
 
-Nothing after this phase may break deployment. If a phase cannot ship, split it rather than holding a broken branch.
+**Decisions carried in from planning:**
+- Full suite — all four products
+- Products C and D ship as **panels inside A and B** (chat panel in customer-app,
+  marketing tab in staff-dashboard), resolving PRD §12 Q1
+- **pytest on the backend only**; frontends verified by hand against PRD §10
+- **Architectural Purity**: The "Simplicity > Pattern Purity" default is suspended. We will employ the Repository Pattern, rich domain models, 12-Factor config, and a Service Layer to ensure maximum decoupling.
 
-## Phase 1A: Product D-owned data and access boundaries
+---
 
-Product D reads store data; it does not create a second catalog or events source. This phase defines and tests the Product D boundary without waiting for the team to ratify concrete database columns or staff-role storage.
+## Architecture
 
-Product D's accepted position is:
-
-- Product D does not migrate or write `books`, `inventory`, or `events`.
-- Product D reads them through a small adapter instead of scattering Supabase queries through components.
-- Product D may own its later `content_drafts` table because that table is product-specific workflow state, not store truth.
-
-The minimum boundary Product D needs is:
-
-```ts
-interface BookContentRecord {
-  id: string;
-  title: string;
-  author: string;
-  genre: string | null;
-  priceCents: number | null;
-  availabilityLabel: string | null;
-}
-
-interface EventContentRecord {
-  id: string;
-  title: string;
-  guestName: string | null;
-  startsAt: string;
-  description: string | null;
-}
-```
-
-These are Product D's required meanings, not a claim that the shared database already uses these column names. Define a `ContentSource` interface around them and keep the fixture implementation from Phase 0 as the first adapter.
-
-### Access boundary
-
-- Define a server-only `requireStaff` boundary without choosing the shared role table's concrete columns.
-- Use deterministic authorized and unauthorized test doubles until the team ratifies the staff-role contract.
-- API keys and provider calls remain server-only. No model credential is sent to the browser.
-
-### Tests
-
-- Fixture-adapter tests return a book and an event through the `ContentSource` interface without dropping required fields.
-- Missing optional fields remain `null`; they are never replaced with invented values.
-- Access-boundary tests reject the unauthorized test double from the Product D page and data endpoints.
-
-**Exit condition.** The Product D page depends only on `ContentSource` and `requireStaff`, works with deterministic fixture implementations, and has passing mapping and unauthorized-access tests. No guessed database column or role-table name appears in application code.
-
-## Phase 1B: Shared Supabase integration (team-blocked)
-
-This integration phase begins only after the team ratifies the corresponding contracts. The repository does not yet contain the proposed `docs/schema.md`, the shared staff-role check is not confirmed, and event-table ownership remains open in [`TODO.md`](../TODO.md#cross-team--blocks-more-than-one-product).
-
-Required team decisions:
-
-- Ratify one shared schema field list and assign who publishes it.
-- Assign ownership of the events migration and staff write surface.
-- Confirm the shared staff-role table and authorization check.
-
-Once those decisions are recorded:
-
-- Implement a Supabase `ContentSource` adapter that maps the ratified book and event fields into Product D's boundary types.
-- Implement `requireStaff` using the ratified shared Supabase Auth and staff-role contract.
-- Keep all provider credentials and database writes server-only.
-
-### Tests
-
-- Adapter tests map a real-schema book and event row into the boundary types.
-- An authenticated staff session can read both datasets.
-- Anonymous and customer sessions cannot reach the Product D workspace, source records, or saved drafts.
-
-**Exit condition.** An authenticated staff session selects a real book and a real event from the shared project. A non-staff session cannot reach either dataset. The concrete mappings cite the team's ratified contract rather than duplicating or guessing it.
-
-## Phase 2: Deterministic generation and fact protection
-
-Build the complete generation core without a live model. This makes the highest-risk logic fast, deterministic, and safe to run in CI.
-
-### Provider boundary
-
-```ts
-interface ContentGenerator {
-  generate(request: GenerationRequest): AsyncIterable<GeneratedVariant>;
-}
-```
-
-Implementations:
-
-- `FixtureContentGenerator`: deterministic outputs for tests, CI, local development, and the Phase 0–4 demo path.
-- `LiveContentGenerator`: added in Phase 5 and selected through server-side configuration.
-
-The request contains a selected structured record, the channel, and the fixed Riverside voice rules. There is no arbitrary free-text prompt in the MVP.
-
-### Fact protection
-
-Follow [`docs/model-access.md`](../docs/model-access.md#4-fact-protection-mechanically-product-d), mechanically rather than through hopeful prompt wording:
-
-1. Convert the selected record into an allowlisted fact block.
-2. Generate prose around placeholder tokens such as `{title}`, `{author}`, `{price}`, `{event_date}`, and `{event_time}`.
-3. Reject unknown placeholder tokens.
-4. Substitute the real values after generation.
-5. Highlight any remaining number, date, or capitalized name that does not appear in the fact block.
-
-The highlighter is a review aid, not a publishing gate. Human review stays mandatory, and missing fields are omitted or visibly flagged rather than guessed.
-
-### Output contract
-
-Every request returns exactly three variants. Each variant contains:
-
-- `captionTemplate`: caption text with approved placeholders before substitution.
-- `caption`: rendered caption after substitution.
-- `postIdea`: a short visual or staging concept, not a generated image.
-- `warnings`: possible unsupported facts for the reviewer to inspect.
-
-### Tests
-
-- Every approved placeholder substitutes the exact selected-record value.
-- Missing optional facts do not produce fabricated filler.
-- Unknown placeholders fail safely.
-- A number, date, or proper name absent from the fact block becomes a warning.
-- Instagram and Facebook requests produce channel-specific deterministic fixtures.
-- Exactly three variants are returned and no live network call occurs in tests.
-
-**Exit condition.** Table-driven tests prove that a model-shaped output cannot change a title, author, price, event date, or event time during substitution, and the deterministic generator returns three channel-specific variants.
-
-## Phase 3: The select → generate → review workflow
-
-Build the complete user experience against the deterministic generator before adding a live provider.
-
-### Select
-
-- Choose Book or Event, then search the shared records.
-- Show the selected source facts beside the generation controls.
-- Choose Instagram or Facebook. Instagram is the default.
-- Do not expose a general prompt box.
-
-### Generate
-
-- Stream visible progress so the screen never appears frozen.
-- Render three accessible variation cards with caption, post idea, and any fact warnings.
-- Keep the selected record and channel stable while generation runs.
-- A retry replaces the current unsaved set only after the new request succeeds.
-
-### Review
-
-- Select one variation and edit its caption or post idea.
-- Keep the source-fact panel visible during editing.
-- Re-run the warning highlighter after edits.
-- Provide Copy, Save Draft, and Mark Ready actions. Copy uses the browser clipboard; the other two persist in Phase 4.
-- Nothing auto-publishes or connects to a social account.
-
-### Accessibility
-
-- All controls have visible labels and keyboard focus states.
-- Variation selection is exposed as a named group, not conveyed by card color alone.
-- Streaming updates use a restrained live region that does not announce every token.
-- Fact warnings include text and an icon; color is supplementary.
-- The full workflow works at phone and tablet widths.
-
-**Exit condition.** A staff tester selects a fixture book or event, changes the channel, generates three options, edits one, reviews warnings against the visible source facts, and copies it without help.
-
-## Phase 4: Draft persistence and review state
-
-Product D owns one workflow table in the shared Supabase project:
+Per PRD §5.1, one FastAPI process owns all state. Chatbot and marketing logic are
+decoupled into Service layers, with the API handling transport.
 
 ```text
-content_drafts
-  id uuid primary key
-  source_type text not null check (source_type in ('book', 'event'))
-  source_id uuid not null
-  source_snapshot jsonb not null
-  channel text not null check (channel in ('instagram', 'facebook'))
-  variants jsonb not null
-  selected_variant int not null check (selected_variant between 0 and 2)
-  edited_caption text not null
-  post_idea text not null
-  warnings jsonb not null default '[]'
-  status text not null check (status in ('draft', 'ready'))
-  created_by uuid not null
-  created_at timestamptz not null default now()
-  updated_at timestamptz not null default now()
+riverside-books-v2/
+├── pyproject.toml              # ruff + pytest + deps
+├── mock_data/*.json            # system of record (PRD §6)
+├── backend/
+│   ├── __init__.py
+│   ├── config.py               # 12-Factor App config (pydantic-settings)
+│   ├── api/
+│   │   ├── main.py             # app, CORS (via config), router mounting
+│   │   ├── core/
+│   │   │   ├── datastore.py    # generic JsonDatastore with granular file locks
+│   │   │   └── repositories.py # BookRepository, OrderRepository, CustomerRepository
+│   │   ├── models.py           # Rich domain Pydantic models (with @computed_field)
+│   │   └── routers/            # HTTP transport for books, customers, orders, chatbot, marketing
+│   ├── chatbot/                # Product C (Service Layer): tree.py, matching.py, service.py
+│   └── marketing/              # Product D (Service Layer): templates.py, generate.py, service.py
+├── tests/                      # pytest, mirrors backend/ layout
+└── apps/
+    ├── customer-app/           # Product A + C's chat panel  (Vite, port 5173)
+    └── staff-dashboard/        # Product B + D's marketing tab (Vite, port 5174)
 ```
 
-`source_snapshot` is an audit record of the facts reviewed with that draft. It is not used as the source for a new generation and does not replace the shared book or event tables.
+**Import direction is one-way:** `api.routers` imports from `chatbot.service` and `marketing.service`, keeping HTTP transport completely decoupled from Product C/D's business logic.
 
-### Write rules
+---
 
-- All writes run server-side and require a shared staff role.
-- Save Draft creates or updates one draft; repeated saves update that row rather than creating duplicates.
-- Mark Ready persists the latest edits and changes only `status` to `ready`.
-- A warning does not block Mark Ready, but the UI requires the reviewer to see the warning panel first.
-- There is no `published` status in the MVP because Product D does not publish.
+## Phase 0 — Repo foundation
 
-### Row Level Security
+Blocks everything. Nothing here is interesting, all of it is load-bearing.
 
-- Staff may read, insert, and update drafts.
-- Anonymous and customer sessions have no access.
-- Delete is omitted from the MVP; archival can be designed later if the store needs it.
+| Task | Detail |
+|---|---|
+| Rename branch | `git branch -m main` — free now, annoying after the first push |
+| `.gitkeep` | In all five empty dirs; git does not track empty directories |
+| First commit | Everything currently untracked has no backup anywhere |
+| `pyproject.toml` | ruff + pytest config, deps |
+| Python env | `uv venv && uv pip install fastapi uvicorn[standard] pydantic pydantic-settings` + dev: `pytest httpx ruff` |
+| Node | `nvm install 20 && nvm use 20` — **`node` is not on PATH**; apt's candidate is 18, too old for current Vite. `~/.nvm` already exists |
 
-### Tests
+**`pyproject.toml` ruff block** — per AGENTS.md, with the one addition it omits:
 
-- Non-staff sessions cannot read or write drafts.
-- Repeated Save Draft updates one row.
-- Mark Ready stores the latest edits and source snapshot.
-- A saved draft reloads with the same selected variation, caption, post idea, warnings, and status.
+```toml
+[tool.ruff]
+target-version = "py312"
+line-length = 88
 
-**Exit condition.** An authenticated staff user saves a draft, reloads it, edits it, and marks it ready. A non-staff session sees no draft rows and cannot create one.
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "D"]
 
-## Phase 5: Live model adapter
+[tool.ruff.lint.pydocstyle]
+convention = "google"   # required, or D203/D211 and D212/D213 conflict
 
-Only after the safe workflow works end to end with the deterministic generator:
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]       # docstrings on every test function is noise
+```
 
-- Choose a provider from [`docs/model-access.md`](../docs/model-access.md#7-provider-options) based on demo-day quality and latency, not hardcoded preference.
-- Read the provider and model identifier from server-side environment variables.
-- Implement the same `ContentGenerator` interface used by the fixture generator.
-- Stream output from a server route; never expose the provider key to the client.
-- Preserve the placeholder contract and run the same substitution and warning pipeline used for fixtures.
-- Apply a timeout, one bounded retry for transient failures, and a useful retry message. Never fall back to fabricated content.
-- Keep live-provider tests out of CI. Use contract tests with recorded, non-sensitive fixtures around the adapter boundary.
+**Done when:** `uv run ruff check .` passes on an empty tree, `node --version`
+reports 20.x, and `git log` shows one commit.
 
-**Exit condition.** Switching one server-side configuration value changes the generator from deterministic fake to live provider. Both paths produce the same validated three-variant contract, and CI still makes zero live model calls.
+---
 
-## Phase 6: Demo readiness and measurement
+## Phase 1 — Data layer
 
-- Seed at least one book, one complete event, and one event with a missing optional field.
-- Run three to five timed staff-style walkthroughs from selection to review; target under one minute.
-- Rate each selected draft as publishable, minor edits, or major rewrite.
-- Review outputs against the agreed voice checklist: warm, local, knowledgeable, community-focused, specific, and free of big-box hype or invented urgency.
-- Run keyboard-only and automated accessibility checks.
-- Verify phone and tablet layouts, slow-network behavior, empty states, provider errors, and retry behavior.
-- Prepare a demo script that shows a hard fact surviving generation unchanged and a suspicious unsupported detail being highlighted.
+The contract. Everything downstream inherits its bugs from here, so this phase
+gets tests before any endpoint exists.
 
-**Exit condition.** The core path completes repeatedly without a broken state, all hard facts match their source records, and most test drafts need no more than minor edits.
+**`backend/api/models.py`** — Rich Domain Models for all six files in PRD §6. Types
+exactly as specified. Rather than anemic data bags, models contain their own domain logic:
+- `available_count` and `stock_status` implemented as `@computed_field` on the Book model.
+- `is_expired()` helper on the Order model.
 
-## Testing, throughout
+**`mock_data/*.json`** — seed data meeting the PRD §6.7 minimums.
 
-| Test | Failure it prevents |
-| --- | --- |
-| Staff-only access | A customer or anonymous visitor reaches the internal generator or drafts |
-| Shared-record adapter mapping | Product D silently drops or renames a required store fact |
-| Placeholder allowlist and substitution | A fluent draft changes a title, price, author, date, or time |
-| Unsupported-fact highlighter | A suspicious generated detail passes review unnoticed |
-| Deterministic provider contract | CI becomes flaky or burns live-model quota |
-| Draft save idempotency | Repeated clicks create duplicate drafts |
-| Draft reload and ready transition | Staff lose edits or approve stale content |
+**`backend/api/core/datastore.py` & `repositories.py`** — The Repository Pattern:
+- `JsonDatastore` acts as the generic file I/O layer with **granular, per-collection locks** (e.g., locking only `inventory.json` rather than the whole store) and atomic writes (`os.replace`).
+- Repositories (`BookRepository`, `OrderRepository`) encapsulate query logic, separating data access from the domain.
 
-## Task decomposition
+**Helpers used everywhere, defined once:** `normalize_phone()` (digits only) and
+`normalize_isbn()` (strip hyphens and spaces).
 
-Each task should touch at most five files.
+**Tests (`tests/test_models.py`, `test_repositories.py`):**
+- Every seed row parses into its model — catches seed/schema drift immediately.
+- `stock_status` at the boundaries: 0, 1, threshold, threshold+1.
+- Repository locks isolate concurrent writes correctly.
 
-| # | Task | Phase |
-| ---: | --- | ---: |
-| 1 | Scaffold Product D, lint, test, build, and deploy | 0 |
-| 2 | Fixture record selector and deterministic three-variant page | 0 |
-| 3 | Define boundary types, `ContentSource`, `requireStaff`, and fixture contract tests | 1A |
-| 4 | Bind the Supabase adapter to the team's ratified shared schema | 1B |
-| 5 | Bind `requireStaff` to the ratified shared role check and add access tests | 1B |
-| 6 | Define generator interface and deterministic fixture implementation | 2 |
-| 7 | Implement placeholder allowlist, substitution, and tests | 2 |
-| 8 | Implement unsupported-fact highlighter and tests | 2 |
-| 9 | Build book/event and channel selectors | 3 |
-| 10 | Build streaming three-variation review UI | 3 |
-| 11 | Add edit, Copy, warning, and responsive accessibility behavior | 3 |
-| 12 | Add `content_drafts` migration and staff-only RLS | 4 |
-| 13 | Implement Save Draft, reload, and Mark Ready flows | 4 |
-| 14 | Implement the configurable live-provider adapter | 5 |
-| 15 | Add adapter contract tests, timeout, retry, and error states | 5 |
-| 16 | Run accessibility, mobile, timing, and edit-burden checks | 6 |
-| 17 | Seed the demo cases and write the demo script | 6 |
+**Done when:** seed data validates, computed field tests pass, and repositories survive concurrent writes in tests.
 
-## Product decision source of truth
+---
 
-The accepted Product D defaults and their status live in [`market_strategy.md`](market_strategy.md#product-decisions-and-team-dependencies). This implementation plan consumes that table instead of maintaining a second copy.
+## Phase 2 — Core API
 
-## Blocking cross-team decisions
+Implement PRD §7's routes across router modules. 
 
-- **Ratify one shared schema field list and assign its publisher.** Product D will not bind to guessed database columns.
-- **Assign ownership of the events migration and staff write surface.** Product D is a reader, not the owner.
-- **Confirm the shared `staff` table and role check.** Product D will reuse it rather than inventing a separate authorization system.
+**Configuration (`backend/config.py`)**:
+- Uses `pydantic-settings` to load environments. CORS origins (`http://localhost:5173`, `http://localhost:5174`) must be injected via settings rather than hardcoded in `main.py`, adhering to 12-Factor App principles.
 
-These block the corresponding database bindings, not Phase 0 or the deterministic core. Work can proceed through the fixture-based workflow while the team resolves them.
+**Rules to enforce server-side** — every one of these has a PRD acceptance
+criterion attached:
+- `POST /orders` → **409** when `available_count < quantity` (two customers, one
+  last copy)
+- Order status transitions follow PRD §6.3; anything else → **400**. `completed`,
+  `cancelled`, `expired` are terminal
+- `PATCH /books/{isbn}/stock` rejects `stock_count < reserved_count`
+- Placing an order increments `reserved_count` **only**; completing one
+  decrements both counts
+- **Stamps are awarded in exactly one place** — the transition to `completed`,
+  one per book collected (`sum(item.quantity for item in order.items)`). Rolls to
+  a reward at 10 and resets. Any second code path that touches `stamps` is a bug
+- `release_expired_holds()` runs as a FastAPI dependency on reads that return
+  orders or books — cheap at this scale, and makes expiry impossible to forget
 
-## Explicitly deferred
+**Tests (`tests/test_orders.py`, `test_books.py`, `test_loyalty.py`)** via
+`fastapi.testclient.TestClient`, against a temp-directory copy of the seed data:
+- Last copy: first order 201, second 409
+- Illegal transition rejected
+- 3-book order completed → stamps +3
+- Customer at 9 stamps completes 1 book → 0 stamps, 1 reward
+- Stock cannot be set below reserved
 
-- Direct social publishing or account connections.
-- Image generation, template design, and Canva or Adobe Express integration.
-- Hashtag generation unless the core text path is stable and time remains.
-- Scheduling, analytics, best-time recommendations, social inboxes, listening, and A/B testing.
-- Automatic approval or any path that bypasses staff review.
+**Done when:** `/docs` lists all 21 endpoints and the above tests pass.
 
-## Unverified
+---
 
-No Product D application is scaffolded yet. The `content_drafts` schema, RLS policies, streaming adapter, and provider behavior have not been executed against a real Supabase or model account. They remain design commitments until their phase exit tests run in the deployed application.
+## Phase 3 — Products C & D (Service Layers)
+
+Both are pure functions decoupled from HTTP transport. They act as Service Layers that the API routers consume.
+
+### Product C — chatbot (`backend/chatbot/`)
+
+- **`service.py`** — Exposes business logic to the API router.
+- **`tree.py`** — the decision tree as data. Root options per PRD §8.C.1.
+- **`matching.py`** — exact match on normalized ISBN; case-insensitive substring
+  on title/author; >5 matches → narrowing prompt with the count; 0 matches →
+  special-order policy plus escalation.
+- Answers report **`available_count`**, never `stock_count` (PRD §5.4). A copy on
+  hold for someone else is not on the shelf.
+- Hours formatting handles the closed-today case and names the next open day.
+- **Every leaf either answers or offers escalation.** No dead ends.
+
+### Product D — marketing (`backend/marketing/`)
+
+- **`service.py`** — Exposes generation logic to the API router.
+- **`templates.py`** — template sets keyed `(subject_type, tone)`, each template
+  carrying a `requires_stock: bool` flag.
+- **Deterministic variant selection** (PRD §5.5, §8.D.4):
+  1. Filter out `requires_stock` templates when `available_count == 0` — so an
+     out-of-stock book never generates "only 2 left, come get it"
+  2. Then `templates[variant % len(templates)]`
+
+  Filtering **before** the modulo matters: reversing the order makes a variant
+  index point at different text depending on stock, breaking reproducibility.
+- **Missing-metadata fallbacks** — an empty `blurb` drops its clause entirely.
+  Templates must never emit `None`, `null`, or an empty bracket.
+- **280-character budget** including hashtags. When over, truncate the blurb
+  clause first, never the title.
+
+**Tests (`tests/test_chatbot.py`, `test_marketing.py`):**
+- Same question twice → byte-identical response
+- Hyphenated ISBN (`978-0-14-303943-3`) matches
+- A 40-match query asks for narrowing rather than dumping 40 results
+- Same `(subject_id, tone, variant)` → identical output **across a store reload**
+- All three tones differ visibly for one book
+- Empty blurb → clean prose, no placeholder
+- Every generated caption ≤ 280 chars including hashtags
+- Out-of-stock book → no stock-referencing template
+
+**Done when:** every C and D acceptance criterion in PRD §8 has a passing test.
+
+---
+
+## Phase 4 — Frontend foundation
+
+- Scaffold both apps: `npm create vite@latest <app> -- --template react-ts`
+- ESLint + Prettier per AGENTS.md; pin ports 5173 / 5174
+- **Generate TS types from the live API** rather than hand-writing them:
+  `openapi-typescript http://127.0.0.1:8000/openapi.json -o src/api/types.ts`,
+  wired as an `npm run gen:types` script in each app.
+
+  One devDependency, one command, and PRD §6 drift — risk R1, the top risk on the
+  board — becomes structurally impossible instead of a discipline problem.
+- A thin `src/api/client.ts` per app wrapping `fetch`. Two small typed clients
+  beat a shared workspace package at this size.
+- **Format money only at the render edge.** `price_cents` stays an integer
+  everywhere else.
+
+**Done when:** both apps boot, generate types cleanly, and fetch `/api/books`.
+
+---
+
+## Phase 5 — Product A: customer-app (+ C's chat panel)
+
+Per PRD §8.A. Routes: search/browse → book detail → pre-order → my orders →
+loyalty card, plus the chat panel.
+
+Points where the PRD's edge cases bite:
+- Display **`stock_status`** from the API; never recompute availability locally
+- Out-of-stock → pre-order control **disabled with a reason**, not hidden
+- Unknown phone → inline registration in one step, and **the pending pre-order
+  survives it** (hold the intent in component state across the registration call)
+- Empty search result → empty state that offers the chatbot, not a blank page
+- 409 on the last copy → explain it; this will happen in the demo if two tabs are open
+- Chat panel renders buttons from `GET /chat/tree` — no hardcoded options
+
+## Phase 6 — Product B: staff-dashboard (+ D's marketing tab)
+
+Per PRD §8.B. Inventory grid → alerts summary → inline stock edit → Kanban board
+→ release-expired action → message inbox, plus the marketing tab.
+
+- Grid shows `stock_count` **and** `available_count` as separate columns — staff
+  need to know what's physically present *and* what's spoken for
+- Alert summary counts must match the number of red/amber rows exactly
+- Inline stock edit is optimistic **with rollback** — the server rejects values
+  below `reserved_count` and the UI has to survive that
+- Kanban: an illegal transition (Completed → Pending) is refused by the API and
+  the card snaps back
+- Board renders correctly with **zero** pending orders
+- Marketing tab: subject search → tone select → "Show another" increments
+  `variant` → copy caption + hashtags together
+
+---
+
+## Phase 7 — Integration
+
+- Run the **PRD §10 seven-step walkthrough** end to end without restarting
+  anything. It deliberately crosses all four products and will surface any place
+  where state didn't actually reach disk
+- Fill in README "Running Locally" — currently a TODO
+- Update PRD §12: close Q1 (resolved: panels), record the Q2 ownership answer
+
+---
+
+## Verification
+
+```bash
+# Backend
+uv run ruff check .
+uv run pytest
+uv run uvicorn backend.api.main:app --reload    # → http://127.0.0.1:8000/docs
+
+# Frontends (separate terminals, backend running)
+cd apps/customer-app    && npm run dev          # → :5173
+cd apps/staff-dashboard && npm run dev          # → :5174
+```
+
+`backend/`, `backend/api/`, `backend/chatbot/`, and `backend/marketing/` each
+need an `__init__.py` for the `backend.api.main:app` module path to resolve from
+the repo root.
+
+**Acceptance is PRD §10** — the seven-step walkthrough. Its step 6 (generate
+"cozy", switch to "urgent", switch back and get the original text **verbatim**)
+is the one that catches non-determinism, and it will not be caught by clicking
+around casually.
+
+---
+
+## Sequencing notes
+
+Phases 0–3 are the critical path: they are the whole backend, and Phase 4 cannot
+start without a running API to generate types from. Phases 5 and 6 are
+independent of each other once Phase 4 lands.
+
+**If teammates join:** Phases 0–2 are the shared foundation and should be built
+once, together, in a single session (PRD §9, Option 1). After Phase 2 is
+committed, Products A/B/C/D genuinely parallelize — which is exactly what PRD §9
+Q2 is asking the team to decide, and it remains the one open item that blocks
+everyone.
+
+---
+
+## Risks carried from PRD §11
+
+| Risk | Handled by |
+|---|---|
+| R1 — data model churn | Phase 1 lands and is committed before any product code; Phase 4 generates types from the live schema |
+| R2 — JSON corruption | Single process, granular locks, atomic temp-then-`os.replace` writes via JsonDatastore |
+| R3 — no staff auth | Accepted, local-only. **Revisit before any hosting** |
+| R6 — Node missing | Phase 0, via the already-installed nvm |
+| R7 — thin seed data | Phase 1 enforces the PRD §6.7 minimums |

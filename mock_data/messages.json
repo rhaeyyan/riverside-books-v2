@@ -1,0 +1,26 @@
+[
+  {
+    "message_id": "msg_001",
+    "name": "Sarah Jenkins",
+    "contact": "sarah.jenkins@example.com",
+    "body": "Hi, I was looking for a signed copy of the new Zadie Smith book. Will signed editions be available at the event or for purchase beforehand?",
+    "created_at": "2026-08-24T15:10:00Z",
+    "status": "new"
+  },
+  {
+    "message_id": "msg_002",
+    "name": "Marcus Vance",
+    "contact": "5551234567",
+    "body": "Hello! Can I order a bulk set of 15 copies of 'The Alchemist' for our community youth reading group next month?",
+    "created_at": "2026-08-24T11:45:00Z",
+    "status": "new"
+  },
+  {
+    "message_id": "msg_003",
+    "name": "Diane Nguyen",
+    "contact": "diane.n@example.com",
+    "body": "Do you have any recommendations for historical fiction set in the 1920s? Looking for a birthday gift for my mother.",
+    "created_at": "2026-08-23T16:20:00Z",
+    "status": "read"
+  }
+]

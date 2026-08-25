@@ -1,0 +1,47 @@
+[
+  {
+    "event_id": "event_001",
+    "title": "An Evening with Zadie Smith: Modern Fiction & Belonging",
+    "author_name": "Zadie Smith",
+    "starts_at": "2026-09-12T19:00:00Z",
+    "capacity": 45,
+    "tickets_sold": 45,
+    "description": "Join acclaimed novelist Zadie Smith for an intimate reading and discussion on contemporary fiction, identity, and the craft of storytelling."
+  },
+  {
+    "event_id": "event_002",
+    "title": "Poetry Workshop & Open Mic Night",
+    "author_name": "Ada Limón",
+    "starts_at": "2026-09-18T18:30:00Z",
+    "capacity": 30,
+    "tickets_sold": 18,
+    "description": "A guided generative poetry workshop led by U.S. Poet Laureate Ada Limón, followed by community open mic readings."
+  },
+  {
+    "event_id": "event_003",
+    "title": "Local History: The Hudson River Valley in Print",
+    "author_name": "David McCullough Jr.",
+    "starts_at": "2026-09-25T17:00:00Z",
+    "capacity": 40,
+    "tickets_sold": 22,
+    "description": "An illustrated lecture exploring the architectural, literary, and environmental heritage of the Hudson River Valley."
+  },
+  {
+    "event_id": "event_004",
+    "title": "Riverside Monthly Book Club: Tomorrow, and Tomorrow, and Tomorrow",
+    "author_name": "Gabrielle Zevin",
+    "starts_at": "2026-10-02T18:00:00Z",
+    "capacity": 25,
+    "tickets_sold": 14,
+    "description": "Our community book club meets to discuss Gabrielle Zevin's bestselling novel about friendship, play, and creative collaboration."
+  },
+  {
+    "event_id": "event_005",
+    "title": "Children's Story Hour & Illustrator Showcase",
+    "author_name": "Oliver Jeffers",
+    "starts_at": "2026-10-10T10:30:00Z",
+    "capacity": 35,
+    "tickets_sold": 10,
+    "description": "A family-friendly morning of live drawing, story reading, and interactive activities with picture book author Oliver Jeffers."
+  }
+]

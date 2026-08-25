@@ -1,0 +1,119 @@
+{
+  "name": "Riverside Books",
+  "address": "128 Main Street, Beacon, NY 12508",
+  "phone": "555-0142",
+  "email": "hello@riversidebooks.com",
+  "hours": {
+    "monday": null,
+    "tuesday": {
+      "open": "10:00",
+      "close": "18:00"
+    },
+    "wednesday": {
+      "open": "10:00",
+      "close": "18:00"
+    },
+    "thursday": {
+      "open": "10:00",
+      "close": "18:00"
+    },
+    "friday": {
+      "open": "10:00",
+      "close": "20:00"
+    },
+    "saturday": {
+      "open": "10:00",
+      "close": "19:00"
+    },
+    "sunday": {
+      "open": "11:00",
+      "close": "17:00"
+    }
+  },
+  "policies": {
+    "returns": "Books in original, unread condition may be returned within 14 days of purchase with a receipt for a full refund. Store credit or exchange is offered within 30 days.",
+    "holds": "Pre-orders and reserve requests are held free of charge at the front counter for 48 hours. After 48 hours, unclaimed holds are automatically released back to inventory.",
+    "special_orders": "If a title is not in stock, our booksellers can special order almost any in-print book for you at no extra charge. Special orders typically arrive within 3 to 5 business days.",
+    "gifts": "We carry a curated selection of greeting cards, artisanal notebooks, bookmarks, tote bags, and literary gift items in-store. While cards and gifts cannot be reserved online, we are happy to hold items over the phone."
+  },
+  "faqs": [
+    {
+      "id": "faq_001",
+      "question": "Where can I park when visiting Riverside Books?",
+      "keywords": [
+        "parking",
+        "park",
+        "car",
+        "lot",
+        "street parking",
+        "garage"
+      ],
+      "answer": "Free street parking is available along Main Street (2-hour limit). There is also a municipal parking lot located one block behind the store on Elm Street."
+    },
+    {
+      "id": "faq_002",
+      "question": "Do you offer digital or physical gift cards?",
+      "keywords": [
+        "gift card",
+        "gift certificate",
+        "voucher",
+        "present"
+      ],
+      "answer": "Yes! Physical gift cards in any denomination can be purchased at the register in-store or ordered over the phone for pickup or mailing."
+    },
+    {
+      "id": "faq_003",
+      "question": "How does the Riverside Books loyalty program work?",
+      "keywords": [
+        "loyalty",
+        "stamp",
+        "rewards",
+        "stamps",
+        "points",
+        "free book",
+        "club"
+      ],
+      "answer": "For every book you purchase or collect in-store, you earn 1 stamp on your digital loyalty card. Once you collect 10 stamps, you earn 1 free book reward!"
+    },
+    {
+      "id": "faq_004",
+      "question": "Is the bookstore wheelchair accessible?",
+      "keywords": [
+        "accessible",
+        "wheelchair",
+        "ada",
+        "ramp",
+        "disability",
+        "stroller"
+      ],
+      "answer": "Yes, our entrance has a ramp and our aisles are wide and fully ADA accessible. If you need any assistance reaching high shelves, our booksellers are always glad to help."
+    },
+    {
+      "id": "faq_005",
+      "question": "Do you buy or appraise used books?",
+      "keywords": [
+        "used books",
+        "sell books",
+        "trade",
+        "appraisal",
+        "secondhand",
+        "buyback"
+      ],
+      "answer": "We currently only sell new books and do not buy back or appraise used books. We recommend donating gently used books to the local Beacon Public Library."
+    },
+    {
+      "id": "faq_006",
+      "question": "Do you offer Wi-Fi or space to read and work?",
+      "keywords": [
+        "wifi",
+        "wi-fi",
+        "internet",
+        "study",
+        "work",
+        "seating",
+        "table"
+      ],
+      "answer": "We have comfortable reading armchairs throughout the store. We provide complimentary high-speed guest Wi-Fi for all visitors."
+    }
+  ]
+}

@@ -180,3 +180,30 @@ create table messages (
 );
 
 create index messages_status_created_idx on messages (status, created_at desc);
+
+-- ---------------------------------------------------------------------------
+-- Row Level Security
+-- ---------------------------------------------------------------------------
+-- Supabase exposes the `public` schema through PostgREST, and the anon key is
+-- public by design — it is meant to be embedded in a browser. A table in an
+-- exposed schema without RLS is readable *and writable* by `anon`, which would
+-- put a second writer on the store's data and break §5.1's "one writer, one
+-- truth" without anyone touching the API.
+--
+-- RLS is enabled with NO policies, which is a deliberate default-deny: every
+-- request arriving over the Data API is refused. Nothing legitimate is lost.
+-- The FastAPI backend connects as `postgres`, which carries BYPASSRLS, so the
+-- repository layer is unaffected — it remains the only path to this data,
+-- which is exactly what §5.1 and §5.2 require.
+--
+-- If a product ever genuinely needs to read Supabase directly, that is a
+-- schema-contract change: it needs a policy written and reviewed here, not a
+-- table quietly left open.
+
+alter table books       enable row level security;
+alter table customers   enable row level security;
+alter table orders      enable row level security;
+alter table order_items enable row level security;
+alter table events      enable row level security;
+alter table store_info  enable row level security;
+alter table messages    enable row level security;

@@ -61,7 +61,7 @@ export default function Home() {
           {books.map(b => (
             <div key={b.isbn} style={{ border: '1px solid #ddd', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ background: '#eee', height: '200px', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src={b.cover_image_url || ""} alt="Cover" style={{ maxHeight: '100%', maxWidth: '100%' }} />
+                {b.cover_image_url && <img src={b.cover_image_url} alt="Cover" style={{ maxHeight: '100%', maxWidth: '100%' }} />}
               </div>
               <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem' }}>{b.title}</h3>
               <p style={{ margin: '0 0 0.5rem 0', color: '#666' }}>{b.author}</p>

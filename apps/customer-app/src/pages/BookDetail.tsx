@@ -87,7 +87,11 @@ export default function BookDetail() {
   return (
     <div style={{ display: 'flex', gap: '2rem' }}>
       <div style={{ flex: '1', maxWidth: '300px' }}>
-        <img src={book.cover_image_url || ""} alt="Cover" style={{ width: '100%' }} />
+        {book.cover_image_url ? (
+          <img src={book.cover_image_url} alt="Cover" style={{ width: '100%' }} />
+        ) : (
+          <div style={{ background: '#eee', aspectRatio: '2 / 3', borderRadius: '4px' }} />
+        )}
       </div>
       <div style={{ flex: '2' }}>
         <h2>{book.title}</h2>

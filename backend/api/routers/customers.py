@@ -43,6 +43,10 @@ def register_customer(
     payload: CustomerRegister, repo: CustomerRepository = Depends(get_customer_repo)
 ):
     phone = normalize_phone(payload.phone)
+    if len(phone) != 10:
+        raise HTTPException(
+            status_code=400, detail="Phone number must be 10 digits"
+        )
     if repo.get_by_phone(phone):
         raise HTTPException(
             status_code=400, detail="Customer with this phone already exists"
@@ -62,6 +66,16 @@ def register_customer(
         joined_date=now_str,
     )
     return repo.create(new_customer)
+
+
+@router.get("/{customer_id}", response_model=Customer)
+def get_customer(
+    customer_id: str, repo: CustomerRepository = Depends(get_customer_repo)
+):
+    customer = repo.get_by_id(customer_id)
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return customer
 
 
 @router.get("/{customer_id}/loyalty", response_model=LoyaltyResponse)

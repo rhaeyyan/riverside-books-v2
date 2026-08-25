@@ -57,7 +57,7 @@ export default function BookDetail() {
       customerId = (custData as any).customer_id;
     }
 
-    const { data, error: orderError } = await client.POST("/api/orders", {
+    const { data, error: orderError, response: orderResponse } = await client.POST("/api/orders", {
       body: {
         customer_id: customerId,
         items: [{ isbn: book.isbn, quantity: 1 }],
@@ -66,8 +66,7 @@ export default function BookDetail() {
     });
 
     if (orderError) {
-      const status = (orderError as any).status;
-      if (status === 409) {
+      if (orderResponse.status === 409) {
         setError("Someone just placed a hold on the last copy! Please check back later.");
         client.GET("/api/books/{isbn}", { params: { path: { isbn: book.isbn } } }).then(res => res.data && setBook(res.data as Book));
       } else {

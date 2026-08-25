@@ -6,13 +6,24 @@ import './Preorders.css';
 type Order = components["schemas"]["Order"];
 type Book = components["schemas"]["Book"];
 
+type Customer = components["schemas"]["Customer"];
+
 export function Preorders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [books, setBooks] = useState<Record<string, Book>>({});
+  const [customers, setCustomers] = useState<Record<string, Customer>>({});
 
   const fetchOrders = () => {
     client.GET("/api/orders", {}).then((res) => {
-      if (res.data) setOrders(res.data);
+      if (res.data) {
+        setOrders(res.data);
+        const missingIds = [...new Set(res.data.map(o => o.customer_id))];
+        missingIds.forEach(id => {
+          client.GET("/api/customers/{customer_id}", { params: { path: { customer_id: id } } }).then(r => {
+            if (r.data) setCustomers(prev => ({ ...prev, [id]: r.data as Customer }));
+          });
+        });
+      }
     });
   };
 
@@ -31,7 +42,7 @@ export function Preorders() {
     fetchBooks();
   }, []);
 
-  const moveOrder = async (order: Order, newStatus: string) => {
+  const moveOrder = async (order: Order, newStatus: Order["status"]) => {
     // Optimistic update
     const prevOrders = [...orders];
     setOrders(orders.map(o => o.order_id === order.order_id ? { ...o, status: newStatus } : o));
@@ -57,7 +68,8 @@ export function Preorders() {
     }
   };
 
-  const columns = ['PENDING', 'READY_FOR_PICKUP', 'COMPLETED'];
+  const columns = ['pending', 'ready_for_pickup', 'completed'] as const;
+  const columnLabel = (c: string) => c.replace(/_/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
   
   const isPastDeadline = (deadline: string) => {
     if (!deadline) return false;
@@ -74,14 +86,14 @@ export function Preorders() {
       <div className="kanban-board">
         {columns.map(col => (
           <div key={col} className="kanban-column">
-            <h2>{col.replace(/_/g, ' ')}</h2>
+            <h2>{columnLabel(col)}</h2>
             <div className="kanban-cards">
               {orders.filter(o => o.status === col).map(order => {
-                const pastDeadline = order.status === 'PENDING' && isPastDeadline(order.hold_expires_at);
+                const pastDeadline = order.status === 'pending' && isPastDeadline(order.hold_expires_at);
                 return (
                   <div key={order.order_id} className={`kanban-card ${pastDeadline ? 'past-deadline' : ''}`}>
                     <div className="card-header">
-                      <span className="customer">Cust: {order.customer_id.substring(0,8)}</span>
+                      <span className="customer">{customers[order.customer_id] ? `${customers[order.customer_id].name} · ${customers[order.customer_id].phone}` : order.customer_id}</span>
                       {pastDeadline && <span className="warning">Expired!</span>}
                     </div>
                     <div className="items-list">
@@ -96,8 +108,8 @@ export function Preorders() {
                         By: {order.hold_expires_at ? new Date(order.hold_expires_at).toLocaleDateString() : 'N/A'}
                       </span>
                       <div className="actions">
-                        {col === 'PENDING' && <button onClick={() => moveOrder(order, 'READY_FOR_PICKUP')}>Ready</button>}
-                        {col === 'READY_FOR_PICKUP' && <button onClick={() => moveOrder(order, 'COMPLETED')}>Complete</button>}
+                        {col === 'pending' && <button onClick={() => moveOrder(order, 'ready_for_pickup')}>Ready</button>}
+                        {col === 'ready_for_pickup' && <button onClick={() => moveOrder(order, 'completed')}>Complete</button>}
                       </div>
                     </div>
                   </div>

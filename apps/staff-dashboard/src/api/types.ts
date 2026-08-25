@@ -14,7 +14,8 @@ export interface paths {
         /** Get Books */
         get: operations["get_books_api_books_get"];
         put?: never;
-        post?: never;
+        /** Create Book */
+        post: operations["create_book_api_books_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -55,6 +56,26 @@ export interface paths {
         patch: operations["update_stock_api_books__isbn__stock_patch"];
         trace?: never;
     };
+    "/api/books/external/{isbn}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lookup External
+         * @description Fetch book metadata from OpenLibrary API.
+         */
+        get: operations["lookup_external_api_books_external__isbn__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/customers/lookup": {
         parameters: {
             query?: never;
@@ -83,6 +104,23 @@ export interface paths {
         put?: never;
         /** Register Customer */
         post: operations["register_customer_api_customers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/customers/{customer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Customer */
+        get: operations["get_customer_api_customers__customer_id__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -294,6 +332,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/messages/{message_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Message Status */
+        patch: operations["update_message_status_api_messages__message_id__status_patch"];
+        trace?: never;
+    };
     "/api/marketing/tones": {
         parameters: {
             query?: never;
@@ -343,8 +398,11 @@ export interface components {
             title: string;
             /** Author */
             author: string;
-            /** Format */
-            format: string;
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "hardcover" | "paperback";
             /** Price Cents */
             price_cents: number;
             /** Stock Count */
@@ -385,6 +443,40 @@ export interface components {
              * @description Compute stock status based on available count and low-stock threshold.
              */
             readonly stock_status: string;
+        };
+        /** BookCreate */
+        BookCreate: {
+            /** Isbn */
+            isbn: string;
+            /** Title */
+            title: string;
+            /** Author */
+            author: string;
+            /** Genre */
+            genre: string;
+            /** Format */
+            format: string;
+            /** Price Cents */
+            price_cents: number;
+            /** Stock Count */
+            stock_count: number;
+            /**
+             * Publisher
+             * @default
+             */
+            publisher: string;
+            /**
+             * Published Date
+             * @default
+             */
+            published_date: string;
+            /** Cover Image Url */
+            cover_image_url?: string | null;
+            /**
+             * Blurb
+             * @default
+             */
+            blurb: string | null;
         };
         /** ChatMessageRequest */
         ChatMessageRequest: {
@@ -537,8 +629,17 @@ export interface components {
             /**
              * Status
              * @default new
+             * @enum {string}
              */
-            status: string;
+            status: "new" | "read";
+        };
+        /** MessageUpdate */
+        MessageUpdate: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "new" | "read";
         };
         /**
          * OperatingHours
@@ -561,8 +662,11 @@ export interface components {
             customer_id: string;
             /** Items */
             items: components["schemas"]["OrderItem"][];
-            /** Status */
-            status: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "ready_for_pickup" | "completed" | "cancelled" | "expired";
             /** Created At */
             created_at: string;
             /** Hold Expires At */
@@ -723,6 +827,39 @@ export interface operations {
             };
         };
     };
+    create_book_api_books_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BookCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Book"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_book_api_books__isbn__get: {
         parameters: {
             query?: never;
@@ -789,6 +926,37 @@ export interface operations {
             };
         };
     };
+    lookup_external_api_books_external__isbn__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                isbn: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     lookup_customer_api_customers_lookup_post: {
         parameters: {
             query?: never;
@@ -834,6 +1002,37 @@ export interface operations {
                 "application/json": components["schemas"]["CustomerRegister"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Customer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_customer_api_customers__customer_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -1211,6 +1410,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Message"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_message_status_api_messages__message_id__status_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
                 };
             };
             /** @description Validation Error */

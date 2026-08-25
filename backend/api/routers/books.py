@@ -62,6 +62,8 @@ class BookCreate(BaseModel):
     format: str
     price_cents: int
     stock_count: int
+    publisher: str = ""
+    published_date: str = ""
     cover_image_url: str | None = None
     blurb: str | None = ""
 
@@ -86,6 +88,8 @@ async def lookup_external(isbn: str):
         book_data = data[key]
 
         authors = ", ".join([a["name"] for a in book_data.get("authors", [])])
+        publishers = book_data.get("publishers", [])
+        publisher = publishers[0]["name"] if publishers else ""
 
         cover = ""
         if "cover" in book_data and "large" in book_data["cover"]:
@@ -95,6 +99,8 @@ async def lookup_external(isbn: str):
             "isbn": isbn,
             "title": book_data.get("title", ""),
             "author": authors,
+            "publisher": publisher,
+            "published_date": book_data.get("publish_date", ""),
             "cover_image_url": cover,
         }
 
@@ -107,11 +113,13 @@ def create_book(payload: BookCreate, repo: BookRepository = Depends(get_book_rep
             title=payload.title,
             author=payload.author,
             genre=payload.genre,
-            format=payload.format,
+            format=payload.format.lower(),
             price_cents=payload.price_cents,
             stock_count=payload.stock_count,
             reserved_count=0,
-            cover_image_url=payload.cover_image_url,
+            publisher=payload.publisher,
+            published_date=payload.published_date,
+            cover_image_url=payload.cover_image_url or "",
             blurb=payload.blurb or "",
         )
         return repo.create(new_book)

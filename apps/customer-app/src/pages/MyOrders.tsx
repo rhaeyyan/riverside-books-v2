@@ -15,13 +15,12 @@ export default function MyOrders() {
     setError(null);
     const cleanPhone = phone.replace(/\D/g, "");
     
-    const { data: custData, error: custError } = await client.POST("/api/customers/lookup", {
+    const { data: custData, error: custError, response: custResponse } = await client.POST("/api/customers/lookup", {
       body: { phone: cleanPhone }
     });
 
     if (custError) {
-      const status = (custError as any).status;
-      if (status === 404) setError("Customer not found.");
+      if (custResponse.status === 404) setError("Customer not found.");
       else setError("An error occurred.");
       setOrders(null);
       return;

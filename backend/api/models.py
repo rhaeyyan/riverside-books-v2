@@ -8,7 +8,7 @@ Covers:
 
 import re
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -43,11 +43,11 @@ class Book(BaseModel):
     isbn: str
     title: str
     author: str
-    format: str
-    price_cents: int
-    stock_count: int
-    reserved_count: int = 0
-    low_stock_threshold: int = 2
+    format: Literal["hardcover", "paperback"]
+    price_cents: int = Field(ge=0)
+    stock_count: int = Field(ge=0)
+    reserved_count: int = Field(ge=0, default=0)
+    low_stock_threshold: int = Field(ge=0, default=2)
     genre: str
     blurb: str = ""
     cover_image_url: str = ""
@@ -76,11 +76,11 @@ class Customer(BaseModel):
     """Domain model representing a bookstore customer and loyalty card."""
 
     customer_id: str
-    phone: str
+    phone: str = Field(pattern=r"^\d{10}$")
     name: str
     email: str = ""
-    stamps: int = 0
-    rewards_available: int = 0
+    stamps: int = Field(ge=0, le=9, default=0)
+    rewards_available: int = Field(ge=0, default=0)
     joined_date: str
 
 
@@ -88,7 +88,7 @@ class OrderItem(BaseModel):
     """Domain model representing a single line item in an order."""
 
     isbn: str
-    quantity: int = 1
+    quantity: int = Field(gt=0, default=1)
 
 
 class Order(BaseModel):
@@ -97,10 +97,10 @@ class Order(BaseModel):
     order_id: str
     customer_id: str
     items: list[OrderItem]
-    status: str
+    status: Literal["pending", "ready_for_pickup", "completed", "cancelled", "expired"]
     created_at: str
     hold_expires_at: str
-    total_cents: int
+    total_cents: int = Field(ge=0)
     notes: str = ""
 
     def is_expired(self) -> bool:
@@ -123,8 +123,8 @@ class Event(BaseModel):
     title: str
     author_name: str
     starts_at: str
-    capacity: int
-    tickets_sold: int = 0
+    capacity: int = Field(ge=0)
+    tickets_sold: int = Field(ge=0, default=0)
     description: str = ""
 
 
@@ -193,4 +193,4 @@ class Message(BaseModel):
     contact: str
     body: str
     created_at: str
-    status: str = "new"
+    status: Literal["new", "read"] = "new"

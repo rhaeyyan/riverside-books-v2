@@ -46,9 +46,11 @@ export function Inventory() {
         title: externalBook.title,
         author: externalBook.author,
         genre: "Uncategorized", // Default
-        format: "Paperback", // Default
+        format: "paperback", // Default
         price_cents: 1999, // Default $19.99
         stock_count: 1, // Start with 1 on hand
+        publisher: externalBook.publisher || "",
+        published_date: externalBook.published_date || "",
         cover_image_url: externalBook.cover_image_url || "",
         blurb: ""
       }

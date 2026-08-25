@@ -14,13 +14,12 @@ export default function LoyaltyCard() {
     setError(null);
     const cleanPhone = phone.replace(/\D/g, "");
     
-    const { data, error: fetchError } = await client.POST("/api/customers/lookup", {
+    const { data, error: fetchError, response: fetchResponse } = await client.POST("/api/customers/lookup", {
       body: { phone: cleanPhone }
     });
 
     if (fetchError) {
-      const status = (fetchError as any).status;
-      if (status === 404) setError("Customer not found. Place an order to register!");
+      if (fetchResponse.status === 404) setError("Customer not found. Place an order to register!");
       else setError("An error occurred.");
       setCustomer(null);
     } else if (data) {

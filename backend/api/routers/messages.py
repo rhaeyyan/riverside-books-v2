@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -9,7 +11,7 @@ router = APIRouter()
 
 
 class MessageUpdate(BaseModel):
-    status: str
+    status: Literal["new", "read"]
 
 
 @router.get("", response_model=list[Message])
@@ -25,9 +27,7 @@ def update_message_status(
     payload: MessageUpdate,
     repo: MessageRepository = Depends(get_message_repo),
 ):
-    msg = repo.get_by_id(message_id)
-    if not msg:
-        raise HTTPException(status_code=404, detail="Message not found")
-    msg.status = payload.status
-    repo.update(msg)
-    return msg
+    try:
+        return repo.update_status(message_id, payload.status)
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))

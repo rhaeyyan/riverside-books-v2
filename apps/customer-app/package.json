@@ -27,7 +27,7 @@
     "openapi-typescript": "^7.13.0",
     "oxlint": "^1.79.0",
     "prettier": "^3.9.6",
-    "typescript": "^7.0.2",
+    "typescript": "^5.9.3",
     "vite": "^8.2.2"
   }
 }

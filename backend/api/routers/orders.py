@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.api.core.repositories import (
     BookRepository,
@@ -22,7 +22,7 @@ router = APIRouter()
 
 class OrderItemInput(BaseModel):
     isbn: str
-    quantity: int
+    quantity: int = Field(gt=0)
 
 
 class OrderCreate(BaseModel):

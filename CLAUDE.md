@@ -70,7 +70,7 @@ body and expect it to need the shared owner's review.
 
 ## Multi-agent orchestration
 
-Three subagents live in [`.claude/agents/`](.claude/agents). The main session is
+Four subagents live in [`.claude/agents/`](.claude/agents). The main session is
 the builder: it writes the implementation code and carries handoffs between
 agents, since subagents cannot invoke each other.
 
@@ -79,6 +79,7 @@ agents, since subagents cannot invoke each other.
 | [`planner`](.claude/agents/planner.md) | nothing (read-only) | turning a goal into a spec of at most 5 files |
 | [`qa`](.claude/agents/qa.md) | `tests/` only | failing tests from the spec, then running the checks |
 | [`reviewer`](.claude/agents/reviewer.md) | nothing (read-only) | an independent read of the diff before the PR |
+| [`designer`](.claude/agents/designer.md) | `apps/` | styling, layout, and frontend accessibility in Products A and B |
 
 The default loop for a feature or a non-trivial fix:
 
@@ -97,9 +98,32 @@ Each agent's restrictions are enforced by its `tools:` frontmatter. `qa` cannot
 edit source, which is the whole reason it is a separate agent: it cannot make a
 failing test pass by weakening the code.
 
+`designer` sits outside that loop rather than inside it: UI work still gets a
+spec and still gets reviewed, but it replaces the main session as the builder
+for anything under `apps/`. Route visual and interaction work there instead of
+styling by hand.
+
 Two products can be built in parallel by spawning a builder with
 `isolation: "worktree"` so each gets its own checkout. Only do this when the
-tasks genuinely touch different products' directories.
+tasks genuinely touch different products' directories. Use a worktree too when
+someone else is working in this clone, so you never move their checkout out
+from under them.
+
+### Skills
+
+Two project skills live in [`.claude/skills/`](.claude/skills), and anyone on
+the team can load them, not just the agents:
+
+- [`design-system`](.claude/skills/design-system/SKILL.md) — the tokens, which
+  of the three coexisting styling systems to use for a given file, and the
+  known drift not to "fix" in passing. Load before touching CSS or `className`.
+- [`a11y-audit`](.claude/skills/a11y-audit/SKILL.md) — the WCAG 2.2 AA pass,
+  plus the accessibility defects already known to be on `main`. Load before
+  calling a UI change done.
+
+They exist as skills rather than as prose in `designer.md` so that a reviewer, a
+teammate, or the main session can load the same rules without going through the
+agent.
 
 ### The `[SPEC]` block
 

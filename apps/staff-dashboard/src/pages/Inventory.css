@@ -19,6 +19,9 @@
   flex: 1;
   max-width: 250px;
   color: white;
+  border: none;
+  font: inherit;
+  text-align: left;
   transition: transform 0.2s;
 }
 
@@ -27,11 +30,11 @@
 }
 
 .alert-card.out-of-stock {
-  background-color: #ef4444;
+  background-color: var(--status-out-fill);
 }
 
 .alert-card.low-stock {
-  background-color: #f59e0b;
+  background-color: var(--status-low-fill);
 }
 
 .alert-text {
@@ -48,17 +51,25 @@
   display: flex;
   gap: 20px;
   align-items: center;
-  background: white;
+  background: var(--bg-raised);
   padding: 16px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* The "Add New Book" bar reuses .filters-bar for layout but keeps its own
+   hardcoded light background regardless of color scheme (out of scope for
+   this pass), so it can't take var(--text) — only the actual filter
+   controls bar, marked with this second class, gets themed text. */
+.filters-bar--controls {
+  color: var(--text);
 }
 
 .search-box {
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   padding: 8px 12px;
   border-radius: 4px;
   flex: 1;
@@ -78,12 +89,13 @@
 
 .filter-group select {
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 4px;
 }
 
 .table-container {
-  background: white;
+  background: var(--bg-raised);
+  color: var(--text);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   overflow-x: auto;
@@ -97,11 +109,11 @@
 .inventory-table th, .inventory-table td {
   padding: 12px 16px;
   text-align: left;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .inventory-table th {
-  background: #f8fafc;
+  background: var(--code-bg);
   font-weight: 600;
   cursor: pointer;
   user-select: none;
@@ -119,25 +131,25 @@
 }
 
 .status-badge.out_of_stock, .status-badge.out-of-stock {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--status-out-bg);
+  color: var(--status-out);
 }
 
 .status-badge.low_stock, .status-badge.low-stock {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--status-low-bg);
+  color: var(--status-low);
 }
 
 .status-badge.in_stock, .status-badge.in-stock {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--status-in-bg);
+  color: var(--status-in);
 }
 
-.inventory-table tr.status-out_of_stock td, .inventory-table tr.status-out-of-stock td {
-  background-color: #fef2f2;
+.inventory-table tr.status-out_of_stock td:first-child, .inventory-table tr.status-out-of-stock td:first-child {
+  border-left: 4px solid var(--status-out);
 }
-.inventory-table tr.status-low_stock td, .inventory-table tr.status-low-stock td {
-  background-color: #fffbeb;
+.inventory-table tr.status-low_stock td:first-child, .inventory-table tr.status-low-stock td:first-child {
+  border-left: 4px solid var(--status-low);
 }
 
 .action-buttons {

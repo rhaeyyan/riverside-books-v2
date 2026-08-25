@@ -158,20 +158,20 @@ export function Inventory() {
   return (
     <div className="inventory-page">
       <div className="alerts-summary">
-        <div className="alert-card out-of-stock" onClick={() => setStatusFilter(statuses.find(s => s.toLowerCase().includes('out')) || 'All')}>
+        <button type="button" className="alert-card out-of-stock" onClick={() => setStatusFilter(statuses.find(s => s.toLowerCase().includes('out')) || 'All')}>
           <AlertCircle size={24} />
           <div className="alert-text">
             <span className="alert-count">{outOfStockCount}</span>
             <span className="alert-label">Out of Stock</span>
           </div>
-        </div>
-        <div className="alert-card low-stock" onClick={() => setStatusFilter(statuses.find(s => s.toLowerCase().includes('low')) || 'All')}>
+        </button>
+        <button type="button" className="alert-card low-stock" onClick={() => setStatusFilter(statuses.find(s => s.toLowerCase().includes('low')) || 'All')}>
           <AlertTriangle size={24} />
           <div className="alert-text">
             <span className="alert-count">{lowStockCount}</span>
             <span className="alert-label">Low Stock</span>
           </div>
-        </div>
+        </button>
       </div>
 
 
@@ -192,7 +192,7 @@ export function Inventory() {
         </form>
       </div>
 
-      <div className="filters-bar">
+      <div className="filters-bar filters-bar--controls">
 
         <div className="search-box">
           <Search size={18} />

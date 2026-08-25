@@ -38,8 +38,6 @@ def get_message_repo() -> MessageRepository:
     return MessageRepository(datastore)
 
 
-
-
 def release_expired_holds(
     order_repo: OrderRepository = Depends(get_order_repo),
     book_repo: BookRepository = Depends(get_book_repo),
@@ -54,4 +52,4 @@ def release_expired_holds(
             for item in order.items:
                 book_repo.adjust_reserved_count(item.isbn, -item.quantity)
         except Exception:
-                        pass
+            pass

@@ -27,8 +27,8 @@ export function Marketing() {
   const searchResults = () => {
     if (!searchQuery) return [];
     const q = searchQuery.toLowerCase();
-    const b = books.filter(b => b.title.toLowerCase().includes(q)).map(b => ({ type: 'book' as const, id: b.isbn, name: b.title, author: b.author, price: b.price }));
-    const e = events.filter(e => e.title.toLowerCase().includes(q)).map(e => ({ type: 'event' as const, id: e.event_id, name: e.title, price: e.ticket_price }));
+    const b = books.filter(b => b.title.toLowerCase().includes(q)).map(b => ({ type: 'book' as const, id: b.isbn, name: b.title, author: b.author, price: b.price_cents / 100 }));
+    const e = events.filter(e => e.title.toLowerCase().includes(q)).map(e => ({ type: 'event' as const, id: e.event_id, name: e.title, price: undefined }));
     return [...b, ...e].slice(0, 10);
   };
 

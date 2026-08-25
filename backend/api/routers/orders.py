@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
@@ -16,6 +17,8 @@ from backend.api.deps import (
     release_expired_holds,
 )
 from backend.api.models import Order, OrderItem
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -183,8 +186,15 @@ def force_release_expired(
                 try:
                     book_repo.adjust_reserved_count(item.isbn, -item.quantity)
                 except Exception:
-                    pass
+                    logger.exception(
+                        "Failed to release stock for %s in order %s",
+                        item.isbn,
+                        order.order_id,
+                    )
         except Exception:
-            pass
+            logger.exception(
+                "Failed to expire order %s; stock not released",
+                order.order_id,
+            )
 
     return ReleaseExpiredResponse(released_count=count)

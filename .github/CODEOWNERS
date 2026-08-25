@@ -1,0 +1,37 @@
+# Code owners for Riverside Books.
+#
+# Each product directory is owned by the collaborator in charge of it. GitHub
+# auto-requests a review from the owner when a pull request touches their paths.
+# Anything not matched below falls to @rhaeyyan.
+#
+# Later rules win, so the default owner is declared first.
+
+*                                   @rhaeyyan
+
+# Product A: Customer Ordering & Loyalty App
+/apps/customer-app/                 @rhaeyyan
+/tests/test_books.py                @rhaeyyan
+/tests/test_orders.py               @rhaeyyan
+/tests/test_loyalty.py              @rhaeyyan
+
+# Product B: Staff Inventory & Ops Dashboard
+/apps/staff-dashboard/              @Cheewaiyip
+
+# Product C: Customer Support Chatbot
+/backend/chatbot/                   @humaali-create
+/backend/api/routers/chat.py        @humaali-create
+/tests/test_chatbot.py              @humaali-create
+
+# Product D: Marketing Content Generator
+/backend/marketing/                 @crystalwatson-art
+/backend/api/routers/marketing.py   @crystalwatson-art
+/tests/test_marketing.py            @crystalwatson-art
+
+# Shared surfaces: the API core, mock data, docs, and CI stay with the owner,
+# since a change here can break every product at once.
+/backend/api/core/                  @rhaeyyan
+/backend/api/main.py                @rhaeyyan
+/backend/api/models.py              @rhaeyyan
+/backend/api/deps.py                @rhaeyyan
+/mock_data/                         @rhaeyyan
+/.github/                           @rhaeyyan

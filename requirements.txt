@@ -37,6 +37,12 @@ packaging==26.3
     # via pytest
 pluggy==1.6.0
     # via pytest
+psycopg==3.3.4
+    # via riverside-books-v2 (pyproject.toml)
+psycopg-binary==3.3.4
+    # via psycopg
+psycopg-pool==3.3.1
+    # via psycopg
 pydantic==2.13.4
     # via
     #   riverside-books-v2 (pyproject.toml)
@@ -60,11 +66,10 @@ starlette==1.6.0
     # via fastapi
 typing-extensions==4.16.0
     # via
-    #   anyio
     #   fastapi
+    #   psycopg-pool
     #   pydantic
     #   pydantic-core
-    #   starlette
     #   typing-inspection
 typing-inspection==0.4.4
     # via

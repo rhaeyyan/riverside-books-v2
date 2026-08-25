@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Depends
 
 from backend.api.core.datastore import JsonDatastore
@@ -10,6 +12,8 @@ from backend.api.core.repositories import (
     StoreInfoRepository,
 )
 from backend.config import settings
+
+logger = logging.getLogger(__name__)
 
 datastore = JsonDatastore(data_dir=settings.data_dir)
 
@@ -46,10 +50,27 @@ def release_expired_holds(
     expired = order_repo.get_expired_pending_orders()
     for order in expired:
         try:
-            # First set to expired
+            # Order first, then the reservation. The reverse would be worse:
+            # `adjust_reserved_count` does not clamp at zero, so an order left
+            # `pending` after a partial release would be swept again on the next
+            # read and decrement twice, inventing stock the shop does not have.
+            #
+            # Neither ordering is actually correct — the two writes need to be
+            # one transaction, which the JSON store cannot express. See PRD R2;
+            # this is one of the nine sites that has to be rewritten as a real
+            # transaction when the database lands.
             order_repo.update_status(order.order_id, "expired")
-            # Then decrement reserved count
             for item in order.items:
-                book_repo.adjust_reserved_count(item.isbn, -item.quantity)
+                try:
+                    book_repo.adjust_reserved_count(item.isbn, -item.quantity)
+                except Exception:
+                    logger.exception(
+                        "Failed to release stock for %s in order %s",
+                        item.isbn,
+                        order.order_id,
+                    )
         except Exception:
-            pass
+            logger.exception(
+                "Failed to expire order %s; stock not released",
+                order.order_id,
+            )

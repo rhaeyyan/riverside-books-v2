@@ -19,6 +19,7 @@ uv run python -m scripts.seed   # regenerate mock_data (see Gotchas)
 uv run pytest            # 75 tests, all green as of 2026-08-25
 uv run ruff check .      # lint; must be clean before a PR
 uv run ruff format .     # format
+uv run python -m scripts.check_contract   # PRD §6-7 vs. the code (see Non-negotiable 2)
 uv run uvicorn backend.api.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
@@ -60,10 +61,16 @@ body and expect it to need the shared owner's review.
 2. **`docs/PRD.md` §5–7 is a contract.** Renaming a model field or changing an
    endpoint shape breaks another teammate's product at runtime with no compile
    error. Propose the change; do not just make it.
+   `uv run python -m scripts.check_contract` compares the §6 field tables and
+   the §7 route table against the Pydantic models and the OpenAPI schema. It
+   reports drift that predates today, so read the output rather than the exit
+   code — what matters is whether **your** diff added a line to it.
 3. **No secrets, ever.** The suite runs on mock data and has no production
    credentials. Nothing goes in `.env` that would matter if leaked.
 4. **`main` is protected.** Branch, PR, green CI, one owner approval. No direct
-   pushes, no force pushes to shared branches, no history rewrites.
+   pushes, no force pushes to shared branches, no history rewrites. A
+   `PreToolUse` hook asks before each of those (see Hooks) — it is a backstop,
+   not a substitute for branching first.
 5. **New dependency = its own decision.** Adding a package means updating
    `pyproject.toml`, regenerating `uv.lock` (`uv sync`) *and* `requirements.txt`
    (`uv pip compile pyproject.toml -o requirements.txt`), because Render builds
@@ -112,19 +119,51 @@ from under them.
 
 ### Skills
 
-Two project skills live in [`.claude/skills/`](.claude/skills), and anyone on
-the team can load them, not just the agents:
+Five project skills live in [`.claude/skills/`](.claude/skills), and anyone on
+the team can load them, not just the agents.
 
+Round the loop, in the order they come up:
+
+- [`grill-me`](.claude/skills/grill-me/SKILL.md) — a capped requirements
+  interview for a goal with more than one plausible reading. Runs **before**
+  `planner`, and emits a `[REQUIREMENTS]` block it turns into a `[SPEC]`. Skip
+  it for anything you would also skip the planner for.
 - [`design-system`](.claude/skills/design-system/SKILL.md) — the tokens, which
   of the three coexisting styling systems to use for a given file, and the
   known drift not to "fix" in passing. Load before touching CSS or `className`.
 - [`a11y-audit`](.claude/skills/a11y-audit/SKILL.md) — the WCAG 2.2 AA pass,
   plus the accessibility defects already known to be on `main`. Load before
   calling a UI change done.
+- [`wrap-up`](.claude/skills/wrap-up/SKILL.md) — the close-out: separate seed
+  drift from real work, run the checks, commit, open the PR with the
+  shared-path callout filled in. User-invoked only; it never decides that the
+  work is finished.
+
+And one that stands outside the loop:
+
+- [`system-review`](.claude/skills/system-review/SKILL.md) — a read-only audit
+  of this scaffolding itself: agents, skills, hooks, `CODEOWNERS`, and whether
+  this file still describes the tree. Proposes; never edits.
 
 They exist as skills rather than as prose in `designer.md` so that a reviewer, a
 teammate, or the main session can load the same rules without going through the
 agent.
+
+### Hooks
+
+Configured in [`.claude/settings.json`](.claude/settings.json), scripts in
+[`.claude/hooks/`](.claude/hooks). Both are committed, so they apply to whoever
+opens the repo — treat a change to either as a shared-path change.
+
+| Hook | Fires on | What it does |
+| --- | --- | --- |
+| [`git-guard.sh`](.claude/hooks/git-guard.sh) | `PreToolUse` / `Bash` | Asks before a force push without `--force-with-lease`, a `git reset --hard`, a history rewrite on a pushed branch, or a commit/push while on `main`. Always `ask`, never `deny` — @rhaeyyan's admin override still needs a way through. |
+| [`post-edit-lint.sh`](.claude/hooks/post-edit-lint.sh) | `PostToolUse` / `Edit`,`Write` | Runs `ruff format` + `ruff check --fix` on an edited `.py`, `oxlint --fix` on an edited `.ts`/`.tsx`, then feeds back only what the auto-fix could not resolve. |
+
+The reasoning is the same one the agent roster already runs on: a restriction
+worth writing down is worth enforcing mechanically rather than on the honor
+system. Each script runs standalone against a synthetic payload — see
+`system-review` for how to check one is still firing.
 
 ### The `[SPEC]` block
 

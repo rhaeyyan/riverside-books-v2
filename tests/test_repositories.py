@@ -13,13 +13,13 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
+
+from backend.api.core.datastore import JsonDatastore
 from backend.api.core.repositories import (
     BookRepository,
     CustomerRepository,
     OrderRepository,
 )
-
-from backend.api.core.datastore import JsonDatastore
 from backend.api.models import (
     Book,
     Customer,
@@ -94,9 +94,7 @@ class TestBookRepository:
             assert isinstance(book.available_count, int)
             assert book.stock_status in {"in_stock", "low_stock", "out_of_stock"}
 
-    def test_get_by_isbn_exact_and_normalized(
-        self, book_repo: BookRepository
-    ) -> None:
+    def test_get_by_isbn_exact_and_normalized(self, book_repo: BookRepository) -> None:
         """Ensure get_by_isbn handles formatted ISBNs with hyphens and spaces."""
         # Query by normalized ISBN
         book = book_repo.get_by_isbn("9780143039433")
@@ -135,9 +133,7 @@ class TestBookRepository:
         # Non-matching query returns empty list
         assert book_repo.get_all(query="nonexistentsearchtermxyz") == []
 
-    def test_get_all_in_stock_only_filter(
-        self, book_repo: BookRepository
-    ) -> None:
+    def test_get_all_in_stock_only_filter(self, book_repo: BookRepository) -> None:
         """Ensure in_stock_only=True excludes books with available_count <= 0."""
         all_books = book_repo.get_all()
         in_stock_books = book_repo.get_all(in_stock_only=True)
@@ -263,9 +259,7 @@ class TestCustomerRepository:
 
         assert customer_repo.get_by_id("cust_nonexistent") is None
 
-    def test_get_by_phone_normalized(
-        self, customer_repo: CustomerRepository
-    ) -> None:
+    def test_get_by_phone_normalized(self, customer_repo: CustomerRepository) -> None:
         """Ensure lookup by phone normalizes phone strings in various formats."""
         first_cust = customer_repo.get_all()[0]
         raw_phone = first_cust.phone
@@ -353,9 +347,7 @@ class TestOrderRepository:
             for item in order.items:
                 assert isinstance(item, OrderItem)
 
-    def test_get_all_filter_by_status(
-        self, order_repo: OrderRepository
-    ) -> None:
+    def test_get_all_filter_by_status(self, order_repo: OrderRepository) -> None:
         """Ensure get_all(status=...) filters by order status."""
         pending_orders = order_repo.get_all(status="pending")
         assert len(pending_orders) >= 1
@@ -420,9 +412,7 @@ class TestOrderRepository:
         assert reloaded is not None
         assert reloaded.status == "ready_for_pickup"
 
-    def test_get_expired_pending_orders(
-        self, order_repo: OrderRepository
-    ) -> None:
+    def test_get_expired_pending_orders(self, order_repo: OrderRepository) -> None:
         """Ensure get_expired_pending_orders retrieves pending orders past expiry."""
         expired_orders = order_repo.get_expired_pending_orders()
         assert len(expired_orders) >= 1
@@ -481,9 +471,7 @@ class TestRepositoryConcurrencyAndLocking:
                 )
 
         with ThreadPoolExecutor(max_workers=len(customer_ids)) as executor:
-            futures = [
-                executor.submit(worker_update, cid) for cid in customer_ids
-            ]
+            futures = [executor.submit(worker_update, cid) for cid in customer_ids]
             for f in futures:
                 f.result()
 

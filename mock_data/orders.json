@@ -39,8 +39,8 @@
       }
     ],
     "status": "pending",
-    "created_at": "2026-08-24T16:15:00Z",
-    "hold_expires_at": "2026-08-26T16:15:00Z",
+    "created_at": "2026-08-20T16:15:00Z",
+    "hold_expires_at": "2026-08-22T16:15:00Z",
     "total_cents": 1699,
     "notes": ""
   },
@@ -98,7 +98,7 @@
         "quantity": 1
       }
     ],
-    "status": "pending",
+    "status": "expired",
     "created_at": "2026-08-21T09:00:00Z",
     "hold_expires_at": "2026-08-23T09:00:00Z",
     "total_cents": 1799,

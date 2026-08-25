@@ -12,6 +12,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+
 from backend.api.models import (
     Book,
     Customer,
@@ -142,9 +143,9 @@ class TestSeedDataParsing:
             "cancelled",
             "expired",
         }
-        assert expected_statuses.issubset(
-            statuses
-        ), f"Missing order statuses: {expected_statuses - statuses}"
+        assert expected_statuses.issubset(statuses), (
+            f"Missing order statuses: {expected_statuses - statuses}"
+        )
 
     def test_events_seed_parsing(self) -> None:
         """Ensure all seed events parse into Event domain models."""

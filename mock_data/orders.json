@@ -1,0 +1,186 @@
+[
+  {
+    "order_id": "order_001",
+    "customer_id": "cust_001",
+    "items": [
+      {
+        "isbn": "9780374605928",
+        "quantity": 1
+      }
+    ],
+    "status": "pending",
+    "created_at": "2026-08-24T18:00:00Z",
+    "hold_expires_at": "2026-08-26T18:00:00Z",
+    "total_cents": 2800,
+    "notes": "Please hold at front desk"
+  },
+  {
+    "order_id": "order_002",
+    "customer_id": "cust_002",
+    "items": [
+      {
+        "isbn": "9780374605928",
+        "quantity": 1
+      }
+    ],
+    "status": "ready_for_pickup",
+    "created_at": "2026-08-24T14:30:00Z",
+    "hold_expires_at": "2026-08-26T14:30:00Z",
+    "total_cents": 2800,
+    "notes": "Will pick up around 5pm"
+  },
+  {
+    "order_id": "order_003",
+    "customer_id": "cust_003",
+    "items": [
+      {
+        "isbn": "9780062315007",
+        "quantity": 1
+      }
+    ],
+    "status": "pending",
+    "created_at": "2026-08-24T16:15:00Z",
+    "hold_expires_at": "2026-08-26T16:15:00Z",
+    "total_cents": 1699,
+    "notes": ""
+  },
+  {
+    "order_id": "order_004",
+    "customer_id": "cust_004",
+    "items": [
+      {
+        "isbn": "9780385547345",
+        "quantity": 1
+      }
+    ],
+    "status": "ready_for_pickup",
+    "created_at": "2026-08-24T12:00:00Z",
+    "hold_expires_at": "2026-08-26T12:00:00Z",
+    "total_cents": 2900,
+    "notes": "Calling when in parking lot"
+  },
+  {
+    "order_id": "order_005",
+    "customer_id": "cust_005",
+    "items": [
+      {
+        "isbn": "9780525657743",
+        "quantity": 1
+      }
+    ],
+    "status": "pending",
+    "created_at": "2026-08-24T19:00:00Z",
+    "hold_expires_at": "2026-08-26T19:00:00Z",
+    "total_cents": 2695,
+    "notes": "Gift for a friend"
+  },
+  {
+    "order_id": "order_006",
+    "customer_id": "cust_006",
+    "items": [
+      {
+        "isbn": "9780593448885",
+        "quantity": 1
+      }
+    ],
+    "status": "ready_for_pickup",
+    "created_at": "2026-08-24T11:20:00Z",
+    "hold_expires_at": "2026-08-26T11:20:00Z",
+    "total_cents": 3250,
+    "notes": ""
+  },
+  {
+    "order_id": "order_007",
+    "customer_id": "cust_007",
+    "items": [
+      {
+        "isbn": "9780143039433",
+        "quantity": 1
+      }
+    ],
+    "status": "pending",
+    "created_at": "2026-08-21T09:00:00Z",
+    "hold_expires_at": "2026-08-23T09:00:00Z",
+    "total_cents": 1799,
+    "notes": "Hold for weekend pickup"
+  },
+  {
+    "order_id": "order_008",
+    "customer_id": "cust_008",
+    "items": [
+      {
+        "isbn": "9780441172719",
+        "quantity": 1
+      }
+    ],
+    "status": "completed",
+    "created_at": "2026-08-20T10:00:00Z",
+    "hold_expires_at": "2026-08-22T10:00:00Z",
+    "total_cents": 1800,
+    "notes": "Picked up Thursday"
+  },
+  {
+    "order_id": "order_009",
+    "customer_id": "cust_009",
+    "items": [
+      {
+        "isbn": "9780399590504",
+        "quantity": 1
+      },
+      {
+        "isbn": "9780547928227",
+        "quantity": 1
+      }
+    ],
+    "status": "completed",
+    "created_at": "2026-08-18T14:00:00Z",
+    "hold_expires_at": "2026-08-20T14:00:00Z",
+    "total_cents": 4399,
+    "notes": ""
+  },
+  {
+    "order_id": "order_010",
+    "customer_id": "cust_010",
+    "items": [
+      {
+        "isbn": "9780060935467",
+        "quantity": 1
+      }
+    ],
+    "status": "cancelled",
+    "created_at": "2026-08-22T11:00:00Z",
+    "hold_expires_at": "2026-08-24T11:00:00Z",
+    "total_cents": 1599,
+    "notes": "Customer called to cancel"
+  },
+  {
+    "order_id": "order_011",
+    "customer_id": "cust_002",
+    "items": [
+      {
+        "isbn": "9780307277671",
+        "quantity": 1
+      }
+    ],
+    "status": "expired",
+    "created_at": "2026-08-15T10:30:00Z",
+    "hold_expires_at": "2026-08-17T10:30:00Z",
+    "total_cents": 1600,
+    "notes": "Hold expired after 48h"
+  },
+  {
+    "order_id": "order_012",
+    "customer_id": "cust_005",
+    "items": [
+      {
+        "isbn": "9781501110368",
+        "quantity": 2
+      }
+    ],
+    "status": "completed",
+    "created_at": "2026-08-23T09:15:00Z",
+    "hold_expires_at": "2026-08-25T09:15:00Z",
+    "total_cents": 3398,
+    "notes": "Collected at counter"
+  }
+]

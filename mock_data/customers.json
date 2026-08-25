@@ -1,0 +1,92 @@
+[
+  {
+    "customer_id": "cust_001",
+    "phone": "5551000001",
+    "name": "Alice Walker",
+    "email": "alice.walker@example.com",
+    "stamps": 0,
+    "rewards_available": 0,
+    "joined_date": "2026-08-01"
+  },
+  {
+    "customer_id": "cust_002",
+    "phone": "5551000002",
+    "name": "Ben Martinez",
+    "email": "ben.martinez@example.com",
+    "stamps": 3,
+    "rewards_available": 0,
+    "joined_date": "2026-06-15"
+  },
+  {
+    "customer_id": "cust_003",
+    "phone": "5551000003",
+    "name": "Clara Oswald",
+    "email": "clara.oswald@example.com",
+    "stamps": 5,
+    "rewards_available": 0,
+    "joined_date": "2026-05-20"
+  },
+  {
+    "customer_id": "cust_004",
+    "phone": "5551000004",
+    "name": "David Kim",
+    "email": "david.kim@example.com",
+    "stamps": 7,
+    "rewards_available": 0,
+    "joined_date": "2026-03-10"
+  },
+  {
+    "customer_id": "cust_005",
+    "phone": "5551000005",
+    "name": "Elena Rostova",
+    "email": "elena.rostova@example.com",
+    "stamps": 9,
+    "rewards_available": 0,
+    "joined_date": "2026-02-14"
+  },
+  {
+    "customer_id": "cust_006",
+    "phone": "5551000006",
+    "name": "Franklin Wright",
+    "email": "franklin.wright@example.com",
+    "stamps": 2,
+    "rewards_available": 1,
+    "joined_date": "2026-01-05"
+  },
+  {
+    "customer_id": "cust_007",
+    "phone": "5551000007",
+    "name": "Grace Hopper",
+    "email": "grace.hopper@example.com",
+    "stamps": 0,
+    "rewards_available": 2,
+    "joined_date": "2025-11-12"
+  },
+  {
+    "customer_id": "cust_008",
+    "phone": "5551000008",
+    "name": "Henry Zhao",
+    "email": "",
+    "stamps": 4,
+    "rewards_available": 0,
+    "joined_date": "2026-07-22"
+  },
+  {
+    "customer_id": "cust_009",
+    "phone": "5551000009",
+    "name": "Ivy Chen",
+    "email": "ivy.chen@example.com",
+    "stamps": 1,
+    "rewards_available": 0,
+    "joined_date": "2026-08-10"
+  },
+  {
+    "customer_id": "cust_010",
+    "phone": "5551000010",
+    "name": "James Sterling",
+    "email": "james.sterling@example.com",
+    "stamps": 8,
+    "rewards_available": 0,
+    "joined_date": "2026-04-02"
+  }
+]

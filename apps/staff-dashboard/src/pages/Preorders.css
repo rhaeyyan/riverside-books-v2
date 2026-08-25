@@ -1,0 +1,124 @@
+.preorders-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: calc(100vh - 100px);
+}
+
+.preorders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.release-btn {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.release-btn:hover {
+  background: #b91c1c;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  overflow-x: auto;
+}
+
+.kanban-column {
+  background: #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.kanban-column h2 {
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #475569;
+  text-transform: capitalize;
+}
+
+.kanban-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.kanban-card {
+  background: white;
+  padding: 16px;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kanban-card.past-deadline {
+  border: 2px solid #ef4444;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.customer {
+  color: #334155;
+}
+
+.warning {
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.items-list {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.item {
+  margin-bottom: 4px;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.deadline {
+  color: #94a3b8;
+}
+
+.actions button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.actions button:hover {
+  background: #2563eb;
+}

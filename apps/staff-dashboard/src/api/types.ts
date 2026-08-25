@@ -294,23 +294,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/messages/{message_id}/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update Message Status */
-        patch: operations["update_message_status_api_messages__message_id__status_patch"];
-        trace?: never;
-    };
     "/api/marketing/tones": {
         parameters: {
             query?: never;
@@ -555,11 +538,6 @@ export interface components {
              * Status
              * @default new
              */
-            status: string;
-        };
-        /** MessageUpdate */
-        MessageUpdate: {
-            /** Status */
             status: string;
         };
         /**
@@ -1233,41 +1211,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Message"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_message_status_api_messages__message_id__status_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                message_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MessageUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Message"];
                 };
             };
             /** @description Validation Error */

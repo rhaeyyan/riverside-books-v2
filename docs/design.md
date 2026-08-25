@@ -114,16 +114,26 @@ verbatim. This replaces the current Vite-starter purple placeholder
 These three states are the single most important color decision in the whole
 suite. They must render identically in Products A, B, and C.
 
-| Status | Condition | Color token | Value |
-|---|---|---|---|
-| `in_stock` | `available_count > low_stock_threshold` | `--status-in` | `#3f7d5c` (forest green) |
-| `low_stock` | `1 <= available_count <= low_stock_threshold` | `--status-low` | `#c17f2e` (amber/ochre) |
-| `out_of_stock` | `available_count == 0` | `--status-out` | `#b3392c` (rust red) |
+| Status | Condition | Color token | Value | `-bg` (badge tint) |
+|---|---|---|---|---|
+| `in_stock` | `available_count > low_stock_threshold` | `--status-in` | `#3c7858` (forest green) | `rgba(60, 120, 88, 0.1)` |
+| `low_stock` | `1 <= available_count <= low_stock_threshold` | `--status-low` | `#936123` (amber/ochre) | `rgba(147, 97, 35, 0.1)` |
+| `out_of_stock` | `available_count == 0` | `--status-out` | `#b3392c` (rust red) | `rgba(179, 57, 44, 0.1)` |
 
-Each has a `-bg` tint at 10% opacity for badge backgrounds
-(`--status-in-bg`, `--status-low-bg`, `--status-out-bg`) so badges read as
-soft pills, not alarm colors, except in the staff dashboard's row-highlight
-context where the full color is used (§7.B).
+Each `-bg` token is its base color at 10% alpha via `rgba()`, not a
+pre-blended hex — the same pattern as `--accent-bg` in §4.1. Using alpha
+rather than a flattened hex means the tint stays correct wherever it's
+composited (over `--bg` or `--bg-raised`, light or dark) instead of only
+matching the one background it was mixed against.
+
+These three base values are deliberately a shade darker than a first pass at
+"forest green / amber / rust" would land, specifically so the badge text
+passes AA against its own tint (§4.4) — see the verified ratios there. Do not
+re-lighten them for visual taste without re-checking contrast.
+
+Badges use the base color as text on the `-bg` tint so they read as soft
+pills, not alarm colors, except in the staff dashboard's row-highlight
+context where the full color is used as a solid stripe (§7.B).
 
 **Rule:** stock-status color is never used for anything else in the UI. If a
 future feature wants "green," it must pick a different green. This keeps the
@@ -143,19 +153,39 @@ Follow the existing `prefers-color-scheme: dark` pattern already in both
 | `--border` | `#3a3327` |
 | `--accent` | `#e07a5f` |
 | `--code-bg` | `#241f18` |
-| `--status-in` | `#6fae8c` |
-| `--status-low` | `#e0a44f` |
-| `--status-out` | `#e0685a` |
+
+| Status | Token | Value | `-bg` (badge tint) |
+|---|---|---|---|
+| `in_stock` | `--status-in` | `#6fae8c` | `rgba(111, 174, 140, 0.1)` |
+| `low_stock` | `--status-low` | `#e0a44f` | `rgba(224, 164, 79, 0.1)` |
+| `out_of_stock` | `--status-out` | `#e27164` | `rgba(226, 113, 100, 0.1)` |
+
+Same `rgba()`-at-10%-alpha pattern as light mode's `-bg` tokens (§4.2).
 
 Stock-status colors get lighter, not desaturated, in dark mode — they still
 need to pass contrast against a dark page while staying legible as
-"traffic-light" signals at a glance.
+"traffic-light" signals at a glance. `--status-out` is a touch lighter here
+than a straight hue-shift of the light-mode red would give, so it clears
+AA against its own tint (§4.4) — the same reasoning as the light-mode
+adjustment in §4.2.
 
 ### 4.4 Accessibility
 
 - Every status color/background pairing must hit **WCAG AA (4.5:1)** for the
   label text sitting on it. Verify `--status-*` against `--status-*-bg` and
-  against `--bg-raised`.
+  against `--bg-raised`. All six pairings (three statuses × light/dark) are
+  pre-verified against their `-bg` tint as specified in §4.2/§4.3:
+
+  | Pairing | Light | Dark |
+  |---|---|---|
+  | in-stock | 4.58:1 | 5.32:1 |
+  | low-stock | 4.63:1 | 6.15:1 |
+  | out-of-stock | 5.10:1 | 4.55:1 |
+
+  These are close to the 4.5:1 floor by design — the palette stays in the
+  intended hue family rather than over-darkening for margin. If any token in
+  §4.1–§4.3 is changed later, re-verify the affected pairing before merging;
+  don't assume a "similar-looking" color still passes.
 - Status is never color-only: the badge always carries text ("Out of stock,"
   "Only 1 left," "In stock") and, where space allows, an icon. This matters
   most in Product B's grid, which is read fast and under time pressure.
@@ -296,9 +326,14 @@ customer-facing audience will read.
 - `lucide-react` is already a shared dependency in both apps — use it for all
   iconography (status icons, empty states, nav) rather than introducing a
   second icon set.
-- Fraunces via Google Fonts `<link>` tag in `index.html` (both apps); specify a
-  `font-display: swap` equivalent (Google Fonts default) so cold loads don't
-  block text.
+- **Both** `Fraunces` (`--heading`) **and** `Inter` (`--sans`) need a Google
+  Fonts `<link>` tag in `index.html` in both apps — `--sans` is where most of
+  the UI's actual text lives (buttons, labels, the entire dashboard grid), so
+  loading only Fraunces leaves nearly everything silently rendering in the
+  `system-ui` fallback instead of the specified typeface. Pull in the weights
+  §5's scale actually uses (400/500/600 for Inter; 500 plus the numeral/italic
+  variants Fraunces exposes for headings), and rely on Google Fonts' default
+  `font-display: swap` so cold loads don't block text.
 - Any new shared component (stock badge, book card, phone field) that both A
   and B need should be built once and decided where it lives — this is the
   same "shared ownership" problem the PRD raises for `backend/api/` (§9). It

@@ -10,7 +10,7 @@
     "low_stock_threshold": 2,
     "genre": "Classic Literature",
     "blurb": "A portrait of the conflict between the powerful and the powerless during the Great Depression.",
-    "cover_image_url": "/static/covers/9780143039433.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780143039433-L.jpg",
     "publisher": "Penguin Classics",
     "published_date": "2006-03-28"
   },
@@ -25,7 +25,7 @@
     "low_stock_threshold": 2,
     "genre": "Contemporary Fiction",
     "blurb": "Two friends\u2014often in love, but never lovers\u2014come together as creative partners in the world of video game design.",
-    "cover_image_url": "/static/covers/9780374605928.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780374605928-L.jpg",
     "publisher": "Knopf",
     "published_date": "2022-07-05"
   },
@@ -40,7 +40,7 @@
     "low_stock_threshold": 2,
     "genre": "Fantasy",
     "blurb": "Between life and death there is a library where every book offers a chance to try another life you could have lived.",
-    "cover_image_url": "/static/covers/9780525559474.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780525559474-L.jpg",
     "publisher": "Viking",
     "published_date": "2020-09-29"
   },
@@ -55,7 +55,7 @@
     "low_stock_threshold": 2,
     "genre": "Philosophical Fiction",
     "blurb": "A magical story of Santiago, an Andalusian shepherd boy who yearns to travel in search of a worldly treasure.",
-    "cover_image_url": "/static/covers/9780062315007.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780062315007-L.jpg",
     "publisher": "HarperOne",
     "published_date": "2014-04-15"
   },
@@ -70,7 +70,7 @@
     "low_stock_threshold": 2,
     "genre": "Self-Help",
     "blurb": "An easy and proven way to build good habits and break bad ones.",
-    "cover_image_url": "/static/covers/9780735211292.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780735211292-L.jpg",
     "publisher": "Avery",
     "published_date": "2018-10-16"
   },
@@ -85,7 +85,7 @@
     "low_stock_threshold": 2,
     "genre": "Historical Fiction",
     "blurb": "Chemist Elizabeth Zott is not your average woman, but life has a way of throwing her off course.",
-    "cover_image_url": "/static/covers/9780385547345.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780385547345-L.jpg",
     "publisher": "Doubleday",
     "published_date": "2022-04-05"
   },
@@ -100,7 +100,7 @@
     "low_stock_threshold": 2,
     "genre": "Sci-Fi",
     "blurb": "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides.",
-    "cover_image_url": "/static/covers/9780441172719.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg",
     "publisher": "Ace",
     "published_date": "1990-09-01"
   },
@@ -115,7 +115,7 @@
     "low_stock_threshold": 2,
     "genre": "Memoir",
     "blurb": "An unforgettable memoir about a young girl who leaves her survivalist family to earn a PhD from Cambridge.",
-    "cover_image_url": "/static/covers/9780399590504.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780399590504-L.jpg",
     "publisher": "Random House",
     "published_date": "2018-02-20"
   },
@@ -130,7 +130,7 @@
     "low_stock_threshold": 2,
     "genre": "Sci-Fi",
     "blurb": "A thrilling book that offers a look at our changing world through the eyes of an unforgettable narrator.",
-    "cover_image_url": "/static/covers/9780593318171.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780593318171-L.jpg",
     "publisher": "Vintage",
     "published_date": "2022-03-01"
   },
@@ -145,7 +145,7 @@
     "low_stock_threshold": 2,
     "genre": "Literary Fiction",
     "blurb": "An impassioned work of activism and resistance that is also a stunning evocation of the natural world.",
-    "cover_image_url": "/static/covers/9780316450867.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780316450867-L.jpg",
     "publisher": "W. W. Norton & Company",
     "published_date": "2019-04-02"
   },
@@ -160,7 +160,7 @@
     "low_stock_threshold": 2,
     "genre": "Nature & Environment",
     "blurb": "Indigenous wisdom, scientific knowledge, and the teachings of plants.",
-    "cover_image_url": "/static/covers/9781250178602.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9781250178602-L.jpg",
     "publisher": "Milkweed Editions",
     "published_date": "2015-08-11"
   },
@@ -175,7 +175,7 @@
     "low_stock_threshold": 2,
     "genre": "Memoir",
     "blurb": "An unflinching, powerful memoir about growing up Korean American, losing her mother, and forging her own identity.",
-    "cover_image_url": "/static/covers/9780525657743.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780525657743-L.jpg",
     "publisher": "Knopf",
     "published_date": "2021-04-20"
   },
@@ -190,7 +190,7 @@
     "low_stock_threshold": 2,
     "genre": "Essays & Social Science",
     "blurb": "A profound work that pivots from the biggest questions about American history and ideals to the most intimate concerns.",
-    "cover_image_url": "/static/covers/9780812988406.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780812988406-L.jpg",
     "publisher": "One World",
     "published_date": "2015-07-14"
   },
@@ -205,7 +205,7 @@
     "low_stock_threshold": 2,
     "genre": "Fantasy",
     "blurb": "Bilbo Baggins is a hobbit who enjoys a comfortable, unambitious life until Gandalf and a company of dwarves arrive.",
-    "cover_image_url": "/static/covers/9780547928227.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780547928227-L.jpg",
     "publisher": "Mariner Books",
     "published_date": "2012-09-18"
   },
@@ -220,7 +220,7 @@
     "low_stock_threshold": 2,
     "genre": "Post-Apocalyptic",
     "blurb": "A father and his son walk alone through burned America, heading slowly toward the coast.",
-    "cover_image_url": "/static/covers/9780307277671.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780307277671-L.jpg",
     "publisher": "Vintage",
     "published_date": "2007-05-01"
   },
@@ -235,7 +235,7 @@
     "low_stock_threshold": 2,
     "genre": "Classic Literature",
     "blurb": "The unforgettable novel of a childhood in a sleepy Southern town and the crisis of conscience that rocked it.",
-    "cover_image_url": "/static/covers/9780060935467.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780060935467-L.jpg",
     "publisher": "Harper Perennial",
     "published_date": "2002-09-03"
   },
@@ -250,7 +250,7 @@
     "low_stock_threshold": 2,
     "genre": "Romance",
     "blurb": "A brave and heartbreaking story that digs its claws into you and doesn't let go.",
-    "cover_image_url": "/static/covers/9781501110368.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9781501110368-L.jpg",
     "publisher": "Atria Books",
     "published_date": "2016-08-02"
   },
@@ -265,7 +265,7 @@
     "low_stock_threshold": 2,
     "genre": "Historical Fiction",
     "blurb": "In June, 1954, eighteen-year-old Emmett Watson is driven home to Nebraska by the warden of the work farm.",
-    "cover_image_url": "/static/covers/9780385545969.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780385545969-L.jpg",
     "publisher": "Viking",
     "published_date": "2021-10-05"
   },
@@ -280,7 +280,7 @@
     "low_stock_threshold": 2,
     "genre": "Contemporary Fiction",
     "blurb": "A gripping novel about the whirlwind rise of an iconic 1970s rock group and their beautiful lead singer.",
-    "cover_image_url": "/static/covers/9781984801258.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9781984801258-L.jpg",
     "publisher": "Ballantine Books",
     "published_date": "2020-02-04"
   },
@@ -295,7 +295,7 @@
     "low_stock_threshold": 2,
     "genre": "Sci-Fi",
     "blurb": "A novel of art, time travel, love, and plague that takes the reader from Vancouver Island to a dark colony on the moon.",
-    "cover_image_url": "/static/covers/9780525559498.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780525559498-L.jpg",
     "publisher": "Knopf",
     "published_date": "2022-04-05"
   },
@@ -310,7 +310,7 @@
     "low_stock_threshold": 2,
     "genre": "Sci-Fi",
     "blurb": "Dana, a modern black woman, is celebrating her twenty-sixth birthday when she is abruptly snatched from her home.",
-    "cover_image_url": "/static/covers/9780807083109.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780807083109-L.jpg",
     "publisher": "Beacon Press",
     "published_date": "2003-02-01"
   },
@@ -325,7 +325,7 @@
     "low_stock_threshold": 3,
     "genre": "Memoir & Essays",
     "blurb": "A genre-bending memoir, a work of autotheory offering fresh, fierce reflections on desire and identity.",
-    "cover_image_url": "",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780143127741-L.jpg",
     "publisher": "Graywolf Press",
     "published_date": "2016-05-03"
   },
@@ -340,7 +340,7 @@
     "low_stock_threshold": 2,
     "genre": "Horror",
     "blurb": "Jack Torrance's new job at the Overlook Hotel is the perfect chance for a fresh start.",
-    "cover_image_url": "/static/covers/9780307743657.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780307743657-L.jpg",
     "publisher": "Anchor",
     "published_date": "2012-06-26"
   },
@@ -355,7 +355,7 @@
     "low_stock_threshold": 2,
     "genre": "Literary Fiction",
     "blurb": "The story of two twins, Esthappen and Rahel, in Kerala, India, navigating family, tragedy, and love.",
-    "cover_image_url": "/static/covers/9780316017930.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780316017930-L.jpg",
     "publisher": "Random House",
     "published_date": "2008-12-16"
   },
@@ -370,7 +370,7 @@
     "low_stock_threshold": 2,
     "genre": "Historical Fiction",
     "blurb": "A story of a South Vietnamese army captain who arrives in America after the fall of Saigon, spying for the communists.",
-    "cover_image_url": "/static/covers/9781594634024.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9781594634024-L.jpg",
     "publisher": "Grove Press",
     "published_date": "2016-04-05"
   },
@@ -385,7 +385,7 @@
     "low_stock_threshold": 2,
     "genre": "Sci-Fi",
     "blurb": "Seconds before the Earth is demolished to make way for a galactic freeway, Arthur Dent is plucked into space.",
-    "cover_image_url": "/static/covers/9780345391803.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780345391803-L.jpg",
     "publisher": "Del Rey",
     "published_date": "1995-09-27"
   },
@@ -400,7 +400,7 @@
     "low_stock_threshold": 2,
     "genre": "Historical Fiction",
     "blurb": "An unforgettable story of familial love and loss that breaks out of its realistic, historical framework.",
-    "cover_image_url": "/static/covers/9780812993547.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780812993547-L.jpg",
     "publisher": "Random House",
     "published_date": "2017-02-14"
   },
@@ -415,7 +415,7 @@
     "low_stock_threshold": 2,
     "genre": "Historical Fiction",
     "blurb": "An epic saga chronicling four generations of an ethnic Korean family in Japan.",
-    "cover_image_url": "/static/covers/9780143128540.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780143128540-L.jpg",
     "publisher": "Grand Central Publishing",
     "published_date": "2017-11-14"
   },
@@ -430,7 +430,7 @@
     "low_stock_threshold": 2,
     "genre": "Science",
     "blurb": "What is the nature of space and time? How do we fit within the universe? Neil deGrasse Tyson brings the universe down to Earth.",
-    "cover_image_url": "/static/covers/9780393609394.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780393609394-L.jpg",
     "publisher": "W. W. Norton & Company",
     "published_date": "2017-05-02"
   },
@@ -445,7 +445,7 @@
     "low_stock_threshold": 2,
     "genre": "Classic Literature",
     "blurb": "Raskolnikov, an impoverished student living in St. Petersburg, decides to commit a crime to test his theory.",
-    "cover_image_url": "/static/covers/9780140449136.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780140449136-L.jpg",
     "publisher": "Penguin Classics",
     "published_date": "2003-01-30"
   },
@@ -460,7 +460,7 @@
     "low_stock_threshold": 2,
     "genre": "Contemporary Fiction",
     "blurb": "A reimagining of David Copperfield set in the mountains of southern Appalachia.",
-    "cover_image_url": "/static/covers/9780593448885.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9780593448885-L.jpg",
     "publisher": "Harper",
     "published_date": "2022-10-18"
   },
@@ -475,7 +475,7 @@
     "low_stock_threshold": 2,
     "genre": "Poetry",
     "blurb": "",
-    "cover_image_url": "/static/covers/9781611808605.jpg",
+    "cover_image_url": "https://covers.openlibrary.org/b/isbn/9781611808605-L.jpg",
     "publisher": "Penguin Books",
     "published_date": "2020-11-10"
   }

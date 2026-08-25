@@ -1,6 +1,6 @@
 # Product Requirements Document — Riverside Books Suite
 
-**Cycle 4 Fellowship · v0.2 · Last updated 2026-08-24**
+**Cycle 4 Fellowship · v0.3 · Last updated 2026-08-25**
 
 > **How to read this document.** Sections 5–7 (Shared Architecture, Data Model, API
 > Contract) are **binding contracts**. All four products read and write the same
@@ -47,8 +47,9 @@ Explicitly **out of scope** for Cycle 4. Listed so nobody builds them by acciden
 - **Online payment or checkout.** Pre-orders are holds, not sales. Money changes
   hands in person at the register.
 - **Shipping or fulfilment by mail.** Pickup only (BOPIS).
-- **A live database.** `mock_data/` JSON is the system of record. No Supabase, no
-  Postgres, no ORM.
+- **Portability across database engines.** One database, reached through the
+  repository layer that already exists (§5.2). No dialect-abstraction layer, no
+  second engine kept working "just in case."
 - **Authentication, passwords, or sessions.** See §5.3 for the identity model that
   replaces it.
 - **Generative AI anywhere.** Products C and D are deterministic by mandate
@@ -63,6 +64,12 @@ Explicitly **out of scope** for Cycle 4. Listed so nobody builds them by acciden
   makes, as it is today.
 - **Multi-store or multi-location support.** One store, one address, one set of
   hours.
+
+> **Struck in v0.3:** *"A live database. `mock_data/` JSON is the system of
+> record. No Supabase, no Postgres, no ORM."* A managed relational database is
+> now the system of record — see §5.2. Every other non-goal above still stands,
+> including authentication: moving to a database that offers auth is not a
+> decision to adopt it.
 
 ---
 
@@ -132,30 +139,68 @@ machine (§5.3).
 These decisions exist because four products share one dataset. Each one prevents a
 specific class of bug.
 
-### 5.1 One process owns all state
+### 5.1 One writer owns all state
 
-`backend/api/` is a **single FastAPI application** and the only process that reads
-or writes `mock_data/`. Products C and D live at `backend/chatbot/` and
-`backend/marketing/` as Python packages **mounted as routers** into that app —
-not as separate servers.
+The **database** is the system of record. `backend/api/` is a single FastAPI
+application and the only thing that reads or writes it. Products C and D live at
+`backend/chatbot/` and `backend/marketing/` as Python packages **mounted as
+routers** into that app — not as separate servers, and never holding their own
+connection.
 
-*Why:* if three services each load their own copy of `inventory.json`, their stock
-counts diverge within seconds and Product C's entire value proposition — live
-stock — quietly becomes a lie. One process, one truth.
+*Why:* if three services each hold their own view of stock, their counts diverge
+and Product C's entire value proposition — live stock — quietly becomes a lie.
+One writer, one truth.
+
+*Changed in v0.3.* Through v0.2 this section read "one process owns all state,"
+and that single process was the only thing making the read-modify-write sequences
+in §5.4 and §5.7 correct — they were guarded by an in-process lock. A database
+does not inherit that guarantee. Those sequences are now **transactions**, and
+the guarantee comes from the database rather than from there being only one
+process. Porting them as plain reads and writes would silently lose the
+invariant; see R2.
 
 **Ownership of `backend/api/`:** it is not one of the four products and needs an
 explicit owner. See §9.
 
 ### 5.2 Persistence model
 
-JSON files are loaded into memory at startup and **written back to disk on every
-mutation** (write-through). Reads are served from memory.
+A **managed relational database** holds the canonical data. Reads and writes go
+through the repository classes in `backend/api/core/repositories.py`; no router
+or product package reaches past them to the database directly.
+
+This extends to tests, which is a change: today several test modules set up state
+by writing seed JSON directly, bypassing the repositories. That shortcut has no
+equivalent once the store is a database, so tests build their fixtures through
+the repository layer or through the seed script (§6.7). See R9.
+
+The field conventions below are unchanged from v0.2 and remain binding. They were
+chosen to be database-shaped in the first place, which is why §6 and §7 need no
+rework:
 
 - Money is stored as **integer cents** (`price_cents`). Never floats.
 - Timestamps are **ISO 8601 UTC strings** (`2026-08-24T14:30:00Z`).
 - ISBNs are **strings**, never integers — leading zeros and the `X` check digit
   are both real.
-- IDs are prefixed strings: `cust_001`, `order_001`, `event_001`.
+- IDs are prefixed strings: `cust_001`, `order_001`, `event_001`. They stay
+  application-generated; no database sequences or UUID defaults, so an ID means
+  the same thing before and after it is persisted.
+
+**What this does not change.** The API contract in §7 is unaffected — same paths,
+same shapes, same status codes. So are the stock rules (§5.4), the thresholds
+(§5.6), determinism (§5.5), and the identity model (§5.3). A product team should
+be able to ignore this amendment entirely unless they are working inside
+`backend/api/`.
+
+**Migrations.** Schema changes ship as ordered, committed migration scripts
+applied in CI and locally by the same command. No schema is changed by hand
+against a live database, because a schema that exists only in someone's console
+is not a contract §6 can hold anyone to.
+
+**Credentials.** No connection string, key, or password is committed to this
+repository, in any environment. They are supplied as environment variables. The
+application uses a least-privileged role for request-time work; any elevated
+credential is reserved for running migrations and is never present in the running
+application's environment. See R8.
 
 ### 5.3 Identity model (replaces authentication)
 
@@ -212,8 +257,9 @@ higher floor on reliable sellers.
 
 ### 5.7 Pre-order hold expiry
 
-Holds last **48 hours**. There is no scheduler in a local-only application, so
-expiry is **lazy and computed at read time**:
+Holds last **48 hours**. Expiry stays **lazy and computed at read time** — a
+scheduler remains out of scope, and lazy expiry keeps the rule in one place
+rather than splitting it between a job and a read path:
 
 - Any endpoint returning an order compares `hold_expires_at` to now. A `pending`
   order past its expiry is reported with status `expired` and its
@@ -224,12 +270,36 @@ expiry is **lazy and computed at read time**:
 *Why this is in the PRD:* v0.1 promised a 48-hour hold with no mechanism to end
 one, which would have left reserved stock locked forever.
 
+*Changed in v0.3:* releasing a hold reads an order, decides it has expired, and
+decrements `reserved_count`. Under v0.2 an in-process lock made that safe. It is
+now one transaction — two concurrent readers must not release the same hold twice
+and double-decrement the count. Same rule, same observable behaviour, different
+mechanism.
+
 ---
 
 ## 6. Canonical Data Model
 
-`mock_data/` files, mimicking a relational structure. **This is the contract.**
-Field names here are the field names in the API and in every product.
+Database tables. **This is the contract.** Field names here are the field names in
+the API and in every product.
+
+*Changed in v0.3:* these were JSON files under `mock_data/`. The field lists below
+are unchanged — they were written to mimic a relational structure, so the move is
+a change of storage, not of shape. Each subsection keeps its original filename in
+its heading so existing references still resolve:
+
+| v0.2 file | v0.3 table |
+|---|---|
+| `inventory.json` | `books` |
+| `customers.json` | `customers` |
+| `orders.json` | `orders` (line items in `order_items`) |
+| `events.json` | `events` |
+| `store_info.json` | `store_info` (single row) |
+| `messages.json` | `messages` |
+
+Nullability, indexes, and foreign keys are not specified here. They are decided in
+the migration that creates each table and reviewed with it — §6 governs names and
+types, which is what the four products depend on.
 
 ### 6.1 `inventory.json` — books
 
@@ -323,6 +393,13 @@ events** with at least one sold out.
 
 *Rationale:* every product's edge-case UI needs a row to render. Empty-state and
 error paths that can't be demonstrated won't be built.
+
+*Changed in v0.3:* seed data ships as a committed, re-runnable seed script rather
+than as checked-in JSON. The minimums above are unchanged and are what the script
+must produce. One of them now needs care: "one order already past
+`hold_expires_at`" was a fixed timestamp in a file that aged into the past on its
+own. A seed script must generate it **relative to the run time**, or the expired
+case silently stops being expired — and §10's walkthrough stops demonstrating it.
 
 ---
 
@@ -491,7 +568,7 @@ demonstrable in a five-minute walkthrough.
    and gifts, plus keyword matching against `store_info.faqs`.
 4. **Events** — upcoming events soonest first, marking sold-out ones.
 5. **Escalation** — from any dead end, "leave a message for staff" collects name,
-   contact, and message, and writes to `messages.json` for Product B's inbox.
+   contact, and message, and writes to `messages` for Product B's inbox.
 
 **Acceptance criteria**
 - [ ] Every leaf node either answers or offers escalation. No dead ends.
@@ -563,7 +640,7 @@ demonstrable in a five-minute walkthrough.
 | `apps/staff-dashboard/` | Teammate B | |
 | `backend/chatbot/` | Teammate C | |
 | `backend/marketing/` | Teammate D | |
-| **`backend/api/` + `mock_data/`** | **Unassigned — must be assigned** | Not one of the four products, but every product depends on it |
+| **`backend/api/` + the database schema and migrations** | **Unassigned — must be assigned** | Not one of the four products, but every product depends on it. As of v0.3 this also covers migrations and the credentials in R8 |
 | `docs/PRD.md` (§5–§7) | All four jointly | Changes need consensus |
 
 **The shared-API problem.** The brief says "each teammate builds one of these four
@@ -613,12 +690,15 @@ restart:
 | # | Risk | Impact | Mitigation |
 |---|---|---|---|
 | R1 | Data model churn after products are built | High — reworks all four | §6 frozen and committed before product code starts |
-| R2 | Concurrent writes to JSON corrupt the file | Medium | Single process (§5.1); serialise writes; write to temp then atomic rename |
+| R2 | ~~Concurrent writes to JSON corrupt the file~~ **Superseded in v0.3:** read-modify-write sequences ported to SQL without transactions | High — silently wrong stock counts, the exact bug §5.4 exists to prevent | Each of the nine `get_lock` sites in `repositories.py` rewritten as an explicit transaction or atomic update, with a concurrency test per site. Not a mechanical port |
 | R3 | No staff authentication | Low here, high if ever deployed | Documented accepted risk; local-only (§2.2). **Must be revisited before any hosting** |
 | R4 | C and D have no host UI and slip late | High — two products undemoable | Resolve §12 Q1 in week one |
 | R5 | `backend/api/` unowned, blocking everyone | High | §9 Option 1 on day one |
 | R6 | Node not installed on dev machines | Blocks A and B entirely | Verify Node 20+ before frontend work starts |
 | R7 | Seed data too thin to show edge cases | Medium — empty states go untested | §6.7 minimums |
+| R8 | Database credentials leak via a commit, a CI log, or a pasted message | High — the store's data, and hard to undo once public | §5.2: environment variables only, never committed; least-privileged role at request time; elevated credentials confined to migrations |
+| R9 | Test suite loses its hermeticity and CI slows or flakes | Medium — the fast, offline suite is why the tests get run | Decide the strategy before migrating (§12 Q8): a throwaway database per run, or transactional rollback per test. Tests must not share mutable state |
+| R10 | The suite becomes undemoable without network or a provisioned database | High — §10 is the deliverable | Keep a local engine usable for development and CI, so a laptop with no connectivity can still run the walkthrough |
 
 ---
 
@@ -631,6 +711,10 @@ restart:
 | Q3 | Is a stamp earned per **book** or per **order**? This PRD assumes per book, matching "buy 10 books, get 1 free" | Before 8.B.5 is built | A + B |
 | Q4 | Can staff manually adjust a customer's stamps to fix mistakes? Not currently specified | Week 2 | B |
 | Q5 | Should sold-out events accept a waitlist, or only display as sold out? §8.D assumes display only | Week 2 | D |
+| Q6 | Which database, and hosted where? v0.3 says "managed relational" and deliberately names no vendor | Before any provisioning | All four |
+| Q7 | Does local development and CI run against the same engine as production, or a local stand-in? Affects R9 and R10 | With Q6 | Owner of `backend/api/` |
+| Q8 | Test isolation strategy — database per run, or transactional rollback per test? | Before the first repository is ported | Owner of `backend/api/` |
+| Q9 | Does the migration land in one change or product by product? The API contract (§7) is unchanged either way, so a staged port is possible | Before work starts | All four |
 
 ---
 
@@ -641,11 +725,14 @@ Each is reversible, but reversing one after products are built is expensive.
 
 1. **Phone number is the customer identity key** (§5.3) — chosen because §4.2's
    own research points at it.
-2. **A single FastAPI process owns all state** (§5.1) — required for the live-stock
-   claim to hold.
+2. ~~**A single FastAPI process owns all state** (§5.1)~~ — **revised in v0.3.**
+   The database is the system of record and `backend/api/` is its only writer
+   (§5.1). The live-stock claim now rests on transactions rather than on there
+   being one process.
 3. **`stock_count` / `reserved_count` / `available_count` are three distinct
    things** (§5.4).
-4. **Holds expire lazily at read time** (§5.7) — no scheduler exists locally.
+4. **Holds expire lazily at read time** (§5.7) — unchanged in v0.3, but the
+   release is now a transaction rather than a lock-guarded read-modify-write.
 5. **Stamps are awarded at pickup, per book** (§8.A.5, §8.B.5) — a hold that is
    never collected shouldn't earn a reward.
 6. **Catalogue is books only** (§2.2) — cards and gifts answered by policy text.
@@ -659,3 +746,4 @@ Each is reversible, but reversing one after products are built is expensive.
 |---|---|---|
 | 0.1 | 2026-08-24 | Initial draft: summary, market research, per-product feature lists, technical constraints |
 | 0.2 | 2026-08-24 | Added goals/non-goals, personas, binding architecture decisions (§5), canonical data model (§6), API contract (§7), user stories + acceptance criteria + edge cases per product, ownership matrix, demo acceptance, risks, open questions. Resolved: customer identity, stock accounting, hold expiry, two-tier stock thresholds, determinism of Product D, C/D client surfaces. Reconciled the app-fatigue finding against Product A |
+| 0.3 | 2026-08-25 | **Adopted a live database.** Struck the "a live database" non-goal (§2.2). §5.1 changed from "one process owns all state" to "one writer owns all state," with the read-modify-write guarantee moving from an in-process lock to transactions. §5.2 rewritten: managed relational database, migrations, credential handling. §5.7 hold release restated as a transaction. §6 reframed from JSON files to tables with a file→table map; field names and types unchanged. §6.7 seed data moves to a re-runnable script that must generate the expired hold relative to run time. R2 superseded; R8–R10 added for credentials, test hermeticity, and offline demoability. Q6–Q9 opened for vendor, local/CI engine, test isolation, and migration sequencing. **Unchanged: §7 API contract, §5.3 identity model, §5.4 stock rules, §5.5 determinism, §5.6 thresholds, and every other non-goal — notably authentication.** |

@@ -192,7 +192,7 @@ export function Inventory() {
         </form>
       </div>
 
-      <div className="filters-bar">
+      <div className="filters-bar filters-bar--controls">
 
         <div className="search-box">
           <Search size={18} />

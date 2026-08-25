@@ -57,6 +57,14 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+/* The "Add New Book" bar reuses .filters-bar for layout but keeps its own
+   hardcoded light background regardless of color scheme (out of scope for
+   this pass), so it can't take var(--text) — only the actual filter
+   controls bar, marked with this second class, gets themed text. */
+.filters-bar--controls {
+  color: var(--text);
+}
+
 .search-box {
   display: flex;
   align-items: center;
@@ -87,6 +95,7 @@
 
 .table-container {
   background: var(--bg-raised);
+  color: var(--text);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   overflow-x: auto;

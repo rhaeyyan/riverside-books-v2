@@ -1,84 +1,32 @@
-import { useState, useEffect } from 'react';
-import { client } from '../api/client';
+import { useEffect } from 'react';
 import { Bubble, QuickReply, TextField, TypingDots } from '../components/ChatBubble';
+import { useChatSession } from '../hooks/useChatSession';
 
 export default function Support() {
-  const [history, setHistory] = useState<{ sender: 'bot' | 'user', text: string }[]>([]);
-  const [currentNode, setCurrentNode] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [isEscalating, setIsEscalating] = useState(false);
-  const [escName, setEscName] = useState("");
-  const [escContact, setEscContact] = useState("");
-  const [escBody, setEscBody] = useState("");
-
-  const [userInput, setUserInput] = useState("");
-
-  const startChat = async () => {
-    if (history.length === 0) {
-      setIsLoading(true);
-      const { data } = await client.POST("/api/chat/message", { body: { node_id: "root", input: null } });
-      if (data) {
-        setCurrentNode(data);
-        setHistory([{ sender: 'bot', text: (data as any).text }]);
-      }
-      setIsLoading(false);
-    }
-  };
+  const {
+    history,
+    currentNode,
+    isLoading,
+    isEscalating,
+    setIsEscalating,
+    escName,
+    setEscName,
+    escContact,
+    setEscContact,
+    escBody,
+    setEscBody,
+    userInput,
+    setUserInput,
+    startChat,
+    handleOption,
+    submitEscalation,
+    submitInput
+  } = useChatSession();
 
   useEffect(() => {
     startChat();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleOption = async (optId: string, optLabel: string) => {
-    if (optId === "escalate") {
-      setHistory(h => [...h, { sender: 'user', text: optLabel }, { sender: 'bot', text: "Please provide your details below to leave a message." }]);
-      setIsEscalating(true);
-      setCurrentNode(null);
-      return;
-    }
-
-    setHistory(h => [...h, { sender: 'user', text: optLabel }]);
-    setIsLoading(true);
-    const { data } = await client.POST("/api/chat/message", { body: { node_id: optId, input: null } });
-    if (data) {
-      setCurrentNode(data);
-      setHistory(h => [...h, { sender: 'bot', text: (data as any).text }]);
-    }
-    setIsLoading(false);
-  };
-
-  const submitEscalation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await client.POST("/api/chat/escalate", {
-      body: { name: escName, contact: escContact, body: escBody }
-    });
-    setHistory(h => [...h, { sender: 'bot', text: "Thank you! Your message has been sent to our staff. We will get back to you shortly." }]);
-    setIsEscalating(false);
-
-    setTimeout(async () => {
-      const { data } = await client.POST("/api/chat/message", { body: { node_id: "root", input: null } });
-      if (data) setCurrentNode(data);
-    }, 2000);
-  };
-
-  const submitInput = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userInput.trim()) return;
-
-    setHistory(h => [...h, { sender: 'user', text: userInput }]);
-    setIsLoading(true);
-    const { data } = await client.POST("/api/chat/message", {
-      body: { node_id: "check_stock", input: userInput }
-    });
-
-    if (data) {
-      setCurrentNode(data);
-      setHistory(h => [...h, { sender: 'bot', text: (data as any).text }]);
-    }
-    setIsLoading(false);
-    setUserInput("");
-  };
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 text-left">
@@ -96,7 +44,7 @@ export default function Support() {
           <p className="mb-4 text-xs font-semibold tracking-[0.14em] text-[var(--text)] uppercase">
             Where to start
           </p>
-          {!isEscalating && currentNode && currentNode.options.length > 0 ? (
+          {(!isEscalating && currentNode && currentNode.options.length > 0) ? (
             <div className="flex flex-col items-start gap-2">
               {currentNode.options.map((opt: any) => (
                 <QuickReply key={opt.id} onClick={() => handleOption(opt.id, opt.label)}>
@@ -104,11 +52,11 @@ export default function Support() {
                 </QuickReply>
               ))}
             </div>
-          ) : (
+          ) : (isEscalating || (currentNode && currentNode.options.length === 0)) ? (
             <p className="text-[15px] text-[var(--text)]">
               Finish the form on the right and the menu comes back.
             </p>
-          )}
+          ) : null}
         </aside>
 
         <section className="flex min-h-[560px] flex-col rounded-[32px] border border-[var(--border)] bg-[var(--bg)] p-5 shadow-[var(--shadow)]">
@@ -130,7 +78,7 @@ export default function Support() {
                 <TextField id="chat-page-contact" label="Email or phone" required value={escContact} onChange={setEscContact} placeholder="Email or Phone" />
                 <TextField id="chat-page-body" label="Your message" required multiline value={escBody} onChange={setEscBody} placeholder="Your message..." />
                 <div className="mt-1 flex gap-2">
-                  <QuickReply type="submit" filled>Send</QuickReply>
+                  <QuickReply type="submit" filled disabled={isLoading}>Send</QuickReply>
                   <QuickReply onClick={() => { setIsEscalating(false); handleOption('root', 'Cancel'); }}>Cancel</QuickReply>
                 </div>
               </form>
@@ -140,7 +88,7 @@ export default function Support() {
           {currentNode && currentNode.text.includes("title, author, or ISBN") && !isEscalating && (
             <form onSubmit={submitInput} className="mt-4 flex items-center gap-3 border-t border-[var(--border)] pt-4">
               <TextField id="chat-page-search" label="Title, author, or ISBN" required value={userInput} onChange={setUserInput} placeholder="Type a book name or ISBN..." />
-              <QuickReply type="submit" filled>Search</QuickReply>
+              <QuickReply type="submit" filled disabled={isLoading}>Search</QuickReply>
             </form>
           )}
         </section>

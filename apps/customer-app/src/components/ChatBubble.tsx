@@ -59,19 +59,22 @@ export function QuickReply({
   children,
   type = 'button',
   filled = false,
+  disabled = false,
 }: {
   onClick?: () => void;
   children: ReactNode;
   type?: 'button' | 'submit';
   filled?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={`rounded-full border-2 border-[var(--accent)] px-5 py-2.5 text-left text-[15px] font-semibold text-[var(--text-h)] transition-colors ${FOCUS} ${
         filled ? 'bg-[var(--accent-bg)] hover:bg-[var(--bg)]' : 'bg-[var(--bg)] hover:bg-[var(--accent-bg)]'
-      }`}
+      } disabled:opacity-50 disabled:cursor-not-allowed`}
     >
       {children}
     </button>

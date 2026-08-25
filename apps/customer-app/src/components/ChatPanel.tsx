@@ -1,38 +1,37 @@
-import { useState, useEffect, useRef } from 'react';
-import { client } from '../api/client';
+import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { Bubble, QuickReply, TextField, TypingDots } from './ChatBubble';
+import { useChatSession } from '../hooks/useChatSession';
 
 export default function ChatPanel() {
   const [isOpen, setIsOpen] = useState(false);
-  const [history, setHistory] = useState<{ sender: 'bot' | 'user', text: string }[]>([]);
-  const [currentNode, setCurrentNode] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    history,
+    currentNode,
+    isLoading,
+    isEscalating,
+    setIsEscalating,
+    escName,
+    setEscName,
+    escContact,
+    setEscContact,
+    escBody,
+    setEscBody,
+    userInput,
+    setUserInput,
+    startChat,
+    handleOption,
+    submitEscalation,
+    submitInput
+  } = useChatSession();
 
-  const [isEscalating, setIsEscalating] = useState(false);
-  const [escName, setEscName] = useState("");
-  const [escContact, setEscContact] = useState("");
-  const [escBody, setEscBody] = useState("");
-
-  const [userInput, setUserInput] = useState("");
   const closeRef = useRef<HTMLButtonElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const hasOpened = useRef(false);
 
-  const startChat = async () => {
-    if (history.length === 0) {
-      setIsLoading(true);
-      const { data } = await client.POST("/api/chat/message", { body: { node_id: "root", input: null } });
-      if (data) {
-        setCurrentNode(data);
-        setHistory([{ sender: 'bot', text: (data as any).text }]);
-      }
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (isOpen) startChat();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Focus moves into the panel on open and back to the launcher on close.
@@ -51,56 +50,6 @@ export default function ChatPanel() {
     }
     if (hasOpened.current) launcherRef.current?.focus();
   }, [isOpen]);
-
-  const handleOption = async (optId: string, optLabel: string) => {
-    if (optId === "escalate") {
-      setHistory(h => [...h, { sender: 'user', text: optLabel }, { sender: 'bot', text: "Please provide your details below to leave a message." }]);
-      setIsEscalating(true);
-      setCurrentNode(null);
-      return;
-    }
-
-    setHistory(h => [...h, { sender: 'user', text: optLabel }]);
-    setIsLoading(true);
-    const { data } = await client.POST("/api/chat/message", { body: { node_id: optId, input: null } });
-    if (data) {
-      setCurrentNode(data);
-      setHistory(h => [...h, { sender: 'bot', text: (data as any).text }]);
-    }
-    setIsLoading(false);
-  };
-
-  const submitEscalation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await client.POST("/api/chat/escalate", {
-      body: { name: escName, contact: escContact, body: escBody }
-    });
-    setHistory(h => [...h, { sender: 'bot', text: "Thank you! Your message has been sent to our staff. We will get back to you shortly." }]);
-    setIsEscalating(false);
-
-    setTimeout(async () => {
-      const { data } = await client.POST("/api/chat/message", { body: { node_id: "root", input: null } });
-      if (data) setCurrentNode(data);
-    }, 2000);
-  };
-
-  const submitInput = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userInput.trim()) return;
-
-    setHistory(h => [...h, { sender: 'user', text: userInput }]);
-    setIsLoading(true);
-    const { data } = await client.POST("/api/chat/message", {
-      body: { node_id: "check_stock", input: userInput }
-    });
-
-    if (data) {
-      setCurrentNode(data);
-      setHistory(h => [...h, { sender: 'bot', text: (data as any).text }]);
-    }
-    setIsLoading(false);
-    setUserInput("");
-  };
 
   return (
     <>
@@ -163,7 +112,7 @@ export default function ChatPanel() {
                 <TextField id="chat-panel-contact" label="Email or phone" required value={escContact} onChange={setEscContact} placeholder="Email or Phone" />
                 <TextField id="chat-panel-body" label="Your message" required multiline value={escBody} onChange={setEscBody} placeholder="Your message..." />
                 <div className="mt-1 flex gap-2">
-                  <QuickReply type="submit" filled>Send</QuickReply>
+                  <QuickReply type="submit" filled disabled={isLoading}>Send</QuickReply>
                   <QuickReply onClick={() => { setIsEscalating(false); handleOption('root', 'Cancel'); }}>Cancel</QuickReply>
                 </div>
               </form>
@@ -172,7 +121,7 @@ export default function ChatPanel() {
             {currentNode && currentNode.text.includes("title, author, or ISBN") && !isEscalating && (
               <form onSubmit={submitInput} className="flex items-center gap-2">
                 <TextField id="chat-panel-search" label="Title, author, or ISBN" required value={userInput} onChange={setUserInput} placeholder="Type a book name..." />
-                <QuickReply type="submit" filled>Ask</QuickReply>
+                <QuickReply type="submit" filled disabled={isLoading}>Ask</QuickReply>
               </form>
             )}
           </div>

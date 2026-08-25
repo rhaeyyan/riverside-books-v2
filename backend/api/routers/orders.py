@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
@@ -16,6 +17,8 @@ from backend.api.deps import (
     release_expired_holds,
 )
 from backend.api.models import Order, OrderItem
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -46,22 +49,26 @@ def create_order(
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
+    items_map = {}
+    for item in payload.items:
+        items_map[item.isbn] = items_map.get(item.isbn, 0) + item.quantity
+
     items = []
     total_cents = 0
 
     # but we will check stock first.
-    for item in payload.items:
-        book = book_repo.get_by_isbn(item.isbn)
+    for isbn, quantity in items_map.items():
+        book = book_repo.get_by_isbn(isbn)
         if not book:
-            raise HTTPException(status_code=404, detail=f"Book not found: {item.isbn}")
+            raise HTTPException(status_code=404, detail=f"Book not found: {isbn}")
 
-        if book.available_count < item.quantity:
+        if book.available_count < quantity:
             raise HTTPException(
-                status_code=409, detail=f"Not enough available stock for {item.isbn}"
+                status_code=409, detail=f"Not enough available stock for {isbn}"
             )
 
-        total_cents += book.price_cents * item.quantity
-        items.append(OrderItem(isbn=book.isbn, quantity=item.quantity))
+        total_cents += book.price_cents * quantity
+        items.append(OrderItem(isbn=isbn, quantity=quantity))
 
     now = datetime.now(UTC)
     expires_at = now + timedelta(hours=48)
@@ -176,8 +183,18 @@ def force_release_expired(
         try:
             order_repo.update_status(order.order_id, "expired")
             for item in order.items:
-                book_repo.adjust_reserved_count(item.isbn, -item.quantity)
+                try:
+                    book_repo.adjust_reserved_count(item.isbn, -item.quantity)
+                except Exception:
+                    logger.exception(
+                        "Failed to release stock for %s in order %s",
+                        item.isbn,
+                        order.order_id,
+                    )
         except Exception:
-            pass
+            logger.exception(
+                "Failed to expire order %s; stock not released",
+                order.order_id,
+            )
 
     return ReleaseExpiredResponse(released_count=count)

@@ -116,8 +116,8 @@ suite. They must render identically in Products A, B, and C.
 
 | Status | Condition | Color token | Value | `-bg` (badge tint) |
 |---|---|---|---|---|
-| `in_stock` | `available_count > low_stock_threshold` | `--status-in` | `#3c7858` (forest green) | `rgba(60, 120, 88, 0.1)` |
-| `low_stock` | `1 <= available_count <= low_stock_threshold` | `--status-low` | `#936123` (amber/ochre) | `rgba(147, 97, 35, 0.1)` |
+| `in_stock` | `available_count > low_stock_threshold` | `--status-in` | `#3a7455` (forest green) | `rgba(58, 116, 85, 0.1)` |
+| `low_stock` | `1 <= available_count <= low_stock_threshold` | `--status-low` | `#8e5e22` (amber/ochre) | `rgba(142, 94, 34, 0.1)` |
 | `out_of_stock` | `available_count == 0` | `--status-out` | `#b3392c` (rust red) | `rgba(179, 57, 44, 0.1)` |
 
 Each `-bg` token is its base color at 10% alpha via `rgba()`, not a
@@ -152,7 +152,19 @@ Follow the existing `prefers-color-scheme: dark` pattern already in both
 | `--text-h` | `#f2ece2` |
 | `--border` | `#3a3327` |
 | `--accent` | `#e07a5f` |
+| `--accent-bg` | `rgba(224, 122, 95, 0.15)` |
+| `--accent-border` | `rgba(224, 122, 95, 0.5)` |
 | `--code-bg` | `#241f18` |
+| `--shadow` | `rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px` |
+
+`--accent-bg`/`--accent-border` carry a higher alpha here than their
+light-mode counterparts (§4.1's `0.08`/`0.35`) because the same alpha reads
+noticeably fainter against a dark page — this matches the Vite-starter dark
+block already present in both `index.css` files, which used the same
+lift. `--shadow` switches to pure black at higher opacity rather than the
+warm-tinted light-mode shadow, again matching the existing dark block: a
+tinted shadow disappears against a dark background, so only opacity does the
+work of separating a raised surface from the page behind it.
 
 | Status | Token | Value | `-bg` (badge tint) |
 |---|---|---|---|
@@ -172,20 +184,27 @@ adjustment in §4.2.
 ### 4.4 Accessibility
 
 - Every status color/background pairing must hit **WCAG AA (4.5:1)** for the
-  label text sitting on it. Verify `--status-*` against `--status-*-bg` and
-  against `--bg-raised`. All six pairings (three statuses × light/dark) are
-  pre-verified against their `-bg` tint as specified in §4.2/§4.3:
+  label text sitting on it. Because the `-bg` tint is `rgba()` alpha rather
+  than a flat hex (§4.2), it composites differently depending on what's
+  underneath — a badge on a card (`--bg-raised`) and a badge directly on the
+  page (`--bg`) are two different pairings, and **both** must be checked; a
+  status badge is not guaranteed to only ever sit on one or the other.
+  All twelve combinations (three statuses × light/dark × two backgrounds)
+  are pre-verified against the values in §4.2/§4.3:
 
-  | Pairing | Light | Dark |
-  |---|---|---|
-  | in-stock | 4.58:1 | 5.32:1 |
-  | low-stock | 4.63:1 | 6.15:1 |
-  | out-of-stock | 5.10:1 | 4.55:1 |
+  | Pairing | Light on `--bg-raised` | Light on `--bg` | Dark on `--bg-raised` | Dark on `--bg` |
+  |---|---|---|---|---|
+  | in-stock | 4.82:1 | 4.53:1 | 5.32:1 | 5.92:1 |
+  | low-stock | 4.86:1 | 4.57:1 | 6.15:1 | 6.86:1 |
+  | out-of-stock | 5.10:1 | 4.80:1 | 4.55:1 | 5.05:1 |
 
-  These are close to the 4.5:1 floor by design — the palette stays in the
-  intended hue family rather than over-darkening for margin. If any token in
-  §4.1–§4.3 is changed later, re-verify the affected pairing before merging;
-  don't assume a "similar-looking" color still passes.
+  Light mode is the tight case — the worst pairing (low-stock on `--bg`) has
+  about 0.07 of headroom above the 4.5:1 floor by design, since the palette
+  stays in the intended hue family rather than over-darkening for margin.
+  Dark mode has generous headroom throughout. If any token in §4.1–§4.3 is
+  changed later, re-verify **all four** backgrounds for the affected status
+  before merging — checking only `--bg-raised` is not sufficient, as a prior
+  revision of this doc found out.
 - Status is never color-only: the badge always carries text ("Out of stock,"
   "Only 1 left," "In stock") and, where space allows, an icon. This matters
   most in Product B's grid, which is read fast and under time pressure.
@@ -321,8 +340,26 @@ customer-facing audience will read.
 - Both apps already run **Tailwind v4** with a CSS-first `@theme`/custom-property
   pattern in `src/index.css` (see the existing `--accent`, `--text`, etc.
   tokens). Section 4–5 of this doc are meant to replace those placeholder
-  values directly, keeping the same variable names so no component code needs
-  to change to pick up the new palette.
+  values directly, keeping the same variable names.
+- **That replacement is necessary but not sufficient — read this before
+  assuming merging this doc gets you the design.** As of this writing,
+  neither app's components read the CSS custom properties at all: `0`
+  `var(--…)` usages in either `apps/*/src/**/*.tsx`. Instead every component
+  is written against hardcoded Tailwind utility classes — 40+ call sites like
+  `text-slate-500`, `text-slate-900`, `border-slate-200` in
+  `apps/staff-dashboard/src/pages/Marketing.tsx` alone. Swapping the token
+  *values* in `index.css` changes nothing on screen until one of these
+  happens:
+  1. **Map the tokens into Tailwind's theme** (`@theme` block, e.g.
+     `--color-slate-500: var(--text)`) so the existing utility classes resolve
+     to the new palette with no component edits — fastest, but only works
+     cleanly where a Tailwind shade already lines up with a token.
+  2. **Rewrite the call sites** to use the token-backed classes directly —
+     more accurate long-term, more surface area to touch.
+  Either path crosses both product boundaries (Product A and Product B are
+  separately owned), so it needs the same explicit agreement the PRD asks for
+  on shared-architecture changes (§9), not an assumption that it happens for
+  free.
 - `lucide-react` is already a shared dependency in both apps — use it for all
   iconography (status icons, empty states, nav) rather than introducing a
   second icon set.

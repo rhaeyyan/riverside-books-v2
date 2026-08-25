@@ -16,6 +16,53 @@ export function Inventory() {
   const [editingIsbn, setEditingIsbn] = useState<string | null>(null);
   const [editStockValue, setEditStockValue] = useState<string>('');
 
+
+  const [newIsbn, setNewIsbn] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const handleAddBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddError(null);
+    if (!newIsbn) return;
+    
+    setIsAdding(true);
+    // 1. Fetch external data
+    const resExternal = await client.GET("/api/books/external/{isbn}", {
+      params: { path: { isbn: newIsbn } }
+    });
+    
+    if (resExternal.error) {
+      setAddError("Failed to find book on OpenLibrary.");
+      setIsAdding(false);
+      return;
+    }
+    
+    // 2. Create local book
+    const externalBook = resExternal.data as any;
+    const resCreate = await client.POST("/api/books", {
+      body: {
+        isbn: newIsbn,
+        title: externalBook.title,
+        author: externalBook.author,
+        genre: "Uncategorized", // Default
+        format: "Paperback", // Default
+        price_cents: 1999, // Default $19.99
+        stock_count: 1, // Start with 1 on hand
+        cover_image_url: externalBook.cover_image_url || "",
+        blurb: ""
+      }
+    });
+    
+    if (resCreate.error) {
+      setAddError("Failed to add book locally (perhaps it already exists).");
+    } else {
+      setNewIsbn('');
+      fetchBooks();
+    }
+    setIsAdding(false);
+  };
+
   useEffect(() => {
     fetchBooks();
   }, []);
@@ -125,7 +172,26 @@ export function Inventory() {
         </div>
       </div>
 
+
+      <div className="filters-bar" style={{ marginBottom: '1rem', background: '#e3f2fd', border: '1px solid #90caf9' }}>
+        <form onSubmit={handleAddBook} style={{ display: 'flex', gap: '1rem', alignItems: 'center', width: '100%' }}>
+          <strong>Add New Book:</strong>
+          <input 
+            type="text" 
+            placeholder="Scan or enter ISBN..." 
+            value={newIsbn} 
+            onChange={e => setNewIsbn(e.target.value)}
+            style={{ padding: '0.5rem', flex: 1 }}
+          />
+          <button type="submit" disabled={isAdding} style={{ padding: '0.5rem 1rem', background: '#0d47a1', color: 'white', border: 'none', borderRadius: '4px' }}>
+            {isAdding ? "Fetching..." : "Fetch from OpenLibrary"}
+          </button>
+          {addError && <span style={{ color: 'red' }}>{addError}</span>}
+        </form>
+      </div>
+
       <div className="filters-bar">
+
         <div className="search-box">
           <Search size={18} />
           <input type="text" placeholder="Search title or author..." value={search} onChange={e => setSearch(e.target.value)} />

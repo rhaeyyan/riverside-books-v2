@@ -38,9 +38,15 @@ To run the full suite locally, you will need three terminal windows:
 
 **1. Start the Backend API:**
 ```bash
+uv run python -m scripts.seed   # first run, or whenever the demo data looks stale
 uv run uvicorn backend.api.main:app --reload --host 127.0.0.1 --port 8000
 ```
 This serves the API and the data layer from `mock_data/`.
+
+`scripts/seed.py` generates `mock_data/` with timestamps relative to when you
+run it, so holds stay live and events stay upcoming (PRD §6.7). It is the source
+of truth for seed data — edit the script, not the JSON. Re-run it any time the
+pre-order board looks empty or every hold shows as expired.
 
 **2. Start Product A (Customer App):**
 ```bash

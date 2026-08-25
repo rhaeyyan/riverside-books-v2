@@ -1,31 +1,55 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { client } from '../api/client';
 import { MessageCircle, X } from 'lucide-react';
+import { Bubble, QuickReply, TextField, TypingDots } from './ChatBubble';
 
 export default function ChatPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [history, setHistory] = useState<{ sender: 'bot' | 'user', text: string }[]>([]);
   const [currentNode, setCurrentNode] = useState<any>(null);
-  
+  const [isLoading, setIsLoading] = useState(false);
+
   const [isEscalating, setIsEscalating] = useState(false);
   const [escName, setEscName] = useState("");
   const [escContact, setEscContact] = useState("");
   const [escBody, setEscBody] = useState("");
-  
+
   const [userInput, setUserInput] = useState("");
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const hasOpened = useRef(false);
 
   const startChat = async () => {
     if (history.length === 0) {
+      setIsLoading(true);
       const { data } = await client.POST("/api/chat/message", { body: { node_id: "root", input: null } });
       if (data) {
         setCurrentNode(data);
         setHistory([{ sender: 'bot', text: (data as any).text }]);
       }
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     if (isOpen) startChat();
+  }, [isOpen]);
+
+  // Focus moves into the panel on open and back to the launcher on close.
+  // Both elements are conditionally mounted, so this has to run after the
+  // render that mounts them — not from the click handler, where the target
+  // does not exist yet. Non-modal, so Tab is deliberately not trapped.
+  useEffect(() => {
+    if (isOpen) {
+      hasOpened.current = true;
+      closeRef.current?.focus();
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setIsOpen(false);
+      };
+      document.addEventListener('keydown', onKey);
+      return () => document.removeEventListener('keydown', onKey);
+    }
+    if (hasOpened.current) launcherRef.current?.focus();
   }, [isOpen]);
 
   const handleOption = async (optId: string, optLabel: string) => {
@@ -37,11 +61,13 @@ export default function ChatPanel() {
     }
 
     setHistory(h => [...h, { sender: 'user', text: optLabel }]);
+    setIsLoading(true);
     const { data } = await client.POST("/api/chat/message", { body: { node_id: optId, input: null } });
     if (data) {
       setCurrentNode(data);
       setHistory(h => [...h, { sender: 'bot', text: (data as any).text }]);
     }
+    setIsLoading(false);
   };
 
   const submitEscalation = async (e: React.FormEvent) => {
@@ -51,7 +77,7 @@ export default function ChatPanel() {
     });
     setHistory(h => [...h, { sender: 'bot', text: "Thank you! Your message has been sent to our staff. We will get back to you shortly." }]);
     setIsEscalating(false);
-    
+
     setTimeout(async () => {
       const { data } = await client.POST("/api/chat/message", { body: { node_id: "root", input: null } });
       if (data) setCurrentNode(data);
@@ -61,95 +87,102 @@ export default function ChatPanel() {
   const submitInput = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userInput.trim()) return;
-    
+
     setHistory(h => [...h, { sender: 'user', text: userInput }]);
-    const { data } = await client.POST("/api/chat/message", { 
-      body: { node_id: "check_stock", input: userInput } 
+    setIsLoading(true);
+    const { data } = await client.POST("/api/chat/message", {
+      body: { node_id: "check_stock", input: userInput }
     });
-    
+
     if (data) {
       setCurrentNode(data);
       setHistory(h => [...h, { sender: 'bot', text: (data as any).text }]);
     }
+    setIsLoading(false);
     setUserInput("");
   };
 
   return (
     <>
-      <button 
-        id="chatbot-toggle"
-        onClick={() => setIsOpen(true)}
-        style={{
-          position: 'fixed', bottom: '2rem', right: '2rem',
-          background: '#007bff', color: 'white', borderRadius: '50%',
-          width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-        }}
-      >
-        <MessageCircle size={32} />
-      </button>
+      {!isOpen && (
+        <button
+          id="chatbot-toggle"
+          ref={launcherRef}
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="fixed right-8 bottom-8 flex items-center gap-2.5 rounded-full border-2 border-[var(--accent)] bg-[var(--accent-bg)] py-3 pr-6 pl-4 text-base font-bold text-[var(--text-h)] shadow-[var(--shadow)] transition-colors hover:bg-[var(--bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+        >
+          <MessageCircle size={24} aria-hidden="true" />
+          Ask us
+        </button>
+      )}
 
       {isOpen && (
-        <div style={{
-          position: 'fixed', bottom: '2rem', right: '2rem',
-          width: '350px', height: '500px', background: 'white',
-          borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-          display: 'flex', flexDirection: 'column', overflow: 'hidden'
-        }}>
-          <div style={{ background: '#007bff', color: 'white', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Riverside Support</h3>
-            <button onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
-              <X size={24} />
+        <div
+          role="dialog"
+          aria-label="Ask Riverside"
+          className="fixed right-8 bottom-8 flex h-[560px] w-[380px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[32px] border border-[var(--border)] bg-[var(--bg)] shadow-[var(--shadow)]"
+        >
+          <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--accent-border)] bg-[var(--accent-bg)] text-sm font-bold text-[var(--text-h)]"
+              >
+                R
+              </span>
+              <div>
+                <p className="text-[15px] font-bold text-[var(--text-h)]">Ask Riverside</p>
+                <p className="text-xs text-[var(--text)]">Answers from today's shelf</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              ref={closeRef}
+              aria-label="Close chat"
+              onClick={() => setIsOpen(false)}
+              className="rounded-full p-1.5 text-[var(--text-h)] transition-colors hover:bg-[var(--code-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+            >
+              <X size={20} aria-hidden="true" />
             </button>
           </div>
 
-          <div style={{ flex: 1, padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div
+            aria-live="polite"
+            className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-5"
+          >
             {history.map((msg, i) => (
-              <div key={i} style={{ 
-                alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                background: msg.sender === 'user' ? '#007bff' : '#f1f3f5',
-                color: msg.sender === 'user' ? 'white' : 'black',
-                padding: '0.75rem 1rem', borderRadius: '16px', maxWidth: '85%',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {msg.text}
-              </div>
+              <Bubble key={i} sender={msg.sender}>{msg.text}</Bubble>
             ))}
-            
+
+            {isLoading && <TypingDots />}
+
             {isEscalating && (
-              <form onSubmit={submitEscalation} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
-                <input required placeholder="Name" value={escName} onChange={e => setEscName(e.target.value)} style={{ padding: '0.5rem' }} />
-                <input required placeholder="Email or Phone" value={escContact} onChange={e => setEscContact(e.target.value)} style={{ padding: '0.5rem' }} />
-                <textarea required placeholder="Your message..." value={escBody} onChange={e => setEscBody(e.target.value)} style={{ padding: '0.5rem', minHeight: '60px' }} />
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="submit" style={{ flex: 1, padding: '0.5rem', background: '#007bff', color: 'white', border: 'none' }}>Send</button>
-                  <button type="button" onClick={() => { setIsEscalating(false); handleOption('root', 'Cancel'); }} style={{ padding: '0.5rem' }}>Cancel</button>
+              <form onSubmit={submitEscalation} className="flex flex-col gap-2 rounded-[24px] border border-[var(--border)] bg-[var(--code-bg)] p-4">
+                <TextField id="chat-panel-name" label="Name" required value={escName} onChange={setEscName} placeholder="Name" />
+                <TextField id="chat-panel-contact" label="Email or phone" required value={escContact} onChange={setEscContact} placeholder="Email or Phone" />
+                <TextField id="chat-panel-body" label="Your message" required multiline value={escBody} onChange={setEscBody} placeholder="Your message..." />
+                <div className="mt-1 flex gap-2">
+                  <QuickReply type="submit" filled>Send</QuickReply>
+                  <QuickReply onClick={() => { setIsEscalating(false); handleOption('root', 'Cancel'); }}>Cancel</QuickReply>
                 </div>
               </form>
             )}
-            
-            {currentNode && currentNode.text.includes("title, author, or ISBN") && (
-              <form onSubmit={submitInput} style={{ display: 'flex', gap: '0.5rem' }}>
-                <input required value={userInput} onChange={e => setUserInput(e.target.value)} placeholder="Type a book name..." style={{ flex: 1, padding: '0.5rem' }} />
-                <button type="submit" style={{ padding: '0.5rem', background: '#007bff', color: 'white', border: 'none' }}>Send</button>
+
+            {currentNode && currentNode.text.includes("title, author, or ISBN") && !isEscalating && (
+              <form onSubmit={submitInput} className="flex items-center gap-2">
+                <TextField id="chat-panel-search" label="Title, author, or ISBN" required value={userInput} onChange={setUserInput} placeholder="Type a book name..." />
+                <QuickReply type="submit" filled>Ask</QuickReply>
               </form>
             )}
           </div>
 
           {!isEscalating && currentNode && currentNode.options.length > 0 && (
-            <div style={{ padding: '1rem', borderTop: '1px solid #eee', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="flex flex-col items-start gap-2 border-t border-[var(--border)] px-4 py-4">
               {currentNode.options.map((opt: any) => (
-                <button 
-                  key={opt.id} 
-                  onClick={() => handleOption(opt.id, opt.label)}
-                  style={{
-                    padding: '0.75rem', background: 'white', border: '1px solid #007bff',
-                    color: '#007bff', borderRadius: '8px', cursor: 'pointer',
-                    textAlign: 'left'
-                  }}
-                >
+                <QuickReply key={opt.id} onClick={() => handleOption(opt.id, opt.label)}>
                   {opt.label}
-                </button>
+                </QuickReply>
               ))}
             </div>
           )}

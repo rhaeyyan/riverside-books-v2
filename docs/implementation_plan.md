@@ -2,8 +2,6 @@
 
 **STATUS: COMPLETED**
 
-# Implementation Plan — Riverside Books Suite (Cycle 4)
-
 ## Context
 
 The repo currently contains five markdown files, five empty directories, and **zero

@@ -81,3 +81,24 @@ static output, so it won't pick up frontend changes until you rebuild;
 for active frontend development, use the three-terminal setup above
 instead, which hot-reloads.
 
+
+## Deployment
+
+Because this project relies on local JSON files (`mock_data/`) for state and is designed to operate as a single cohesive storefront, it is best deployed as a **Unified Application** on a service with persistent disk storage (like Render or Railway) rather than split across serverless providers like Vercel.
+
+We have included a unified build script (`render-build.sh`) that installs the backend dependencies and builds both React frontends. 
+
+### Deploying to Render
+1. Create a **Web Service** on Render connected to this repository.
+2. Set the Environment to **Python**.
+3. Set the **Build Command** to:
+   ```bash
+   ./render-build.sh
+   ```
+4. Set the **Start Command** to:
+   ```bash
+   uvicorn backend.api.main:app --host 0.0.0.0 --port $PORT
+   ```
+5. *(Optional)* Add the `CORS_ORIGINS` environment variable if you plan to access the API externally.
+
+Once deployed, the FastAPI application will seamlessly serve the API, the Landing Page, the Customer App (`/shop`), and the Staff Dashboard (`/staff`) all from a single domain.

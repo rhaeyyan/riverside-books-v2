@@ -10,6 +10,7 @@ products — they are not owned by any single product workstream.
 | [`market_strategy.md`](market_strategy.md) | Competitor and market research for Product D's marketing generator. | Research, see note below |
 | [`look_and_feel_references.md`](look_and_feel_references.md) | Collected weblinks used as visual-style inspiration for Products A–D. Inspiration to adapt, not implementations to copy. | Reference |
 | [`product-d-review.md`](product-d-review.md) | Review of Product D against PRD §8.D, with three open findings and a scope call for the team. | Open findings |
+| [`live-database-migration.md`](live-database-migration.md) | Lift assessment for replacing `JsonDatastore` with a live database, and what's blocked on Supabase provisioning + a team schema decision. | Needs team input |
 
 The project brief the suite was built from is [`../Cycle 4_ Project briefs.md`](../Cycle%204_%20Project%20briefs.md).
 Repository layout and the toolchain rules live in [`../AGENTS.md`](../AGENTS.md);

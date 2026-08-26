@@ -10,7 +10,7 @@ This is a monorepo containing four interconnected products built as part of the 
 A frontend application that allows customers to search the store's catalog, check real-time stock levels, place pre-orders for in-store pickup, and track their loyalty rewards.
 
 ### Product B: Staff Inventory & Ops Dashboard
-An operational dashboard for the store staff and owner to monitor live stock levels, flag low/out-of-stock titles, and manage pending pre-orders.
+An operational dashboard for the store staff and owner to monitor live stock levels, flag low/out-of-stock titles, and manage pending pre-orders. **Note:** Access requires a staff PIN. For local development and demos, use `1234` (Manager) or `5678` (Bookseller).
 
 ### Product C: Customer Support Chatbot
 A customer support agent that answers common questions (store hours, return policy, event schedules) and performs live stock checks. **Note:** This is built using a deterministic approach (e.g., decision trees and exact matching) rather than generative AI.
@@ -21,7 +21,7 @@ An internal tool that automatically generates social media captions and post ide
 ## Tech Stack
 - **Frontend**: React + TypeScript (Vite)
 - **Backend**: Python 3.12 (FastAPI)
-- **Database**: Local mock data (JSON/in-memory) instead of a live database.
+- **Database**: Currently migrating from local JSON mock data to a managed Postgres database (Supabase) via `psycopg` 3.
 
 ## Project Structure
 - `apps/customer-app/` - Source code for Product A
@@ -30,6 +30,7 @@ An internal tool that automatically generates social media captions and post ide
 - `backend/chatbot/` - Source code for Product C (Deterministic Chatbot)
 - `backend/marketing/` - Source code for Product D (Deterministic Content Generator)
 - `mock_data/` - Mock JSON files acting as the store's central database for inventory, orders, and events
+- `scripts/` - Utilities including the run-time-relative `seed.py` and the PRD conformance auditor `check_contract.py`
 - `web/` - Static landing page for the unified gateway (see below)
 
 ## Running Locally

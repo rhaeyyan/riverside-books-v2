@@ -8,6 +8,17 @@ type Book = components["schemas"]["Book"];
 
 type Customer = components["schemas"]["Customer"];
 
+const isPastDeadline = (deadline: string) => {
+  if (!deadline) return false;
+  return new Date(deadline) < new Date();
+};
+
+const columns = [
+  { key: 'pending', label: 'To prepare', emptyText: 'Nothing waiting to be pulled.' },
+  { key: 'ready_for_pickup', label: 'Ready at counter', emptyText: 'No bags on the shelf.' },
+  { key: 'completed', label: 'Picked up', emptyText: 'Nobody collected yet today.' },
+] as const;
+
 export function Preorders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [books, setBooks] = useState<Record<string, Book>>({});
@@ -68,56 +79,77 @@ export function Preorders() {
     }
   };
 
-  const columns = ['pending', 'ready_for_pickup', 'completed'] as const;
-  const columnLabel = (c: string) => c.replace(/_/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
-  
-  const isPastDeadline = (deadline: string) => {
-    if (!deadline) return false;
-    return new Date(deadline) < new Date();
-  };
+  const expiredCount = orders.filter(o => o.status === 'expired' || (o.status === 'pending' && isPastDeadline(o.hold_expires_at))).length;
+  const releaseLabel = expiredCount === 0 ? 'Holds released' : `Release ${expiredCount} expired holds`;
 
   return (
     <div className="preorders-page">
       <div className="preorders-header">
-        <h1>Pre-order Board</h1>
-        <button className="release-btn" onClick={releaseExpired}>Release Expired Holds</button>
+        <div>
+          <h1>Pre-orders</h1>
+          <p className="preorders-subtitle">Holds sit at the counter for 48 hours, then release back to the shelf.</p>
+        </div>
+        <div className="release-btn-wrap">
+          <button
+            className="release-btn"
+            onClick={releaseExpired}
+            disabled={expiredCount === 0}
+          >
+            {releaseLabel}
+          </button>
+          <span className="sr-only" role="status" aria-live="polite">{releaseLabel}</span>
+        </div>
       </div>
-      
+
       <div className="kanban-board">
-        {columns.map(col => (
-          <div key={col} className="kanban-column">
-            <h2>{columnLabel(col)}</h2>
-            <div className="kanban-cards">
-              {orders.filter(o => o.status === col).map(order => {
-                const pastDeadline = order.status === 'pending' && isPastDeadline(order.hold_expires_at);
-                return (
-                  <div key={order.order_id} className={`kanban-card ${pastDeadline ? 'past-deadline' : ''}`}>
-                    <div className="card-header">
-                      <span className="customer">{customers[order.customer_id] ? `${customers[order.customer_id].name} · ${customers[order.customer_id].phone}` : order.customer_id}</span>
-                      {pastDeadline && <span className="warning">Expired!</span>}
-                    </div>
-                    <div className="items-list">
-                      {order.items.map(item => (
-                        <div key={item.isbn} className="item">
-                          {item.quantity}x {books[item.isbn]?.title || item.isbn}
+        {columns.map(col => {
+          const cards = orders.filter(o => o.status === col.key);
+          return (
+            <div key={col.key} className="kanban-column">
+              <div className="kanban-column-header">
+                <h2>{col.label}</h2>
+                <span className="kanban-count">{cards.length}</span>
+              </div>
+              <div className="kanban-cards">
+                {cards.map(order => {
+                  const pastDeadline = order.status === 'pending' && isPastDeadline(order.hold_expires_at);
+                  const customer = customers[order.customer_id];
+                  return (
+                    <div key={order.order_id} className={`kanban-card ${pastDeadline ? 'past-deadline' : ''}`}>
+                      <div className="card-header">
+                        <div>
+                          <div className="customer-name">{customer ? customer.name : order.customer_id}</div>
+                          {customer && <div className="customer-phone">{customer.phone}</div>}
                         </div>
-                      ))}
-                    </div>
-                    <div className="card-footer">
-                      <span className="deadline">
-                        By: {order.hold_expires_at ? new Date(order.hold_expires_at).toLocaleDateString() : 'N/A'}
-                      </span>
-                      <div className="actions">
-                        {col === 'pending' && <button onClick={() => moveOrder(order, 'ready_for_pickup')}>Ready</button>}
-                        {col === 'ready_for_pickup' && <button onClick={() => moveOrder(order, 'completed')}>Complete</button>}
+                        {pastDeadline && <span className="warning">Past 48h</span>}
+                      </div>
+                      <div className="items-list">
+                        {order.items.map(item => (
+                          <div key={item.isbn} className="item">
+                            {item.quantity} x {books[item.isbn]?.title || item.isbn}
+                          </div>
+                        ))}
+                      </div>
+                      {order.notes && <q className="order-note">{order.notes}</q>}
+                      <div className="card-footer">
+                        <span className={`deadline ${pastDeadline ? 'deadline-past' : ''}`}>
+                          By: {order.hold_expires_at ? new Date(order.hold_expires_at).toLocaleDateString() : 'N/A'}
+                        </span>
+                        <div className="actions">
+                          {col.key === 'pending' && <button onClick={() => moveOrder(order, 'ready_for_pickup')}>Mark ready</button>}
+                          {col.key === 'ready_for_pickup' && <button onClick={() => moveOrder(order, 'completed')}>Complete</button>}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+                {cards.length === 0 && (
+                  <div className="kanban-empty">{col.emptyText}</div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

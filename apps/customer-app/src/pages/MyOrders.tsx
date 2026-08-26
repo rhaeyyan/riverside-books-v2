@@ -75,7 +75,7 @@ export default function MyOrders() {
 
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', paddingTop: '12px' }}>
-      <h1 style={{ fontFamily: 'var(--heading)', fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: 500, color: 'var(--text-h)', margin: '0 0 8px' }}>
+      <h1 style={{ fontFamily: 'var(--heading)', fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: 500, color: 'var(--text-h)', margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
         My Holds & Orders
       </h1>
       <p style={{ fontSize: '15.5px', color: '#6c6155', margin: '0 0 24px', lineHeight: 1.5 }}>
@@ -90,6 +90,7 @@ export default function MyOrders() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="e.g. (845) 555-0142"
+            aria-label="Phone number"
             required
             style={{
               width: '100%',
@@ -122,102 +123,104 @@ export default function MyOrders() {
       )}
 
       {orders && (
-        orders.length === 0 ? (
-          <div className="empty-state" style={{ margin: '20px 0' }}>
-            <BookOpen size={40} className="empty-state-icon" aria-hidden="true" />
-            <h3 className="empty-state-title">No holds found</h3>
-            <p className="empty-state-desc">
-              We don't see any holds or orders for that number. Browse our shelves to find your next great read!
-            </p>
-            <Link to="/" className="btn-secondary" style={{ textDecoration: 'none' }}>
-              Browse Available Books
-            </Link>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {orders.map((o) => {
-              const isHoldActive = o.status === 'pending' || o.status === 'ready_for_pickup';
-              return (
-                <div
-                  key={o.order_id}
-                  style={{
-                    background: 'var(--bg-raised)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    boxShadow: 'rgba(36, 29, 22, 0.04) 0 4px 10px'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '16px', fontWeight: 600, color: 'var(--accent)' }}>
-                          #{o.order_id}
-                        </span>
-                        <OrderStatusBadge status={o.status} />
-                      </div>
-                      <div style={{ display: 'flex', gap: '16px', color: '#6c6155', fontSize: '13px', marginTop: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <Calendar size={14} />
-                          {new Date(o.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                        <span style={{ fontWeight: 600, color: 'var(--text-h)', fontVariantNumeric: 'tabular-nums' }}>
-                          Total: {formatMoney(o.total_cents)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {isHoldActive && (
-                      <button
-                        onClick={() => handleCancel(o.order_id)}
-                        disabled={cancellingId === o.order_id}
-                        style={{
-                          padding: '8px 14px',
-                          background: 'transparent',
-                          color: 'var(--status-out)',
-                          border: '1px solid var(--status-out)',
-                          borderRadius: '6px',
-                          fontSize: '13px',
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                          minHeight: '38px',
-                          transition: 'background-color 0.15s ease'
-                        }}
-                      >
-                        {cancellingId === o.order_id ? "Cancelling..." : "Cancel Hold"}
-                      </button>
-                    )}
-                  </div>
-
-                  {o.status === "pending" && o.hold_expires_at && (
-                    <div style={{ marginTop: '14px', padding: '10px 14px', background: 'var(--status-low-bg)', borderRadius: '6px', fontSize: '13.5px', color: 'var(--status-low)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Clock size={15} />
-                      <span>
-                        Hold held at register until: <strong>{new Date(o.hold_expires_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong>
-                      </span>
-                    </div>
-                  )}
-
-                  <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a7e6f', marginBottom: '8px', fontWeight: 600 }}>
-                      Reserved Books ({o.items.length})
-                    </div>
-                    <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {o.items.map((item) => (
-                        <li key={item.isbn} style={{ fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
-                          <span>
-                            ISBN <span style={{ fontFamily: 'var(--mono)', fontSize: '13px' }}>{item.isbn}</span>
+        <div role="status" aria-live="polite">
+          {orders.length === 0 ? (
+            <div className="empty-state" style={{ margin: '20px 0' }}>
+              <BookOpen size={40} className="empty-state-icon" aria-hidden="true" />
+              <h3 className="empty-state-title">No holds found</h3>
+              <p className="empty-state-desc">
+                We don't see any holds or orders for that number. Browse our shelves to find your next great read!
+              </p>
+              <Link to="/" className="btn-secondary" style={{ textDecoration: 'none' }}>
+                Browse Available Books
+              </Link>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {orders.map((o) => {
+                const isHoldActive = o.status === 'pending' || o.status === 'ready_for_pickup';
+                return (
+                  <div
+                    key={o.order_id}
+                    style={{
+                      background: 'var(--bg-raised)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      boxShadow: 'rgba(36, 29, 22, 0.04) 0 4px 10px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: '16px', fontWeight: 600, color: 'var(--accent)' }}>
+                            #{o.order_id}
                           </span>
-                          <span style={{ color: '#6c6155' }}>Qty: {item.quantity}</span>
-                        </li>
-                      ))}
-                    </ul>
+                          <OrderStatusBadge status={o.status} />
+                        </div>
+                        <div style={{ display: 'flex', gap: '16px', color: '#6c6155', fontSize: '13px', marginTop: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Calendar size={14} />
+                            {new Date(o.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          <span style={{ fontWeight: 600, color: 'var(--text-h)', fontVariantNumeric: 'tabular-nums' }}>
+                            Total: {formatMoney(o.total_cents)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {isHoldActive && (
+                        <button
+                          onClick={() => handleCancel(o.order_id)}
+                          disabled={cancellingId === o.order_id}
+                          style={{
+                            padding: '8px 14px',
+                            background: 'transparent',
+                            color: 'var(--status-out)',
+                            border: '1px solid var(--status-out)',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            minHeight: '38px',
+                            transition: 'background-color 0.15s ease'
+                          }}
+                        >
+                          {cancellingId === o.order_id ? "Cancelling..." : "Cancel Hold"}
+                        </button>
+                      )}
+                    </div>
+
+                    {o.status === "pending" && o.hold_expires_at && (
+                      <div style={{ marginTop: '14px', padding: '10px 14px', background: 'var(--status-low-bg)', borderRadius: '6px', fontSize: '13.5px', color: 'var(--status-low)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Clock size={15} />
+                        <span>
+                          Hold held at register until: <strong>{new Date(o.hold_expires_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong>
+                        </span>
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a7e6f', marginBottom: '8px', fontWeight: 600 }}>
+                        Reserved Books ({o.items.length})
+                      </div>
+                      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {o.items.map((item) => (
+                          <li key={item.isbn} style={{ fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>
+                              ISBN <span style={{ fontFamily: 'var(--mono)', fontSize: '13px' }}>{item.isbn}</span>
+                            </span>
+                            <span style={{ color: '#6c6155' }}>Qty: {item.quantity}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

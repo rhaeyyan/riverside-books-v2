@@ -1,21 +1,30 @@
 import { useEffect, useState, useMemo } from 'react';
 import { client } from '../api/client';
 import type { components } from '../api/types';
-import { Search, AlertCircle, AlertTriangle, Edit2, Check, X } from 'lucide-react';
+import { Search, AlertCircle, AlertTriangle, Bookmark, Clock, Edit2, Check, X } from 'lucide-react';
 import './Inventory.css';
 
 type Book = components["schemas"]["Book"];
+type Order = components["schemas"]["Order"];
+type StatusFilter = 'out_of_stock' | 'low_stock' | null;
+type SortField = 'title' | 'stock_count' | 'available_count';
+
+const isPastDeadline = (deadline: string) => {
+  if (!deadline) return false;
+  return new Date(deadline) < new Date();
+};
 
 export function Inventory() {
   const [books, setBooks] = useState<Book[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState<keyof Book>('title');
+  const [sortField, setSortField] = useState<SortField>('title');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(null);
+  const [heldOnly, setHeldOnly] = useState(false);
   const [genreFilter, setGenreFilter] = useState('All');
   const [editingIsbn, setEditingIsbn] = useState<string | null>(null);
   const [editStockValue, setEditStockValue] = useState<string>('');
-
 
   const [newIsbn, setNewIsbn] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -27,23 +36,29 @@ export function Inventory() {
     });
   };
 
+  const fetchOrders = () => {
+    client.GET("/api/orders", {}).then((res) => {
+      if (res.data) setOrders(res.data);
+    });
+  };
+
   const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddError(null);
     if (!newIsbn) return;
-    
+
     setIsAdding(true);
     // 1. Fetch external data
     const resExternal = await client.GET("/api/books/external/{isbn}", {
       params: { path: { isbn: newIsbn } }
     });
-    
+
     if (resExternal.error) {
       setAddError("Failed to find book on OpenLibrary.");
       setIsAdding(false);
       return;
     }
-    
+
     // 2. Create local book
     const externalBook = resExternal.data as any;
     const resCreate = await client.POST("/api/books", {
@@ -61,7 +76,7 @@ export function Inventory() {
         blurb: ""
       }
     });
-    
+
     if (resCreate.error) {
       setAddError("Failed to add book locally (perhaps it already exists).");
     } else {
@@ -73,9 +88,10 @@ export function Inventory() {
 
   useEffect(() => {
     fetchBooks();
+    fetchOrders();
   }, []);
 
-  const handleSort = (field: keyof Book) => {
+  const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
     } else {
@@ -89,38 +105,74 @@ export function Inventory() {
     return ['All', ...Array.from(g).sort()];
   }, [books]);
 
-  const statuses = useMemo(() => {
-    const s = new Set(books.map(b => b.stock_status));
-    return ['All', ...Array.from(s).sort()];
-  }, [books]);
-
   const filteredBooks = useMemo(() => {
     let result = books;
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(b => b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q));
     }
-    if (statusFilter !== 'All') {
+    if (statusFilter) {
       result = result.filter(b => b.stock_status === statusFilter);
+    }
+    if (heldOnly) {
+      result = result.filter(b => b.reserved_count > 0);
     }
     if (genreFilter !== 'All') {
       result = result.filter(b => b.genre === genreFilter);
     }
-    result.sort((a, b) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
-      
+    result = [...result].sort((a, b) => {
+      const aVal = a[sortField];
+      const bVal = b[sortField];
       if (typeof aVal === 'string' && typeof bVal === 'string') {
         return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      } else {
-        return sortDir === 'asc' ? ((aVal as number) - (bVal as number)) : ((bVal as number) - (aVal as number));
       }
+      return sortDir === 'asc' ? ((aVal as number) - (bVal as number)) : ((bVal as number) - (aVal as number));
     });
     return result;
-  }, [books, search, sortField, sortDir, statusFilter, genreFilter]);
+  }, [books, search, sortField, sortDir, statusFilter, heldOnly, genreFilter]);
 
-  const outOfStockCount = books.filter(b => b.stock_status === 'OUT_OF_STOCK' || b.stock_status === 'Out of Stock' || b.stock_status.toLowerCase().includes('out')).length;
-  const lowStockCount = books.filter(b => b.stock_status === 'LOW_STOCK' || b.stock_status === 'Low Stock' || b.stock_status.toLowerCase().includes('low')).length;
+  const filterActive = statusFilter !== null || heldOnly;
+  const filterLabel = [
+    statusFilter === 'out_of_stock' ? 'Out of stock' : statusFilter === 'low_stock' ? 'Low stock' : null,
+    heldOnly ? 'On hold' : null,
+  ].filter(Boolean).join(' + ');
+
+  const clearFilters = () => {
+    setSearch('');
+    setGenreFilter('All');
+    setStatusFilter(null);
+    setHeldOnly(false);
+  };
+
+  const outOfStockCount = books.filter(b => b.stock_status === 'out_of_stock').length;
+  const lowStockCount = books.filter(b => b.stock_status === 'low_stock').length;
+  const heldCount = books.reduce((n, b) => n + b.reserved_count, 0);
+  const expiredCount = orders.filter(o => o.status === 'expired' || (o.status === 'pending' && isPastDeadline(o.hold_expires_at))).length;
+
+  const tiles: { id: 'out_of_stock' | 'low_stock' | 'held' | 'expired', className: string, icon: React.ReactNode, count: number, label: string, hint: string, active: boolean }[] = [
+    { id: 'out_of_stock', className: 'out-of-stock', icon: <AlertCircle size={22} />, count: outOfStockCount, label: 'Out of stock', hint: 'Reorder or offer a special order', active: statusFilter === 'out_of_stock' },
+    { id: 'low_stock', className: 'low-stock', icon: <AlertTriangle size={22} />, count: lowStockCount, label: 'Low stock', hint: 'Sell-through risk this week', active: statusFilter === 'low_stock' },
+    { id: 'held', className: 'held', icon: <Bookmark size={22} />, count: heldCount, label: 'Copies on hold', hint: 'Reserved, not on the shelf', active: heldOnly },
+    { id: 'expired', className: 'expired', icon: <Clock size={22} />, count: expiredCount, label: 'Holds past 48h', hint: 'Release them back to stock', active: false },
+  ];
+
+  const handleTileClick = async (id: 'out_of_stock' | 'low_stock' | 'held' | 'expired') => {
+    if (id === 'expired') {
+      if (expiredCount === 0) return;
+      const res = await client.POST("/api/orders/release-expired", {});
+      if (res.data) {
+        alert(`Released ${res.data.released_count} expired holds.`);
+        fetchOrders();
+        fetchBooks();
+      }
+      return;
+    }
+    if (id === 'held') {
+      setHeldOnly(h => !h);
+      return;
+    }
+    setStatusFilter(f => f === id ? null : id);
+  };
 
   const startEdit = (book: Book) => {
     setEditingIsbn(book.isbn);
@@ -155,54 +207,60 @@ export function Inventory() {
     }
   };
 
+  const statusLabel = (b: Book) => {
+    if (b.stock_status === 'out_of_stock') return 'Out of stock';
+    if (b.stock_status === 'low_stock') return b.available_count === 1 ? 'Only 1 left' : `Only ${b.available_count} left`;
+    return 'In stock';
+  };
+
+  const sortArrow = (field: SortField) => sortField === field ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+
   return (
     <div className="inventory-page">
-      <div className="alerts-summary">
-        <button type="button" className="alert-card out-of-stock" onClick={() => setStatusFilter(statuses.find(s => s.toLowerCase().includes('out')) || 'All')}>
-          <AlertCircle size={24} />
-          <div className="alert-text">
-            <span className="alert-count">{outOfStockCount}</span>
-            <span className="alert-label">Out of Stock</span>
-          </div>
-        </button>
-        <button type="button" className="alert-card low-stock" onClick={() => setStatusFilter(statuses.find(s => s.toLowerCase().includes('low')) || 'All')}>
-          <AlertTriangle size={24} />
-          <div className="alert-text">
-            <span className="alert-count">{lowStockCount}</span>
-            <span className="alert-label">Low Stock</span>
-          </div>
-        </button>
-      </div>
-
-
-      <div className="filters-bar" style={{ marginBottom: '1rem', background: '#e3f2fd', border: '1px solid #90caf9' }}>
-        <form onSubmit={handleAddBook} style={{ display: 'flex', gap: '1rem', alignItems: 'center', width: '100%' }}>
-          <strong>Add New Book:</strong>
-          <input 
-            type="text" 
-            placeholder="Scan or enter ISBN..." 
-            value={newIsbn} 
+      <div className="inventory-header">
+        <div>
+          <h1>Inventory</h1>
+          <p className="inventory-subtitle">{books.length} titles on file · counted live against holds</p>
+        </div>
+        <form onSubmit={handleAddBook} className="isbn-form">
+          <input
+            type="text"
+            placeholder="Scan ISBN to add…"
+            value={newIsbn}
             onChange={e => setNewIsbn(e.target.value)}
-            style={{ padding: '0.5rem', flex: 1 }}
+            className="isbn-input"
           />
-          <button type="submit" disabled={isAdding} style={{ padding: '0.5rem 1rem', background: '#0d47a1', color: 'white', border: 'none', borderRadius: '4px' }}>
-            {isAdding ? "Fetching..." : "Fetch from OpenLibrary"}
+          <button type="submit" disabled={isAdding} className="isbn-submit">
+            {isAdding ? "Looking up…" : "Look up"}
           </button>
-          {addError && <span style={{ color: 'red' }}>{addError}</span>}
         </form>
+      </div>
+      {addError && <p className="isbn-error">{addError}</p>}
+
+      <div className="alerts-summary">
+        {tiles.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            className={`alert-card ${t.className}`}
+            aria-pressed={t.id === 'expired' ? undefined : t.active}
+            onClick={() => handleTileClick(t.id)}
+          >
+            <div className="alert-top">
+              {t.icon}
+              {t.count > 0 && <span className="alert-dot" />}
+            </div>
+            <span className="alert-count">{t.count}</span>
+            <span className="alert-label">{t.label}</span>
+            <span className="alert-hint">{t.hint}</span>
+          </button>
+        ))}
       </div>
 
       <div className="filters-bar filters-bar--controls">
-
         <div className="search-box">
           <Search size={18} />
           <input type="text" placeholder="Search title or author..." value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-        <div className="filter-group">
-          <label>Status:</label>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
         </div>
         <div className="filter-group">
           <label>Genre:</label>
@@ -210,32 +268,41 @@ export function Inventory() {
             {genres.map(g => <option key={g} value={g}>{g}</option>)}
           </select>
         </div>
+        {filterActive && (
+          <button type="button" className="filter-chip" onClick={clearFilters}>
+            {filterLabel} ✕
+          </button>
+        )}
+        <span className="shown-count">{filteredBooks.length} shown</span>
       </div>
 
       <div className="table-container">
         <table className="inventory-table">
           <thead>
             <tr>
-              <th onClick={() => handleSort('title')}>Title {sortField === 'title' && (sortDir === 'asc' ? '↑' : '↓')}</th>
-              <th onClick={() => handleSort('author')}>Author {sortField === 'author' && (sortDir === 'asc' ? '↑' : '↓')}</th>
+              <th><button type="button" className="sort-btn" onClick={() => handleSort('title')}>Title{sortArrow('title')}</button></th>
+              <th>ISBN</th>
               <th>Genre</th>
-              <th onClick={() => handleSort('stock_count')}>Stock {sortField === 'stock_count' && (sortDir === 'asc' ? '↑' : '↓')}</th>
-              <th>Available</th>
-              <th>Reserved</th>
-              <th onClick={() => handleSort('stock_status')}>Status {sortField === 'stock_status' && (sortDir === 'asc' ? '↑' : '↓')}</th>
+              <th><button type="button" className="sort-btn" onClick={() => handleSort('stock_count')}>On hand{sortArrow('stock_count')}</button></th>
+              <th><button type="button" className="sort-btn" onClick={() => handleSort('available_count')}>Avail{sortArrow('available_count')}</button></th>
+              <th>Held</th>
+              <th>Status</th>
               <th>Price</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredBooks.map(b => (
-              <tr key={b.isbn} className={`status-${b.stock_status.toLowerCase().replace(/\s+/g, '-')}`}>
-                <td>{b.title}</td>
-                <td>{b.author}</td>
+              <tr key={b.isbn} className={`status-${b.stock_status.replace(/_/g, '-')}`}>
+                <td>
+                  <div className="title-cell">{b.title}</div>
+                  <div className="author-cell">{b.author}</div>
+                </td>
+                <td className="isbn-cell">{b.isbn}</td>
                 <td>{b.genre}</td>
                 <td>
                   {editingIsbn === b.isbn ? (
-                    <input type="number" value={editStockValue} onChange={e => setEditStockValue(e.target.value)} style={{ width: '60px' }} />
+                    <input type="number" value={editStockValue} onChange={e => setEditStockValue(e.target.value)} className="edit-stock-input" />
                   ) : (
                     b.stock_count
                   )}
@@ -243,8 +310,8 @@ export function Inventory() {
                 <td>{b.available_count}</td>
                 <td>{b.reserved_count}</td>
                 <td>
-                  <span className={`status-badge ${b.stock_status.toLowerCase().replace(/\s+/g, '-')}`}>
-                    {b.stock_status}
+                  <span className={`status-badge ${b.stock_status.replace(/_/g, '-')}`}>
+                    {statusLabel(b)}
                   </span>
                 </td>
                 <td>${(b.price_cents / 100).toFixed(2)}</td>
@@ -255,13 +322,20 @@ export function Inventory() {
                       <button onClick={cancelEdit} title="Cancel"><X size={16} /></button>
                     </div>
                   ) : (
-                    <button onClick={() => startEdit(b)} title="Edit Stock"><Edit2 size={16} /></button>
+                    <button onClick={() => startEdit(b)} title="Adjust count"><Edit2 size={16} /></button>
                   )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {filteredBooks.length === 0 && (
+          <div className="empty-state">
+            <div className="empty-title">Nothing on that shelf</div>
+            <div className="empty-hint">No titles match what you typed. Try the author's surname.</div>
+            <button type="button" className="empty-clear" onClick={clearFilters}>Clear filters</button>
+          </div>
+        )}
       </div>
     </div>
   );

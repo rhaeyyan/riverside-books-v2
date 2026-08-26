@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Any
 
 from psycopg import Connection
@@ -26,6 +27,9 @@ from backend.config import settings
 logger = logging.getLogger(__name__)
 
 _pool: ConnectionPool | None = None
+_current_conn: ContextVar[Connection | None] = ContextVar(
+    "_current_conn", default=None
+)
 
 
 def get_pool() -> ConnectionPool:
@@ -66,7 +70,29 @@ def close_pool() -> None:
 
 
 @contextmanager
-def transaction() -> Iterator[Connection]:
+def set_current_connection(conn: Connection | None) -> Iterator[None]:
+    """Set the active connection for the current context (e.g. test isolation).
+
+    Args:
+        conn: The psycopg connection to use for queries, or None to clear.
+
+    Yields:
+        None.
+    """
+    token = _current_conn.set(conn)
+    try:
+        yield
+    finally:
+        _current_conn.reset(token)
+
+
+def get_current_connection() -> Connection | None:
+    """Return the active connection in the current context, if set."""
+    return _current_conn.get()
+
+
+@contextmanager
+def transaction(conn: Connection | None = None) -> Iterator[Connection]:
     """Run a block inside a single database transaction.
 
     Every write in the repository layer goes through this. psycopg commits when
@@ -77,18 +103,79 @@ def transaction() -> Iterator[Connection]:
     Reads use this too. A multi-statement read that spans a concurrent write
     would otherwise see two different versions of the store's stock, which is
     exactly the divergence §5.1 exists to prevent.
+
+    Args:
+        conn: Optional specific Connection. If omitted, uses the scoped
+            connection if set, or checks out a connection from the pool.
+
+    Yields:
+        The active Connection for this transaction.
     """
-    with get_pool().connection() as conn, conn.transaction():
-        yield conn
+    active_conn = conn or _current_conn.get()
+    if active_conn is not None:
+        with active_conn.transaction():
+            yield active_conn
+    else:
+        with get_pool().connection() as pool_conn, pool_conn.transaction():
+            yield pool_conn
 
 
-def fetch_one(sql: str, params: Any = None) -> dict[str, Any] | None:
-    """Run a single read returning at most one row."""
-    with get_pool().connection() as conn:
-        return conn.execute(sql, params).fetchone()
+def fetch_one(
+    sql: str, params: Any = None, conn: Connection | None = None
+) -> dict[str, Any] | None:
+    """Run a single read returning at most one row.
+
+    Args:
+        sql: SQL query string to execute.
+        params: Parameters to substitute into query.
+        conn: Optional specific Connection. If omitted, uses scoped connection
+            or pool.
+
+    Returns:
+        Dict of row columns if found, None otherwise.
+    """
+    active_conn = conn or _current_conn.get()
+    if active_conn is not None:
+        return active_conn.execute(sql, params).fetchone()
+    with get_pool().connection() as pool_conn:
+        return pool_conn.execute(sql, params).fetchone()
 
 
-def fetch_all(sql: str, params: Any = None) -> list[dict[str, Any]]:
-    """Run a single read returning every matching row."""
-    with get_pool().connection() as conn:
-        return conn.execute(sql, params).fetchall()
+def fetch_all(
+    sql: str, params: Any = None, conn: Connection | None = None
+) -> list[dict[str, Any]]:
+    """Run a single read returning every matching row.
+
+    Args:
+        sql: SQL query string to execute.
+        params: Parameters to substitute into query.
+        conn: Optional specific Connection. If omitted, uses scoped connection
+            or pool.
+
+    Returns:
+        List of dicts representing matching rows.
+    """
+    active_conn = conn or _current_conn.get()
+    if active_conn is not None:
+        return active_conn.execute(sql, params).fetchall()
+    with get_pool().connection() as pool_conn:
+        return pool_conn.execute(sql, params).fetchall()
+
+
+def execute(
+    sql: str, params: Any = None, conn: Connection | None = None
+) -> None:
+    """Execute a single statement without returning rows.
+
+    Args:
+        sql: SQL statement to execute.
+        params: Parameters to substitute into statement.
+        conn: Optional specific Connection. If omitted, uses scoped connection
+            or pool.
+    """
+    active_conn = conn or _current_conn.get()
+    if active_conn is not None:
+        active_conn.execute(sql, params)
+    else:
+        with get_pool().connection() as pool_conn:
+            pool_conn.execute(sql, params)

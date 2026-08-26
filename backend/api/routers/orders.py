@@ -5,6 +5,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from backend.api.core import db
 from backend.api.core.repositories import (
     BookRepository,
     CustomerRepository,
@@ -84,12 +85,11 @@ def create_order(
         notes=payload.notes or "",
     )
 
-    created_order = order_repo.create(order)
-
-    for item in items:
-        book_repo.adjust_reserved_count(item.isbn, item.quantity)
-
-    return created_order
+    with db.transaction():
+        created_order = order_repo.create(order)
+        for item in items:
+            book_repo.adjust_reserved_count(item.isbn, item.quantity)
+        return created_order
 
 
 @router.get(
@@ -131,40 +131,40 @@ def update_order_status(
             detail=f"Invalid transition from {current_status} to {new_status}",
         )
 
-    # Process completion
-    if new_status == "completed":
-        customer = customer_repo.get_by_id(order.customer_id)
-        if not customer:
-            raise HTTPException(status_code=404, detail="Customer not found")
+    with db.transaction():
+        # Process completion
+        if new_status == "completed":
+            customer = customer_repo.get_by_id(order.customer_id)
+            if not customer:
+                raise HTTPException(status_code=404, detail="Customer not found")
 
-        # Completing an order decrements both reserved_count and stock_count.
-        # This runs before the stamps write below so a rejected stock update
-        # (e.g. stale reserved_count data) never leaves stamps granted for an
-        # order that didn't actually complete.
-        for item in order.items:
-            book = book_repo.get_by_isbn(item.isbn)
-            if book:
-                book_repo.update_stock(book.isbn, book.stock_count - item.quantity)
-                book_repo.adjust_reserved_count(book.isbn, -item.quantity)
+            # Completing an order decrements both reserved_count and stock_count.
+            # Decrement reserved_count first so constraint:
+            # (reserved_count between 0 and stock_count) is never violated.
+            for item in order.items:
+                book = book_repo.get_by_isbn(item.isbn)
+                if book:
+                    book_repo.adjust_reserved_count(book.isbn, -item.quantity)
+                    book_repo.update_stock(book.isbn, book.stock_count - item.quantity)
 
-        total_books = sum(item.quantity for item in order.items)
-        new_stamps = customer.stamps + total_books
-        rewards_earned = new_stamps // 10
-        remaining_stamps = new_stamps % 10
+            total_books = sum(item.quantity for item in order.items)
+            new_stamps = customer.stamps + total_books
+            rewards_earned = new_stamps // 10
+            remaining_stamps = new_stamps % 10
 
-        customer_repo.update_loyalty(
-            customer.customer_id,
-            remaining_stamps,
-            customer.rewards_available + rewards_earned,
-        )
+            customer_repo.update_loyalty(
+                customer.customer_id,
+                remaining_stamps,
+                customer.rewards_available + rewards_earned,
+            )
 
-    elif new_status == "cancelled":
-        # cancelling an order releases the reservation immediately
-        for item in order.items:
-            book_repo.adjust_reserved_count(item.isbn, -item.quantity)
+        elif new_status == "cancelled":
+            # cancelling an order releases the reservation immediately
+            for item in order.items:
+                book_repo.adjust_reserved_count(item.isbn, -item.quantity)
 
-    updated_order = order_repo.update_status(order_id, new_status)
-    return updated_order
+        updated_order = order_repo.update_status(order_id, new_status)
+        return updated_order
 
 
 class ReleaseExpiredResponse(BaseModel):

@@ -1,36 +1,21 @@
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
+from psycopg import Connection
 
-from backend.api.core.datastore import JsonDatastore
+from backend.api.core import db
 from backend.api.core.repositories import BookRepository, EventRepository
 from backend.api.deps import get_book_repo, get_event_repo
 from backend.api.main import app
 
-MOCK_DATA_DIR = Path(__file__).parent.parent / "mock_data"
+
+@pytest.fixture
+def book_repo(db_connection: Connection) -> BookRepository:
+    return BookRepository()
 
 
 @pytest.fixture
-def datastore(tmp_path: Path) -> JsonDatastore:
-    for seed_file in ["inventory.json", "events.json"]:
-        source = MOCK_DATA_DIR / seed_file
-        dest = tmp_path / seed_file
-        if source.exists():
-            dest.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
-        else:
-            dest.write_text("[]", encoding="utf-8")
-    return JsonDatastore(data_dir=tmp_path)
-
-
-@pytest.fixture
-def book_repo(datastore: JsonDatastore) -> BookRepository:
-    return BookRepository(datastore=datastore)
-
-
-@pytest.fixture
-def event_repo(datastore: JsonDatastore) -> EventRepository:
-    return EventRepository(datastore=datastore)
+def event_repo(db_connection: Connection) -> EventRepository:
+    return EventRepository()
 
 
 @pytest.fixture
@@ -76,12 +61,7 @@ def test_all_three_tones_differ(client: TestClient, book_repo):
 
 def test_empty_blurb(client: TestClient, book_repo):
     book = book_repo.get_all()[0]
-    # Set blurb to empty
-    # We can do this directly in repo for test
-    with book_repo.datastore.get_lock(book_repo.collection_name):
-        data = book_repo.datastore.load(book_repo.collection_name)
-        data[0]["blurb"] = ""
-        book_repo.datastore.save(book_repo.collection_name, data)
+    db.execute("UPDATE books SET blurb = '' WHERE isbn = %s", (book.isbn,))
 
     r = client.post(
         "/api/marketing/generate",
@@ -100,10 +80,7 @@ def test_empty_blurb(client: TestClient, book_repo):
 
 def test_caption_under_280_chars(client: TestClient, book_repo):
     book = book_repo.get_all()[0]
-    with book_repo.datastore.get_lock(book_repo.collection_name):
-        data = book_repo.datastore.load(book_repo.collection_name)
-        data[0]["blurb"] = "A " * 300  # Extremely long blurb
-        book_repo.datastore.save(book_repo.collection_name, data)
+    db.execute("UPDATE books SET blurb = %s WHERE isbn = %s", ("A " * 300, book.isbn))
 
     r = client.post(
         "/api/marketing/generate",
@@ -121,11 +98,10 @@ def test_caption_under_280_chars(client: TestClient, book_repo):
 
 def test_out_of_stock_no_stock_template(client: TestClient, book_repo):
     book = book_repo.get_all()[0]
-    with book_repo.datastore.get_lock(book_repo.collection_name):
-        data = book_repo.datastore.load(book_repo.collection_name)
-        data[0]["stock_count"] = 0
-        data[0]["reserved_count"] = 0
-        book_repo.datastore.save(book_repo.collection_name, data)
+    db.execute(
+        "UPDATE books SET stock_count = 0, reserved_count = 0 WHERE isbn = %s",
+        (book.isbn,),
+    )
 
     # Tone 'cozy' has a requires_stock template at index 1
     # Without stock, variant 1 should wrap around to index 0, NOT use index 1
@@ -155,12 +131,11 @@ def test_out_of_stock_no_stock_template(client: TestClient, book_repo):
 
 def test_sold_out_event_waitlist(client: TestClient, event_repo):
     events = event_repo.get_all()
-    # Find or make a sold out event
     event = events[0]
-    with event_repo.datastore.get_lock(event_repo.collection_name):
-        data = event_repo.datastore.load(event_repo.collection_name)
-        data[0]["tickets_sold"] = data[0]["capacity"]
-        event_repo.datastore.save(event_repo.collection_name, data)
+    db.execute(
+        "UPDATE events SET tickets_sold = capacity WHERE event_id = %s",
+        (event.event_id,),
+    )
 
     r = client.post(
         "/api/marketing/generate",

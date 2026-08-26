@@ -4,6 +4,7 @@ import { client } from '../api/client';
 import { formatMoney } from '../utils/format';
 import type { components } from '../api/types';
 import { Search, Clock, Calendar, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
+import './MyOrders.css';
 
 type Order = components["schemas"]["Order"];
 
@@ -74,56 +75,162 @@ export default function MyOrders() {
   };
 
   return (
-    <div style={{ maxWidth: '720px', margin: '0 auto', paddingTop: '12px' }}>
-      <h1 style={{ fontFamily: 'var(--heading)', fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: 500, color: 'var(--text-h)', margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-        My Holds & Orders
-      </h1>
-      <p style={{ fontSize: '15.5px', color: '#6c6155', margin: '0 0 24px', lineHeight: 1.5 }}>
-        Look up your reservations and holds using the phone number you provided.
-      </p>
+    <div>
+      <section className="myorders-hero">
+        <div className="myorders-hero-copy">
+          <p className="myorders-eyebrow">Reserved books, held at the register</p>
+          <h1 className="myorders-title">
+            My Holds & Orders
+          </h1>
+          <p className="myorders-subtitle">
+            Look up your reservations and holds using the phone number you provided.
+          </p>
 
-      <form onSubmit={fetchOrders} style={{ display: 'flex', gap: '10px', marginBottom: '28px', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1', minWidth: '220px', position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <Search size={18} style={{ position: 'absolute', left: '14px', color: '#8a7e6f' }} />
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="e.g. (845) 555-0142"
-            aria-label="Phone number"
-            required
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              padding: '12px 14px 12px 42px',
-              border: '1px solid var(--border)',
-              borderRadius: '8px',
-              background: 'var(--bg-raised)',
-              fontSize: '15px',
-              fontFamily: 'var(--mono)',
-              color: 'var(--text-h)',
-              minHeight: '44px'
-            }}
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="search-submit-btn"
-          style={{ minHeight: '44px' }}
-        >
-          {loading ? "Looking up..." : "Find My Holds"}
-        </button>
-      </form>
+          <form onSubmit={fetchOrders} className="myorders-lookup-form">
+            <div className="myorders-input-wrapper">
+              <Search size={18} className="myorders-search-icon" aria-hidden="true" />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="e.g. (845) 555-0142"
+                aria-label="Phone number"
+                required
+                className="myorders-phone-input"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="search-submit-btn"
+            >
+              {loading ? "Looking up..." : "Find My Holds"}
+            </button>
+          </form>
 
-      {error && (
-        <div style={{ padding: '14px 16px', background: 'var(--status-out-bg)', border: '1px solid var(--status-out)', borderRadius: '8px', color: 'var(--status-out)', fontSize: '14px', marginBottom: '24px' }} role="alert">
-          {error}
+          {error && (
+            <div style={{ padding: '14px 16px', background: 'var(--status-out-bg)', border: '1px solid var(--status-out)', borderRadius: '8px', color: 'var(--status-out)', fontSize: '14px', marginBottom: '24px' }} role="alert">
+              {error}
+            </div>
+          )}
         </div>
-      )}
+
+        <div className="myorders-hero-art">
+          <svg
+            viewBox="0 0 400 400"
+            preserveAspectRatio="xMidYMid slice"
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient id="ordersBgv" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#3d1f4d" />
+                <stop offset="1" stopColor="#241030" />
+              </linearGradient>
+              <linearGradient id="ordersSpineA" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#c14a38" />
+                <stop offset="1" stopColor="#8a2f22" />
+              </linearGradient>
+              <linearGradient id="ordersSpineB" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#e2a355" />
+                <stop offset="1" stopColor="#b9782f" />
+              </linearGradient>
+              <linearGradient id="ordersSpineC" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#3d8c7c" />
+                <stop offset="1" stopColor="#20574c" />
+              </linearGradient>
+            </defs>
+
+            <rect width="400" height="400" fill="url(#ordersBgv)" />
+
+            <g stroke="#fbf7f0" strokeOpacity="0.05">
+              <path d="M 200 -20 L 520 460" />
+              <path d="M 120 -20 L 440 460" />
+              <path d="M 280 -20 L 600 460" />
+              <path d="M 40 -20 L 360 460" />
+            </g>
+
+            {/* Reserved shelf cubbies — one slot pulled and tagged for a hold */}
+            <g>
+              <rect x="40" y="56" width="326" height="6" fill="#fbf7f0" opacity="0.45" />
+              <rect x="40" y="56" width="6" height="164" fill="#fbf7f0" opacity="0.45" />
+              <rect x="120" y="56" width="6" height="164" fill="#fbf7f0" opacity="0.45" />
+              <rect x="200" y="56" width="6" height="164" fill="#fbf7f0" opacity="0.45" />
+              <rect x="280" y="56" width="6" height="164" fill="#fbf7f0" opacity="0.45" />
+              <rect x="360" y="56" width="6" height="164" fill="#fbf7f0" opacity="0.45" />
+
+              <rect x="52" y="86" width="62" height="120" rx="2" fill="url(#ordersSpineC)" opacity="0.85" />
+              <rect x="132" y="72" width="62" height="134" rx="2" fill="url(#ordersSpineA)" opacity="0.85" />
+
+              {/* Empty slot — the held title has already been pulled */}
+              <rect x="214" y="78" width="58" height="128" rx="2" fill="none" stroke="#fbf7f0" strokeOpacity="0.3" strokeDasharray="5 5" />
+              <path d="M 243 78 L 243 58" stroke="#fbf7f0" strokeOpacity="0.5" strokeWidth="1.5" />
+              <rect x="228" y="38" width="30" height="20" rx="3" fill="url(#ordersSpineB)" />
+              <circle cx="243" cy="48" r="2.2" fill="#241030" opacity="0.5" />
+
+              <rect x="292" y="80" width="62" height="126" rx="2" fill="url(#ordersSpineB)" opacity="0.85" />
+
+              <rect x="40" y="220" width="326" height="7" fill="#e2a355" opacity="0.85" />
+              <rect x="40" y="227" width="326" height="10" fill="#000000" opacity="0.22" />
+            </g>
+
+            {/* Register counter with the held book waiting, tagged */}
+            <g>
+              <rect x="0" y="252" width="400" height="148" fill="url(#ordersSpineB)" opacity="0.94" />
+              <rect x="0" y="252" width="400" height="8" fill="#fbf7f0" opacity="0.22" />
+
+              <g transform="rotate(-7 210 320)">
+                <rect x="150" y="296" width="118" height="16" rx="3" fill="#fbf7f0" opacity="0.85" />
+                <rect x="150" y="278" width="118" height="30" rx="4" fill="url(#ordersSpineA)" />
+                <rect x="162" y="288" width="60" height="4" fill="#fbf7f0" opacity="0.4" />
+              </g>
+
+              <path d="M 268 280 Q 292 258 288 236" fill="none" stroke="#241030" strokeOpacity="0.35" strokeWidth="2" />
+              <circle cx="286" cy="228" r="16" fill="url(#ordersSpineC)" stroke="#fbf7f0" strokeOpacity="0.5" strokeWidth="1.5" />
+              <circle cx="286" cy="228" r="2" fill="#fbf7f0" />
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <section className="myorders-rule" aria-label="How holds work at Riverside Books">
+        <div className="rule-item">
+          <div className="rule-number" aria-hidden="true">01</div>
+          <h2 className="rule-title">Held 48 hours</h2>
+          <p className="rule-desc">
+            Every hold shows the exact date and time it expires at the register, right on the order below.
+          </p>
+        </div>
+        <div className="rule-item">
+          <div className="rule-number" aria-hidden="true">02</div>
+          <h2 className="rule-title">Tracked in real time</h2>
+          <p className="rule-desc">
+            Pending, ready for pickup, completed, or cancelled — each order shows the same status the register sees.
+          </p>
+        </div>
+        <div className="rule-item">
+          <div className="rule-number" aria-hidden="true">03</div>
+          <h2 className="rule-title">Cancel anytime, online</h2>
+          <p className="rule-desc">
+            Changed your mind? Cancel a pending or ready hold right from this page — no call needed.
+          </p>
+        </div>
+      </section>
+
+      <section className="myorders-promo">
+        <div className="myorders-promo-inner">
+          <p className="myorders-promo-eyebrow">The reader card</p>
+          <h2 className="myorders-promo-title">Ten stamps, and the eleventh book is on us.</h2>
+          <p className="myorders-promo-desc">
+            Earn 1 stamp for every book purchased. Collect 10 stamps to earn a free paperback of your choice!
+          </p>
+          <Link to="/loyalty" className="myorders-promo-cta">
+            See my stamp card
+          </Link>
+        </div>
+      </section>
 
       {orders && (
-        <div role="status" aria-live="polite">
+        <div className="myorders-results" role="status" aria-live="polite">
           {orders.length === 0 ? (
             <div className="empty-state" style={{ margin: '20px 0' }}>
               <BookOpen size={40} className="empty-state-icon" aria-hidden="true" />

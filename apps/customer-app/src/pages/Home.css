@@ -14,12 +14,6 @@
   margin: 0 0 10px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .browse-eyebrow {
-    color: #9e9180;
-  }
-}
-
 .browse-title {
   font-family: var(--heading);
   font-size: clamp(32px, 5vw, 46px);
@@ -37,12 +31,6 @@
   line-height: 1.5;
   color: #6c6155;
   max-width: 520px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .browse-subtitle {
-    color: #9e9180;
-  }
 }
 
 .search-section {
@@ -281,24 +269,12 @@
   position: relative;
 }
 
-@media (prefers-color-scheme: dark) {
-  .book-cover-fallback {
-    background: linear-gradient(145deg, #2b251e 0%, #201a14 100%);
-  }
-}
-
 .book-fallback-initial {
   font-family: var(--heading);
   font-size: 52px;
   font-weight: 600;
   color: rgba(36, 29, 22, 0.16);
   line-height: 1;
-}
-
-@media (prefers-color-scheme: dark) {
-  .book-fallback-initial {
-    color: rgba(242, 236, 226, 0.16);
-  }
 }
 
 .book-fallback-isbn {
@@ -311,12 +287,6 @@
   letter-spacing: 0.04em;
   color: rgba(36, 29, 22, 0.38);
   text-transform: uppercase;
-}
-
-@media (prefers-color-scheme: dark) {
-  .book-fallback-isbn {
-    color: rgba(242, 236, 226, 0.38);
-  }
 }
 
 .book-card-info {
@@ -342,12 +312,6 @@
   font-size: 13px;
   color: #6c6155;
   margin: 0 0 10px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .book-author {
-    color: #9e9180;
-  }
 }
 
 .book-card-footer {
@@ -425,12 +389,6 @@
   margin: 0 auto 20px;
   max-width: 420px;
   line-height: 1.5;
-}
-
-@media (prefers-color-scheme: dark) {
-  .empty-state-desc {
-    color: #9e9180;
-  }
 }
 
 .empty-state-actions {

@@ -1,8 +1,8 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 .layout {
@@ -12,8 +12,8 @@ body {
 
 .sidebar {
   width: 250px;
-  background: #1e293b;
-  color: white;
+  background: var(--ink);
+  color: var(--ink-text);
   display: flex;
   flex-direction: column;
 }
@@ -22,7 +22,9 @@ body {
   padding: 24px;
   font-size: 20px;
   font-weight: bold;
-  border-bottom: 1px solid #334155;
+  /* No dedicated muted-ink-border token; this rgba mirrors --ink-text at
+     reduced opacity, matching the divider treatment in the approved mockup. */
+  border-bottom: 1px solid rgba(251, 247, 240, 0.12);
 }
 
 .nav-links {
@@ -36,14 +38,14 @@ body {
   align-items: center;
   gap: 12px;
   padding: 12px 24px;
-  color: #cbd5e1;
+  color: color-mix(in srgb, var(--ink-text) 72%, transparent);
   text-decoration: none;
   transition: background 0.2s;
 }
 
 .nav-link:hover, .nav-link.active {
-  background: #334155;
-  color: white;
+  background: var(--ink-hover);
+  color: var(--ink-text);
 }
 
 .content {

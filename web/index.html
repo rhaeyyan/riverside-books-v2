@@ -4,142 +4,238 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Riverside Books</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
   <style>
     :root {
-      --bg: #fff;
-      --ink: #1a1a1a;
-      --muted: #666;
-      --border: #e2e2e2;
-      --accent: #007bff;
-      --accent-bg: #eef5ff;
+      --bg: #fbf7f0;
+      --ink: #2f1739;
+      --ink-text: #fbf7f0;
+      --accent: #a63d2f;
+      --accent-hover: #8a3226;
+      --amber: #d1893c;
+      --text: #4a4038;
+      --muted: #6c6155;
+      --muted-2: #756a5c;
+      --border: #e6ddd0;
+      --border-2: #ddd2c2;
+      --code-bg: #f4efe6;
+      --bg-raised: #ffffff;
+      --heading: 'Fraunces', Georgia, serif;
+      --sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
-      color: var(--ink);
+      color: var(--text);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
     }
 
-    .wrap {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 4rem 1.5rem 3rem;
+    a { color: var(--accent); }
+    a:hover { color: var(--accent-hover); }
+
+    .nav-link { color: var(--text); text-decoration: none; transition: color .15s ease; }
+    .nav-link:hover { color: var(--accent); }
+
+    .btn-primary { background: var(--accent); color: var(--ink-text); transition: background-color .15s ease; }
+    .btn-primary:hover { background-color: var(--accent-hover); }
+
+    .btn-cream { background: var(--ink-text); color: var(--accent); transition: background-color .15s ease, color .15s ease; }
+    .btn-cream:hover { background-color: #fff; color: var(--accent-hover); }
+
+    .quiet-link { color: var(--ink-text); border-bottom: 1px solid rgba(251, 247, 240, .4); transition: border-color .15s ease; }
+    .quiet-link:hover { border-color: var(--ink-text); }
+
+    .footer-link { color: var(--muted-2); border-bottom: 1px solid var(--border-2); transition: color .15s ease, border-color .15s ease; }
+    .footer-link:hover { color: var(--ink); border-color: var(--ink); }
+
+    @media (prefers-reduced-motion: reduce) {
+      a, .nav-link, .btn-primary, .btn-cream, .quiet-link, .footer-link { transition: none; }
     }
 
-    header {
-      margin-bottom: 2.5rem;
-    }
+    .hero-title { font-size: clamp(40px, 7.5vw, 84px); }
+    .band-title { font-size: clamp(30px, 5vw, 52px); }
 
-    h1 {
-      font-size: 2rem;
-      margin: 0 0 0.5rem;
-    }
-
-    header p {
-      color: var(--muted);
-      font-size: 1.05rem;
-      margin: 0;
-      max-width: 52ch;
-    }
-
-    .cards {
+    .rule {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0 40px;
     }
-
-    a.card {
-      display: block;
-      padding: 1.25rem 1.4rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      text-decoration: none;
-      color: inherit;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    .talkers {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px;
     }
+    .hero-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
 
-    a.card:hover,
-    a.card:focus-visible {
-      border-color: var(--accent);
-      box-shadow: 0 2px 10px rgba(0, 123, 255, 0.12);
-      outline: none;
+    @media (max-width: 900px) {
+      .rule { grid-template-columns: 1fr; gap: 0; }
     }
-
-    a.card .eyebrow {
-      display: inline-block;
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--accent);
-      background: var(--accent-bg);
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      margin-bottom: 0.6rem;
+    @media (max-width: 760px) {
+      .hero-grid { grid-template-columns: 1fr; grid-template-rows: 200px auto; }
+      .hero-copy { padding-top: 36px !important; }
     }
-
-    a.card h2 {
-      margin: 0 0 0.35rem;
-      font-size: 1.15rem;
-      color: var(--ink);
-    }
-
-    a.card p {
-      margin: 0;
-      font-size: 0.92rem;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-
-    footer {
-      margin-top: 2.5rem;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-
-    footer a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
+    @media (max-width: 680px) {
+      .talkers { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Riverside Books</h1>
-      <p>One store, one backend, two apps. Pick where you're working.</p>
-    </header>
+<div style="min-height: 100vh; display: flex; flex-direction: column">
 
-    <div class="cards">
-      <a class="card" href="/shop/">
-        <span class="eyebrow">Customers</span>
-        <h2>Storefront</h2>
-        <p>Search the catalog, place a 48-hour hold, check your loyalty stamps, or ask the chatbot a question.</p>
-      </a>
-
-      <a class="card" href="/staff/">
-        <span class="eyebrow">Staff</span>
-        <h2>Staff Dashboard</h2>
-        <p>Live inventory, the pre-order board, the message inbox, and the marketing caption generator.</p>
-      </a>
-
-      <a class="card" href="/docs">
-        <span class="eyebrow">Reference</span>
-        <h2>API Docs</h2>
-        <p>The shared FastAPI backend both apps run on &mdash; every endpoint, live and interactive.</p>
-      </a>
+  <header style="width: 100%; box-sizing: border-box; padding: 18px 28px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap">
+    <div style="font-family: var(--heading); font-weight: 500; font-size: 21px; color: var(--ink); letter-spacing: -0.3px">Riverside Books</div>
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); white-space: nowrap">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: var(--amber); display: block"></span>Open today until 8 PM
     </div>
+    <nav style="margin-left: auto; display: flex; align-items: center; gap: 20px; font-size: 14px; flex-wrap: wrap">
+      <a href="/shop/" class="nav-link">Browse</a>
+      <a href="/shop/orders" class="nav-link">My holds</a>
+      <a href="/shop/loyalty" class="nav-link">Stamp card</a>
+      <a href="/docs" class="nav-link" style="color: var(--muted-2)">API docs</a>
+    </nav>
+  </header>
 
-    <footer>
-      Local-only demo &middot; one FastAPI process, one JSON data store.
-    </footer>
-  </div>
+  <main>
+  <section class="hero-grid" style="position: relative; width: 100%; min-height: min(70vh, 620px); display: grid; background: var(--ink); overflow: hidden">
+    <div style="position: relative; overflow: hidden; background: #1f0f2b">
+      <svg viewBox="0 0 700 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
+        <defs>
+          <linearGradient id="bgv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d1f4d"/><stop offset="1" stop-color="#241030"/></linearGradient>
+          <linearGradient id="spineA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c14a38"/><stop offset="1" stop-color="#8a2f22"/></linearGradient>
+          <linearGradient id="spineB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2a355"/><stop offset="1" stop-color="#b9782f"/></linearGradient>
+          <linearGradient id="spineC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d8c7c"/><stop offset="1" stop-color="#20574c"/></linearGradient>
+        </defs>
+        <rect width="700" height="800" fill="url(#bgv)"/>
+        <g stroke="#fbf7f0" stroke-opacity="0.05" stroke-width="1">
+          <path d="M 350 -50 L 900 800"/><path d="M 250 -50 L 800 800"/><path d="M 150 -50 L 700 800"/>
+          <path d="M 350 -50 L -200 800"/><path d="M 450 -50 L -100 800"/><path d="M 550 -50 L 0 800"/>
+        </g>
+        <g>
+          <rect x="60" y="150" width="60" height="270" rx="2" fill="url(#spineA)"/>
+          <rect x="60" y="150" width="60" height="8" fill="#fbf7f0" opacity="0.28"/>
+          <rect x="76" y="200" width="28" height="4" fill="#fbf7f0" opacity="0.6"/>
+          <rect x="76" y="214" width="28" height="4" fill="#fbf7f0" opacity="0.35"/>
+          <rect x="126" y="112" width="44" height="308" rx="2" fill="url(#spineB)"/>
+          <rect x="138" y="170" width="20" height="4" fill="#3d1f4d" opacity="0.45"/>
+          <rect x="176" y="186" width="72" height="234" rx="2" fill="url(#spineC)"/>
+          <rect x="196" y="240" width="32" height="4" fill="#e2a355" opacity="0.8"/>
+          <rect x="196" y="254" width="32" height="4" fill="#e2a355" opacity="0.45"/>
+          <rect x="254" y="140" width="38" height="280" rx="2" fill="#fbf7f0" opacity="0.9"/>
+          <rect x="254" y="196" width="38" height="10" fill="#c14a38"/>
+          <g transform="rotate(14 340 420)">
+            <rect x="300" y="176" width="66" height="248" rx="2" fill="url(#spineA)" opacity="0.95"/>
+            <rect x="318" y="230" width="30" height="4" fill="#fbf7f0" opacity="0.55"/>
+          </g>
+          <rect x="398" y="128" width="50" height="292" rx="2" fill="url(#spineB)"/>
+          <rect x="412" y="188" width="22" height="4" fill="#3d1f4d" opacity="0.45"/>
+          <rect x="454" y="168" width="76" height="252" rx="2" fill="url(#spineC)"/>
+          <rect x="476" y="224" width="34" height="4" fill="#e2a355" opacity="0.75"/>
+          <rect x="536" y="146" width="42" height="274" rx="2" fill="#fbf7f0" opacity="0.86"/>
+          <rect x="536" y="204" width="42" height="9" fill="#c14a38" opacity="0.9"/>
+          <rect x="40" y="420" width="580" height="9" fill="#e2a355" opacity="0.9"/>
+          <rect x="40" y="429" width="580" height="16" fill="#000" opacity="0.25"/>
+        </g>
+        <g>
+          <rect x="90" y="530" width="46" height="192" rx="2" fill="url(#spineB)" opacity="0.55"/>
+          <rect x="142" y="556" width="70" height="166" rx="2" fill="url(#spineC)" opacity="0.55"/>
+          <rect x="218" y="516" width="40" height="206" rx="2" fill="#fbf7f0" opacity="0.4"/>
+          <rect x="264" y="548" width="60" height="174" rx="2" fill="url(#spineA)" opacity="0.5"/>
+          <rect x="330" y="524" width="44" height="198" rx="2" fill="url(#spineB)" opacity="0.45"/>
+          <rect x="380" y="560" width="72" height="162" rx="2" fill="url(#spineC)" opacity="0.45"/>
+          <rect x="458" y="536" width="38" height="186" rx="2" fill="#fbf7f0" opacity="0.32"/>
+          <rect x="502" y="552" width="58" height="170" rx="2" fill="url(#spineA)" opacity="0.4"/>
+          <rect x="40" y="722" width="580" height="8" fill="#e2a355" opacity="0.45"/>
+        </g>
+      </svg>
+    </div>
+    <div class="hero-copy" style="position: relative; z-index: 2; align-self: end; padding: 80px 28px 46px; box-sizing: border-box">
+      <div style="font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(251,247,240,.72)">128 Main Street &middot; Beacon, New York</div>
+      <h1 class="hero-title" style="font-family: var(--heading); font-weight: 400; line-height: 0.96; letter-spacing: -0.035em; color: var(--ink-text); margin: 16px 0 0; max-width: 16ch">See what's on the shelf</h1>
+      <div style="display: flex; align-items: center; gap: 24px; margin-top: 30px; flex-wrap: wrap">
+        <a href="/shop/" class="btn-primary" style="font-size: 16px; font-weight: 600; padding: 14px 24px; border-radius: 6px; text-decoration: none; white-space: nowrap">Browse the catalog &rarr;</a>
+        <a href="/shop/orders" class="quiet-link" style="font-size: 15px; font-weight: 500; padding-bottom: 2px; text-decoration: none; white-space: nowrap">Check a hold</a>
+      </div>
+    </div>
+  </section>
+
+  <section style="width: 100%; max-width: 1120px; margin: 0 auto; padding: 64px 28px 8px; box-sizing: border-box">
+    <div class="rule">
+      <div style="border-top: 2px solid var(--ink); padding: 18px 0 30px">
+        <div style="font-family: var(--heading); font-size: 15px; color: var(--amber); letter-spacing: 0.14em">01</div>
+        <h3 style="font-family: var(--heading); font-size: 26px; font-weight: 400; line-height: 1.12; letter-spacing: -0.02em; color: var(--ink); margin: 10px 0 0; max-width: 15ch">Live stock, not a guess</h3>
+        <p style="margin: 10px 0 0; font-size: 15.5px; line-height: 1.6; color: var(--muted); max-width: 32ch">Every title reads in stock, last copies, or out &mdash; the same count the till sees.</p>
+      </div>
+      <div style="border-top: 1px solid var(--border-2); padding: 18px 0 30px">
+        <div style="font-family: var(--heading); font-size: 15px; color: var(--amber); letter-spacing: 0.14em">02</div>
+        <h3 style="font-family: var(--heading); font-size: 26px; font-weight: 400; line-height: 1.12; letter-spacing: -0.02em; color: var(--ink); margin: 10px 0 0; max-width: 15ch">Held 48 hours</h3>
+        <p style="margin: 10px 0 0; font-size: 15.5px; line-height: 1.6; color: var(--muted); max-width: 32ch">Reserve with a phone number. It waits behind the counter with your name on it.</p>
+      </div>
+      <div style="border-top: 1px solid var(--border-2); padding: 18px 0 30px">
+        <div style="font-family: var(--heading); font-size: 15px; color: var(--amber); letter-spacing: 0.14em">03</div>
+        <h3 style="font-family: var(--heading); font-size: 26px; font-weight: 400; line-height: 1.12; letter-spacing: -0.02em; color: var(--ink); margin: 10px 0 0; max-width: 15ch">Ask a bookseller</h3>
+        <p style="margin: 10px 0 0; font-size: 15.5px; line-height: 1.6; color: var(--muted); max-width: 32ch">Hours, events, whether we have it. Answered in the shop's own words, day or night.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="width: 100%; background: var(--accent); color: var(--ink-text); padding: 64px 28px; box-sizing: border-box">
+    <div style="max-width: 1120px; margin: 0 auto">
+      <div style="font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,.86)">The reader card</div>
+      <h2 class="band-title" style="font-family: var(--heading); font-weight: 400; line-height: 1; letter-spacing: -0.03em; margin: 14px 0 0; max-width: 22ch">Ten stamps, and the eleventh book is on us.</h2>
+      <p style="margin: 16px 0 0; font-size: 16.5px; line-height: 1.55; color: rgba(255,255,255,.86); max-width: 46ch">No plastic, no app to install. Your phone number is the card. Stamps land when you collect at the counter.</p>
+      <a href="/shop/loyalty" class="btn-cream" style="display: inline-block; margin-top: 24px; font-size: 15px; font-weight: 600; padding: 13px 22px; border-radius: 6px; text-decoration: none">See my stamp card</a>
+    </div>
+  </section>
+
+  <section style="width: 100%; max-width: 1120px; margin: 0 auto; padding: 64px 28px 16px; box-sizing: border-box">
+    <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 22px">
+      <h2 style="font-family: var(--heading); font-size: 28px; font-weight: 400; letter-spacing: -0.025em; color: var(--ink); margin: 0">What we're pressing on people</h2>
+      <span style="font-size: 13px; color: var(--muted-2)">Handwritten on the shelf this month</span>
+    </div>
+    <div class="talkers">
+      <article style="display: flex; gap: 20px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: 22px">
+        <div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">B</div>
+        <div style="min-width: 0">
+          <div style="font-family: var(--heading); font-size: 19px; font-weight: 500; color: var(--ink); line-height: 1.2">Braiding Sweetgrass</div>
+          <div style="font-size: 13px; color: var(--muted-2); margin-top: 3px">Robin Wall Kimmerer</div>
+          <p style="font-family: var(--heading); font-style: italic; font-size: 16px; line-height: 1.5; color: var(--text); margin: 12px 0 0">I have re-shelved this four times and bought it back twice. Read the strawberry chapter and you'll understand.</p>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 14px">
+            <span style="width: 20px; height: 1px; background: var(--amber); display: block"></span>
+            <span style="font-size: 12px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--amber); font-weight: 600">Nora, floor 2</span>
+          </div>
+        </div>
+      </article>
+      <article style="display: flex; gap: 20px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: 22px">
+        <div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">L</div>
+        <div style="min-width: 0">
+          <div style="font-family: var(--heading); font-size: 19px; font-weight: 500; color: var(--ink); line-height: 1.2">Lessons in Chemistry</div>
+          <div style="font-size: 13px; color: var(--muted-2); margin-top: 3px">Bonnie Garmus</div>
+          <p style="font-family: var(--heading); font-style: italic; font-size: 16px; line-height: 1.5; color: var(--text); margin: 12px 0 0">Funnier than the cover lets on, and angrier. Seven copies out the door last week &mdash; we keep a stack by the register.</p>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 14px">
+            <span style="width: 20px; height: 1px; background: var(--amber); display: block"></span>
+            <span style="font-size: 12px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--amber); font-weight: 600">Ellis, front counter</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+  </main>
+
+  <footer style="margin-top: auto; width: 100%; max-width: 1120px; margin-left: auto; margin-right: auto; padding: 56px 28px 28px; box-sizing: border-box">
+    <div style="border-top: 1px solid var(--border-2); padding-top: 18px; display: flex; align-items: center; gap: 20px; font-size: 13px; color: var(--muted-2); flex-wrap: wrap">
+      <span>Riverside Books &middot; 128 Main Street, Beacon NY &middot; Mon&ndash;Sat 10 AM&ndash;8 PM, Sun 11 AM&ndash;5 PM</span>
+      <a href="/staff/" class="footer-link" style="margin-left: auto; padding-bottom: 2px; text-decoration: none; white-space: nowrap">Staff sign in</a>
+    </div>
+  </footer>
+</div>
 </body>
 </html>

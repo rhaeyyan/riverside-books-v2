@@ -1,14 +1,19 @@
 @import "tailwindcss";
 :root {
   --text: #4a4038;
-  --text-h: #241d16;
+  --text-h: #2f1739;
   --bg: #fbf7f0;
   --bg-raised: #ffffff;
   --border: #e6ddd0;
   --code-bg: #f4efe6;
   --accent: #a63d2f;
+  --accent-hover: #8a3226;
   --accent-bg: rgba(166, 61, 47, 0.08);
   --accent-border: rgba(166, 61, 47, 0.35);
+  --accent-fill: #a63d2f;
+  --ink: #2f1739;
+  --ink-hover: #45225a;
+  --ink-text: #fbf7f0;
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(36, 29, 22, 0.08) 0 10px 15px -3px, rgba(36, 29, 22, 0.04) 0 4px 6px -2px;
@@ -21,6 +26,7 @@
   --status-out-bg: rgba(179, 57, 44, 0.1);
   --status-out-fill: #b3392c;
   --status-low-fill: #8e5e22;
+  --status-in-fill: #3a7455;
 
   --sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: 'Fraunces', Georgia, serif;
@@ -50,6 +56,7 @@
     --border: #3a3327;
     --code-bg: #241f18;
     --accent: #e07a5f;
+    --accent-hover: #ef9376;
     --accent-bg: rgba(224, 122, 95, 0.15);
     --accent-border: rgba(224, 122, 95, 0.5);
     --social-bg: rgba(47, 48, 58, 0.5);

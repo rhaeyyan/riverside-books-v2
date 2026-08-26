@@ -7,8 +7,8 @@
 .empty-state {
   padding: 40px;
   text-align: center;
-  color: #64748b;
-  background: white;
+  color: var(--text);
+  background: var(--bg-raised);
   border-radius: 8px;
 }
 
@@ -19,7 +19,7 @@
 }
 
 .message-card {
-  background: white;
+  background: var(--bg-raised);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -35,18 +35,18 @@
 }
 
 .contact-info {
-  color: #64748b;
+  color: var(--text);
   font-size: 14px;
 }
 
 .message-time {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text);
 }
 
 .message-body {
-  color: #334155;
-  background: #f8fafc;
+  color: var(--text);
+  background: var(--code-bg);
   padding: 12px;
   border-radius: 4px;
   white-space: pre-wrap;
@@ -58,9 +58,9 @@
 }
 
 .message-actions button {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #cbd5e1;
+  background: var(--code-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
@@ -68,5 +68,5 @@
 }
 
 .message-actions button:hover {
-  background: #e2e8f0;
+  background: var(--border);
 }

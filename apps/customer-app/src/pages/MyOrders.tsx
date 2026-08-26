@@ -61,7 +61,7 @@ export default function MyOrders() {
         <button type="submit" style={{ padding: '0.5rem 1rem' }}>Find Orders</button>
       </form>
       
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--status-out)' }}>{error}</p>}
 
       {orders && (
         orders.length === 0 ? (
@@ -69,7 +69,7 @@ export default function MyOrders() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {orders.map(o => (
-              <div key={o.order_id} style={{ border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
+              <div key={o.order_id} style={{ border: '1px solid var(--border)', padding: '1rem', borderRadius: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <h3 style={{ margin: '0 0 0.5rem 0' }}>Order {o.order_id}</h3>
@@ -77,7 +77,7 @@ export default function MyOrders() {
                     <p>Total: {formatMoney(o.total_cents)}</p>
                     <p>Placed: {new Date(o.created_at).toLocaleString()}</p>
                     {o.status === "pending" && (
-                      <p style={{ color: 'orange' }}>
+                      <p style={{ color: 'var(--status-low)' }}>
                         Hold expires: {new Date(o.hold_expires_at).toLocaleString()}
                       </p>
                     )}
@@ -86,7 +86,7 @@ export default function MyOrders() {
                     {(o.status === 'pending' || o.status === 'ready_for_pickup') && (
                       <button 
                         onClick={() => handleCancel(o.order_id)}
-                        style={{ padding: '0.5rem 1rem', background: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                        style={{ padding: '0.5rem 1rem', background: 'var(--status-out-fill)', color: 'var(--ink-text)', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                       >
                         Cancel Hold
                       </button>

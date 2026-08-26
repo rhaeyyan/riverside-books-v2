@@ -15,6 +15,20 @@ jobs:
   backend:
     name: Backend (lint + tests)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: riverside
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -32,11 +46,22 @@ jobs:
       - name: Lint
         run: uv run ruff check .
 
+      - name: Apply schema
+        env:
+          PGPASSWORD: password
+        run: |
+          sudo apt-get install -y postgresql-client
+          psql -h localhost -U postgres -d riverside -f supabase/migrations/20260825210000_init_schema.sql
+          psql -h localhost -U postgres -d riverside -f supabase/migrations/20260825220000_review_fixes.sql
+
       - name: Seed
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/riverside
+
         # Regenerates mock_data with run-time-relative timestamps (PRD §6.7).
         # Also guards the seed script itself: it exits non-zero if the data it
         # produces no longer meets the §6.7 minimums.
-        run: uv run python -m scripts.seed
+        run: uv run python -m scripts.seed --db
 
       - name: Test
         run: uv run pytest

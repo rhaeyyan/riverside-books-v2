@@ -32,15 +32,15 @@
 
 .book-detail-layout {
   display: grid;
-  grid-template-columns: minmax(220px, 300px) minmax(300px, 1fr);
-  gap: 48px;
+  grid-template-columns: minmax(200px, 270px) minmax(280px, 1fr);
+  gap: 40px;
   align-items: start;
 }
 
 @media (max-width: 768px) {
   .book-detail-layout {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 22px;
   }
 }
 
@@ -74,7 +74,7 @@
 
 .book-detail-title {
   font-family: var(--heading);
-  font-size: clamp(28px, 4.5vw, 40px);
+  font-size: clamp(28px, 4vw, 36px);
   font-weight: 500;
   color: var(--text-h);
   margin: 0;

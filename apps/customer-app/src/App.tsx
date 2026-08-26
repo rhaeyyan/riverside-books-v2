@@ -72,7 +72,7 @@ function App() {
             <div className="footer-links">
               <Link to="/support" className="footer-link">FAQ & Policies</Link>
               <a href="/staff/" className="footer-link">Staff Dashboard</a>
-              <a href="/" className="footer-link">Gateway</a>
+              <a href="/" className="footer-link">Home</a>
             </div>
           </div>
         </footer>

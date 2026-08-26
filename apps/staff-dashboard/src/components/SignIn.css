@@ -1,0 +1,115 @@
+.signin-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.signin-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg-raised);
+  border-radius: 12px;
+  padding: 34px 32px;
+  box-shadow: var(--shadow);
+}
+
+.signin-wordmark {
+  font-family: var(--heading);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-h);
+  letter-spacing: -0.2px;
+}
+
+.signin-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-top: 4px;
+  margin-bottom: 22px;
+}
+
+.signin-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.signin-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-raised);
+  font-size: 15px;
+  letter-spacing: 0.3em;
+  color: var(--text-h);
+}
+
+.signin-input:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.signin-error {
+  min-height: 1.4em;
+  font-size: 12.5px;
+  color: var(--status-out);
+  margin-top: 8px;
+}
+
+.signin-submit {
+  width: 100%;
+  margin-top: 16px;
+  padding: 11px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--ink-text);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.signin-submit:hover {
+  background: var(--ink-hover);
+}
+
+.signin-submit:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
+.signin-demo-hint {
+  margin-top: 16px;
+  font-size: 11.5px;
+  color: var(--text);
+}
+
+.signin-back {
+  display: block;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.signin-back:hover,
+.signin-back:focus-visible {
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signin-submit {
+    transition: none;
+  }
+}

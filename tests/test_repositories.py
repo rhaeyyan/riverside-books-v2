@@ -30,6 +30,7 @@ from backend.api.models import (
     OrderItem,
     StoreInfo,
 )
+from backend.config import settings
 
 MOCK_DATA_DIR = Path(__file__).resolve().parent.parent / "mock_data"
 
@@ -438,6 +439,12 @@ class TestOrderRepository:
 
 class TestRepositoryConcurrencyAndLocking:
     """Tests validating repository thread-safety and lock isolation."""
+
+    @pytest.fixture(autouse=True)
+    def check_database_configured(self) -> None:
+        """Skip concurrency tests if DATABASE_URL is not set."""
+        if not settings.database_url:
+            pytest.skip("DATABASE_URL is not set; skipping concurrency database test")
 
     def test_concurrent_stock_mutations_preserve_consistency(self) -> None:
         """Verify concurrent stock adjustments on same collection do not lose writes."""

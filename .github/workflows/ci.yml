@@ -64,6 +64,8 @@ jobs:
         run: uv run python -m scripts.seed --db
 
       - name: Test
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/riverside
         run: uv run pytest
 
   frontend:

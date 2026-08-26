@@ -13,18 +13,22 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
+from psycopg import Connection
 
 from backend.api.core.datastore import JsonDatastore
+from backend.api.core.db import set_current_connection
 from backend.api.core.repositories import (
     BookRepository,
     CustomerRepository,
     OrderRepository,
+    StoreInfoRepository,
 )
 from backend.api.models import (
     Book,
     Customer,
     Order,
     OrderItem,
+    StoreInfo,
 )
 
 MOCK_DATA_DIR = Path(__file__).resolve().parent.parent / "mock_data"
@@ -58,15 +62,21 @@ def empty_datastore(tmp_path: Path) -> JsonDatastore:
 
 
 @pytest.fixture
-def book_repo(datastore: JsonDatastore) -> BookRepository:
-    """Provide BookRepository instance."""
-    return BookRepository(datastore=datastore)
+def book_repo(db_connection: Connection) -> BookRepository:
+    """Provide BookRepository instance backed by Postgres transaction."""
+    return BookRepository()
 
 
 @pytest.fixture
-def customer_repo(datastore: JsonDatastore) -> CustomerRepository:
-    """Provide CustomerRepository instance."""
-    return CustomerRepository(datastore=datastore)
+def customer_repo(db_connection: Connection) -> CustomerRepository:
+    """Provide CustomerRepository instance backed by Postgres transaction."""
+    return CustomerRepository()
+
+
+@pytest.fixture
+def store_info_repo(db_connection: Connection) -> StoreInfoRepository:
+    """Provide StoreInfoRepository instance backed by Postgres transaction."""
+    return StoreInfoRepository()
 
 
 @pytest.fixture
@@ -218,7 +228,7 @@ class TestBookRepository:
 
     def test_adjust_reserved_count(self, book_repo: BookRepository) -> None:
         """Ensure adjust_reserved_count correctly increments/decrements reservations."""
-        isbn = "9780143039433"
+        isbn = "9780525559474"
         original = book_repo.get_by_isbn(isbn)
         assert original is not None
         original_reserved = original.reserved_count
@@ -429,19 +439,21 @@ class TestOrderRepository:
 class TestRepositoryConcurrencyAndLocking:
     """Tests validating repository thread-safety and lock isolation."""
 
-    def test_concurrent_stock_mutations_preserve_consistency(
-        self, book_repo: BookRepository
-    ) -> None:
+    def test_concurrent_stock_mutations_preserve_consistency(self) -> None:
         """Verify concurrent stock adjustments on same collection do not lose writes."""
-        isbn = "9780143039433"
+        set_current_connection(None)
+        book_repo = BookRepository()
+        isbn = "9780525559474"
         initial_book = book_repo.get_by_isbn(isbn)
         assert initial_book is not None
         initial_reserved = initial_book.reserved_count
+        book_repo.update_stock(isbn, stock_count=initial_book.stock_count + 100)
 
         num_threads = 10
         deltas_per_thread = 5
 
         def worker_adjust() -> None:
+            set_current_connection(None)
             for _ in range(deltas_per_thread):
                 book_repo.adjust_reserved_count(isbn, delta=1)
 
@@ -455,14 +467,21 @@ class TestRepositoryConcurrencyAndLocking:
         expected_reserved = initial_reserved + (num_threads * deltas_per_thread)
         assert final_book.reserved_count == expected_reserved
 
-    def test_concurrent_customer_loyalty_mutations(
-        self, customer_repo: CustomerRepository
-    ) -> None:
+        # Clean up
+        book_repo.adjust_reserved_count(
+            isbn, delta=-(num_threads * deltas_per_thread)
+        )
+        book_repo.update_stock(isbn, stock_count=initial_book.stock_count)
+
+    def test_concurrent_customer_loyalty_mutations(self) -> None:
         """Verify concurrent updates to distinct customers preserve integrity."""
+        set_current_connection(None)
+        customer_repo = CustomerRepository()
         customers = customer_repo.get_all()[:5]
         customer_ids = [c.customer_id for c in customers]
 
         def worker_update(cid: str) -> None:
+            set_current_connection(None)
             for i in range(10):
                 customer_repo.update_loyalty(
                     customer_id=cid,
@@ -481,19 +500,21 @@ class TestRepositoryConcurrencyAndLocking:
             assert isinstance(cust, Customer)
 
     def test_cross_collection_concurrency_no_deadlock(
-        self,
-        book_repo: BookRepository,
-        customer_repo: CustomerRepository,
-        order_repo: OrderRepository,
+        self, order_repo: OrderRepository
     ) -> None:
         """Verify distinct repositories operate without deadlock."""
+        set_current_connection(None)
+        book_repo = BookRepository()
+        customer_repo = CustomerRepository()
         num_iterations = 20
 
         def mutate_books() -> None:
+            set_current_connection(None)
             for i in range(num_iterations):
                 book_repo.update_stock("9780143039433", stock_count=10 + i)
 
         def mutate_customers() -> None:
+            set_current_connection(None)
             for j in range(num_iterations):
                 customer_repo.update_loyalty(
                     "cust_001", stamps=j % 10, rewards_available=0
@@ -514,5 +535,27 @@ class TestRepositoryConcurrencyAndLocking:
             t.start()
 
         for t in threads:
-            t.join(timeout=5)
+            t.join(timeout=10)
             assert not t.is_alive(), f"Thread {t.name} timed out or deadlocked"
+
+        book_repo.update_stock("9780143039433", stock_count=0)
+
+
+# ============================================================================
+# StoreInfoRepository Tests
+# ============================================================================
+
+
+class TestStoreInfoRepository:
+    """Unit and behavioral tests for StoreInfoRepository."""
+
+    def test_get_store_info_returns_typed_domain_model(
+        self, store_info_repo: StoreInfoRepository
+    ) -> None:
+        """Ensure get_store_info returns a populated StoreInfo domain model."""
+        info = store_info_repo.get_store_info()
+        assert isinstance(info, StoreInfo)
+        assert "Riverside Books" in info.name
+        assert info.hours.tuesday is not None
+        assert len(info.faqs) >= 6
+

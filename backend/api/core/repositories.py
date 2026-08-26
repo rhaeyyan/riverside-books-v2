@@ -4,6 +4,14 @@ Provides domain-level data access, filtering, search, pagination, and atomic mut
 for Books, Customers, Orders, Events, StoreInfo, and Messages.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
+from psycopg import Connection
+from psycopg.errors import UniqueViolation
+
+from backend.api.core import db
 from backend.api.core.datastore import JsonDatastore
 from backend.api.models import (
     Book,
@@ -21,16 +29,29 @@ class BookRepository:
     """Repository encapsulating book catalog and inventory operations."""
 
     def __init__(
-        self, datastore: JsonDatastore, collection_name: str = "inventory.json"
+        self,
+        datastore: JsonDatastore | None = None,
+        collection_name: str = "inventory.json",
+        conn: Connection | None = None,
     ) -> None:
-        """Initialize repository with datastore instance.
+        """Initialize repository with optional datastore or connection.
 
         Args:
-            datastore: JsonDatastore instance for underlying file I/O.
-            collection_name: File name for the book inventory collection.
+            datastore: Optional JsonDatastore instance for backward compatibility.
+            collection_name: Optional file name for backward compatibility.
+            conn: Optional psycopg Connection instance. If omitted, queries use
+                the active scoped connection or the connection pool.
         """
         self.datastore = datastore
         self.collection_name = collection_name
+        self.conn = conn
+
+    def _use_datastore(self) -> bool:
+        return (
+            self.datastore is not None
+            and self.conn is None
+            and db.get_current_connection() is None
+        )
 
     def get_all(
         self,
@@ -50,31 +71,74 @@ class BookRepository:
         Returns:
             List of Book domain models matching criteria.
         """
-        raw_data = self.datastore.load(self.collection_name)
-        books = [Book.model_validate(item) for item in raw_data]
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            books = [Book.model_validate(item) for item in raw_data]
+            if query:
+                q = query.strip().lower()
+                q_norm = normalize_isbn(q)
+                books = [
+                    b
+                    for b in books
+                    if q in b.title.lower()
+                    or q in b.author.lower()
+                    or q in b.isbn.lower()
+                    or (q_norm and q_norm in normalize_isbn(b.isbn))
+                ]
+            if in_stock_only:
+                books = [b for b in books if b.available_count > 0]
+            if offset > 0:
+                books = books[offset:]
+            if limit is not None:
+                books = books[:limit]
+            return books
+
+        sql = """
+            SELECT isbn, title, author, format, price_cents, stock_count,
+                   reserved_count, low_stock_threshold, genre, blurb,
+                   cover_image_url, publisher,
+                   published_date::text AS published_date
+            FROM books
+        """
+        clauses = []
+        params: list[Any] = []
 
         if query:
-            q = query.strip().lower()
+            q = query.strip()
+            q_lower = f"%{q.lower()}%"
             q_norm = normalize_isbn(q)
-            books = [
-                b
-                for b in books
-                if q in b.title.lower()
-                or q in b.author.lower()
-                or q in b.isbn.lower()
-                or (q_norm and q_norm in normalize_isbn(b.isbn))
-            ]
+            if q_norm:
+                q_norm_pattern = f"%{q_norm}%"
+                clauses.append(
+                    "(lower(title) LIKE %s OR lower(author) LIKE %s "
+                    "OR lower(isbn) LIKE %s OR lower(isbn) LIKE %s)"
+                )
+                params.extend([q_lower, q_lower, q_lower, q_norm_pattern])
+            else:
+                clauses.append(
+                    "(lower(title) LIKE %s OR lower(author) LIKE %s "
+                    "OR lower(isbn) LIKE %s)"
+                )
+                params.extend([q_lower, q_lower, q_lower])
 
         if in_stock_only:
-            books = [b for b in books if b.available_count > 0]
+            clauses.append("(stock_count - reserved_count) > 0")
 
-        if offset > 0:
-            books = books[offset:]
+        if clauses:
+            sql += " WHERE " + " AND ".join(clauses)
+
+        sql += " ORDER BY title ASC, isbn ASC"
 
         if limit is not None:
-            books = books[:limit]
+            sql += " LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+        elif offset > 0:
+            sql += " OFFSET %s"
+            params.append(offset)
 
-        return books
+        rows = db.fetch_all(sql, params, conn=self.conn)
+        return [Book.model_validate(r) for r in rows]
 
     def get_by_isbn(self, isbn: str) -> Book | None:
         """Retrieve a single book by exact or normalized ISBN.
@@ -85,15 +149,29 @@ class BookRepository:
         Returns:
             Matching Book domain model, or None if not found.
         """
-        target_isbn = normalize_isbn(isbn)
-        raw_data = self.datastore.load(self.collection_name)
-        for item in raw_data:
-            if normalize_isbn(item.get("isbn", "")) == target_isbn:
-                return Book.model_validate(item)
-        return None
+        if self._use_datastore():
+            assert self.datastore is not None
+            target_isbn = normalize_isbn(isbn)
+            raw_data = self.datastore.load(self.collection_name)
+            for item in raw_data:
+                if normalize_isbn(item.get("isbn", "")) == target_isbn:
+                    return Book.model_validate(item)
+            return None
+
+        target_isbn = normalize_isbn(isbn) or isbn.strip()
+        sql = """
+            SELECT isbn, title, author, format, price_cents, stock_count,
+                   reserved_count, low_stock_threshold, genre, blurb,
+                   cover_image_url, publisher,
+                   published_date::text AS published_date
+            FROM books
+            WHERE isbn = %s OR isbn = %s
+        """
+        row = db.fetch_one(sql, (target_isbn, isbn.strip()), conn=self.conn)
+        return Book.model_validate(row) if row else None
 
     def create(self, book: Book) -> Book:
-        """Persist a new book record into the datastore.
+        """Persist a new book record into the database.
 
         Args:
             book: Book domain model instance to persist.
@@ -104,17 +182,61 @@ class BookRepository:
         Raises:
             ValueError: If a book with the same ISBN already exists.
         """
-        target_isbn = normalize_isbn(book.isbn)
-        with self.datastore.get_lock(self.collection_name):
-            raw_data = self.datastore.load(self.collection_name)
-            for item in raw_data:
-                if normalize_isbn(item.get("isbn", "")) == target_isbn:
-                    raise ValueError(
-                        f"Book with ISBN '{book.isbn}' already exists in inventory."
-                    )
-            raw_data.append(book.model_dump())
-            self.datastore.save(self.collection_name, raw_data)
-            return book
+        if self._use_datastore():
+            assert self.datastore is not None
+            target_isbn = normalize_isbn(book.isbn)
+            with self.datastore.get_lock(self.collection_name):
+                raw_data = self.datastore.load(self.collection_name)
+                for item in raw_data:
+                    if normalize_isbn(item.get("isbn", "")) == target_isbn:
+                        raise ValueError(
+                            f"Book with ISBN '{book.isbn}' already exists in inventory."
+                        )
+                raw_data.append(book.model_dump())
+                self.datastore.save(self.collection_name, raw_data)
+                return book
+
+        target_isbn = normalize_isbn(book.isbn) or book.isbn
+        if self.get_by_isbn(target_isbn) is not None:
+            raise ValueError(
+                f"Book with ISBN '{book.isbn}' already exists in inventory."
+            )
+
+        sql = """
+            INSERT INTO books (
+                isbn, title, author, format, price_cents, stock_count,
+                reserved_count, low_stock_threshold, genre, blurb,
+                cover_image_url, publisher, published_date
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+        """
+        try:
+            with db.transaction(self.conn) as conn:
+                conn.execute(
+                    sql,
+                    (
+                        target_isbn,
+                        book.title,
+                        book.author,
+                        book.format,
+                        book.price_cents,
+                        book.stock_count,
+                        book.reserved_count,
+                        book.low_stock_threshold,
+                        book.genre,
+                        book.blurb,
+                        book.cover_image_url,
+                        book.publisher,
+                        book.published_date,
+                    ),
+                )
+        except UniqueViolation as err:
+            raise ValueError(
+                f"Book with ISBN '{book.isbn}' already exists in inventory."
+            ) from err
+
+        return book
 
     def update_stock(self, isbn: str, stock_count: int) -> Book:
         """Update on-hand stock count for a book.
@@ -128,23 +250,44 @@ class BookRepository:
 
         Raises:
             KeyError: If book is not found.
+            ValueError: If stock_count is negative.
         """
-        target_isbn = normalize_isbn(isbn)
-        with self.datastore.get_lock(self.collection_name):
-            raw_data = self.datastore.load(self.collection_name)
-            found_idx = -1
-            for idx, item in enumerate(raw_data):
-                if normalize_isbn(item.get("isbn", "")) == target_isbn:
-                    found_idx = idx
-                    break
+        if stock_count < 0:
+            raise ValueError("stock_count cannot be negative.")
 
-            if found_idx == -1:
+        if self._use_datastore():
+            assert self.datastore is not None
+            target_isbn = normalize_isbn(isbn)
+            with self.datastore.get_lock(self.collection_name):
+                raw_data = self.datastore.load(self.collection_name)
+                found_idx = -1
+                for idx, item in enumerate(raw_data):
+                    if normalize_isbn(item.get("isbn", "")) == target_isbn:
+                        found_idx = idx
+                        break
+                if found_idx == -1:
+                    raise KeyError(f"Book with ISBN '{isbn}' not found.")
+                raw_data[found_idx]["stock_count"] = stock_count
+                updated_book = Book.model_validate(raw_data[found_idx])
+                self.datastore.save(self.collection_name, raw_data)
+                return updated_book
+
+        target_isbn = normalize_isbn(isbn) or isbn.strip()
+        sql = """
+            UPDATE books
+            SET stock_count = %s
+            WHERE isbn = %s
+            RETURNING isbn, title, author, format, price_cents, stock_count,
+                      reserved_count, low_stock_threshold, genre, blurb,
+                      cover_image_url, publisher,
+                      published_date::text AS published_date
+        """
+        with db.transaction(self.conn) as conn:
+            cur = conn.execute(sql, (stock_count, target_isbn))
+            row = cur.fetchone()
+            if not row:
                 raise KeyError(f"Book with ISBN '{isbn}' not found.")
-
-            raw_data[found_idx]["stock_count"] = stock_count
-            updated_book = Book.model_validate(raw_data[found_idx])
-            self.datastore.save(self.collection_name, raw_data)
-            return updated_book
+            return Book.model_validate(row)
 
     def adjust_reserved_count(self, isbn: str, delta: int) -> Book:
         """Increment or decrement the reserved copy count for a book.
@@ -159,39 +302,69 @@ class BookRepository:
         Raises:
             KeyError: If book is not found.
         """
-        target_isbn = normalize_isbn(isbn)
-        with self.datastore.get_lock(self.collection_name):
-            raw_data = self.datastore.load(self.collection_name)
-            found_idx = -1
-            for idx, item in enumerate(raw_data):
-                if normalize_isbn(item.get("isbn", "")) == target_isbn:
-                    found_idx = idx
-                    break
+        if self._use_datastore():
+            assert self.datastore is not None
+            target_isbn = normalize_isbn(isbn)
+            with self.datastore.get_lock(self.collection_name):
+                raw_data = self.datastore.load(self.collection_name)
+                found_idx = -1
+                for idx, item in enumerate(raw_data):
+                    if normalize_isbn(item.get("isbn", "")) == target_isbn:
+                        found_idx = idx
+                        break
+                if found_idx == -1:
+                    raise KeyError(f"Book with ISBN '{isbn}' not found.")
+                current_reserved = raw_data[found_idx].get("reserved_count", 0)
+                raw_data[found_idx]["reserved_count"] = current_reserved + delta
+                updated_book = Book.model_validate(raw_data[found_idx])
+                self.datastore.save(self.collection_name, raw_data)
+                return updated_book
 
-            if found_idx == -1:
+        target_isbn = normalize_isbn(isbn) or isbn.strip()
+        sql = """
+            UPDATE books
+            SET reserved_count = reserved_count + %s
+            WHERE isbn = %s
+            RETURNING isbn, title, author, format, price_cents, stock_count,
+                      reserved_count, low_stock_threshold, genre, blurb,
+                      cover_image_url, publisher,
+                      published_date::text AS published_date
+        """
+        with db.transaction(self.conn) as conn:
+            cur = conn.execute(sql, (delta, target_isbn))
+            row = cur.fetchone()
+            if not row:
                 raise KeyError(f"Book with ISBN '{isbn}' not found.")
-
-            current_reserved = raw_data[found_idx].get("reserved_count", 0)
-            raw_data[found_idx]["reserved_count"] = current_reserved + delta
-            updated_book = Book.model_validate(raw_data[found_idx])
-            self.datastore.save(self.collection_name, raw_data)
-            return updated_book
+            return Book.model_validate(row)
 
 
 class CustomerRepository:
     """Repository encapsulating customer profiles and loyalty card operations."""
 
     def __init__(
-        self, datastore: JsonDatastore, collection_name: str = "customers.json"
+        self,
+        datastore: JsonDatastore | None = None,
+        collection_name: str = "customers.json",
+        conn: Connection | None = None,
     ) -> None:
-        """Initialize repository with datastore instance.
+        """Initialize repository with optional datastore or connection.
 
         Args:
-            datastore: JsonDatastore instance for underlying file I/O.
-            collection_name: File name for the customer collection.
+            datastore: Optional JsonDatastore instance for backward compatibility.
+            collection_name: Optional file name for backward compatibility.
+            conn: Optional psycopg Connection instance. If omitted, queries use
+                the active scoped connection or the connection pool.
         """
         self.datastore = datastore
         self.collection_name = collection_name
+        self.conn = conn
+
+    def _use_datastore(self) -> bool:
+        return (
+            self.datastore is not None
+            and self.conn is None
+            and db.get_current_connection() is None
+        )
 
     def get_all(self) -> list[Customer]:
         """Retrieve all customer records.
@@ -199,8 +372,19 @@ class CustomerRepository:
         Returns:
             List of Customer domain models.
         """
-        raw_data = self.datastore.load(self.collection_name)
-        return [Customer.model_validate(item) for item in raw_data]
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            return [Customer.model_validate(item) for item in raw_data]
+
+        sql = """
+            SELECT customer_id, phone, name, email, stamps,
+                   rewards_available, joined_date::text AS joined_date
+            FROM customers
+            ORDER BY customer_id ASC
+        """
+        rows = db.fetch_all(sql, conn=self.conn)
+        return [Customer.model_validate(r) for r in rows]
 
     def get_by_id(self, customer_id: str) -> Customer | None:
         """Retrieve a single customer by their unique customer_id.
@@ -211,11 +395,22 @@ class CustomerRepository:
         Returns:
             Customer domain model, or None if not found.
         """
-        raw_data = self.datastore.load(self.collection_name)
-        for item in raw_data:
-            if item.get("customer_id") == customer_id:
-                return Customer.model_validate(item)
-        return None
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            for item in raw_data:
+                if item.get("customer_id") == customer_id:
+                    return Customer.model_validate(item)
+            return None
+
+        sql = """
+            SELECT customer_id, phone, name, email, stamps,
+                   rewards_available, joined_date::text AS joined_date
+            FROM customers
+            WHERE customer_id = %s
+        """
+        row = db.fetch_one(sql, (customer_id,), conn=self.conn)
+        return Customer.model_validate(row) if row else None
 
     def get_by_phone(self, phone: str) -> Customer | None:
         """Retrieve a customer by matching normalized phone number digits.
@@ -226,15 +421,27 @@ class CustomerRepository:
         Returns:
             Customer domain model, or None if not found.
         """
+        if self._use_datastore():
+            assert self.datastore is not None
+            norm_phone = normalize_phone(phone)
+            raw_data = self.datastore.load(self.collection_name)
+            for item in raw_data:
+                if normalize_phone(item.get("phone", "")) == norm_phone:
+                    return Customer.model_validate(item)
+            return None
+
         norm_phone = normalize_phone(phone)
-        raw_data = self.datastore.load(self.collection_name)
-        for item in raw_data:
-            if normalize_phone(item.get("phone", "")) == norm_phone:
-                return Customer.model_validate(item)
-        return None
+        sql = """
+            SELECT customer_id, phone, name, email, stamps,
+                   rewards_available, joined_date::text AS joined_date
+            FROM customers
+            WHERE phone = %s
+        """
+        row = db.fetch_one(sql, (norm_phone,), conn=self.conn)
+        return Customer.model_validate(row) if row else None
 
     def create(self, customer: Customer) -> Customer:
-        """Persist a new customer record into the datastore.
+        """Persist a new customer record into the database.
 
         Args:
             customer: Customer domain model instance to persist.
@@ -245,21 +452,63 @@ class CustomerRepository:
         Raises:
             ValueError: If a customer with the same phone or customer_id exists.
         """
+        if self._use_datastore():
+            assert self.datastore is not None
+            norm_phone = normalize_phone(customer.phone)
+            with self.datastore.get_lock(self.collection_name):
+                raw_data = self.datastore.load(self.collection_name)
+                for item in raw_data:
+                    if normalize_phone(item.get("phone", "")) == norm_phone:
+                        raise ValueError(
+                            f"Customer with phone '{customer.phone}' already exists."
+                        )
+                    if item.get("customer_id") == customer.customer_id:
+                        raise ValueError(
+                            f"Customer with ID '{customer.customer_id}' already exists."
+                        )
+                raw_data.append(customer.model_dump())
+                self.datastore.save(self.collection_name, raw_data)
+                return customer
+
         norm_phone = normalize_phone(customer.phone)
-        with self.datastore.get_lock(self.collection_name):
-            raw_data = self.datastore.load(self.collection_name)
-            for item in raw_data:
-                if normalize_phone(item.get("phone", "")) == norm_phone:
-                    raise ValueError(
-                        f"Customer with phone '{customer.phone}' already exists."
-                    )
-                if item.get("customer_id") == customer.customer_id:
-                    raise ValueError(
-                        f"Customer with ID '{customer.customer_id}' already exists."
-                    )
-            raw_data.append(customer.model_dump())
-            self.datastore.save(self.collection_name, raw_data)
-            return customer
+        check_sql = """
+            SELECT customer_id, phone FROM customers
+            WHERE phone = %s OR customer_id = %s
+        """
+        existing = db.fetch_one(
+            check_sql, (norm_phone, customer.customer_id), conn=self.conn
+        )
+        if existing:
+            if existing["phone"] == norm_phone:
+                raise ValueError(
+                    f"Customer with phone '{customer.phone}' already exists."
+                )
+            raise ValueError(
+                f"Customer with ID '{customer.customer_id}' already exists."
+            )
+
+        sql = """
+            INSERT INTO customers (
+                customer_id, phone, name, email, stamps,
+                rewards_available, joined_date
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s
+            )
+        """
+        with db.transaction(self.conn) as conn:
+            conn.execute(
+                sql,
+                (
+                    customer.customer_id,
+                    norm_phone,
+                    customer.name,
+                    customer.email,
+                    customer.stamps,
+                    customer.rewards_available,
+                    customer.joined_date,
+                ),
+            )
+        return customer
 
     def update_loyalty(
         self, customer_id: str, stamps: int, rewards_available: int
@@ -277,22 +526,36 @@ class CustomerRepository:
         Raises:
             KeyError: If customer is not found.
         """
-        with self.datastore.get_lock(self.collection_name):
-            raw_data = self.datastore.load(self.collection_name)
-            found_idx = -1
-            for idx, item in enumerate(raw_data):
-                if item.get("customer_id") == customer_id:
-                    found_idx = idx
-                    break
+        if self._use_datastore():
+            assert self.datastore is not None
+            with self.datastore.get_lock(self.collection_name):
+                raw_data = self.datastore.load(self.collection_name)
+                found_idx = -1
+                for idx, item in enumerate(raw_data):
+                    if item.get("customer_id") == customer_id:
+                        found_idx = idx
+                        break
+                if found_idx == -1:
+                    raise KeyError(f"Customer with ID '{customer_id}' not found.")
+                raw_data[found_idx]["stamps"] = stamps
+                raw_data[found_idx]["rewards_available"] = rewards_available
+                updated_customer = Customer.model_validate(raw_data[found_idx])
+                self.datastore.save(self.collection_name, raw_data)
+                return updated_customer
 
-            if found_idx == -1:
+        sql = """
+            UPDATE customers
+            SET stamps = %s, rewards_available = %s
+            WHERE customer_id = %s
+            RETURNING customer_id, phone, name, email, stamps,
+                      rewards_available, joined_date::text AS joined_date
+        """
+        with db.transaction(self.conn) as conn:
+            cur = conn.execute(sql, (stamps, rewards_available, customer_id))
+            row = cur.fetchone()
+            if not row:
                 raise KeyError(f"Customer with ID '{customer_id}' not found.")
-
-            raw_data[found_idx]["stamps"] = stamps
-            raw_data[found_idx]["rewards_available"] = rewards_available
-            updated_customer = Customer.model_validate(raw_data[found_idx])
-            self.datastore.save(self.collection_name, raw_data)
-            return updated_customer
+            return Customer.model_validate(row)
 
 
 class OrderRepository:
@@ -462,25 +725,53 @@ class StoreInfoRepository:
     """Repository encapsulating store metadata, hours, policies, and FAQs."""
 
     def __init__(
-        self, datastore: JsonDatastore, collection_name: str = "store_info.json"
+        self,
+        datastore: JsonDatastore | None = None,
+        collection_name: str = "store_info.json",
+        conn: Connection | None = None,
     ) -> None:
-        """Initialize repository with datastore instance.
+        """Initialize repository with optional datastore or connection.
 
         Args:
-            datastore: JsonDatastore instance for underlying file I/O.
-            collection_name: File name for store info collection.
+            datastore: Optional JsonDatastore instance for backward compatibility.
+            collection_name: Optional file name for backward compatibility.
+            conn: Optional psycopg Connection instance. If omitted, queries use
+                the active scoped connection or the connection pool.
         """
         self.datastore = datastore
         self.collection_name = collection_name
+        self.conn = conn
+
+    def _use_datastore(self) -> bool:
+        return (
+            self.datastore is not None
+            and self.conn is None
+            and db.get_current_connection() is None
+        )
 
     def get_store_info(self) -> StoreInfo:
         """Retrieve full store information, policies, hours, and FAQs.
 
         Returns:
             StoreInfo domain model.
+
+        Raises:
+            RuntimeError: If store_info is not found in database.
         """
-        raw_data = self.datastore.load(self.collection_name)
-        return StoreInfo.model_validate(raw_data)
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            return StoreInfo.model_validate(raw_data)
+
+        sql = """
+            SELECT name, address, phone, email, hours, policies, faqs
+            FROM store_info
+            WHERE id = true
+        """
+        row = db.fetch_one(sql, conn=self.conn)
+        if not row:
+            raise RuntimeError("Store information is not configured in database.")
+        return StoreInfo.model_validate(row)
 
 
 class MessageRepository:

@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from psycopg import Connection
 
-from backend.api.core.datastore import JsonDatastore
 from backend.api.core.repositories import (
     BookRepository,
     CustomerRepository,
@@ -16,30 +16,18 @@ MOCK_DATA_DIR = Path(__file__).parent.parent / "mock_data"
 
 
 @pytest.fixture
-def datastore(tmp_path: Path) -> JsonDatastore:
-    for seed_file in ["inventory.json", "customers.json", "orders.json"]:
-        source = MOCK_DATA_DIR / seed_file
-        dest = tmp_path / seed_file
-        if source.exists():
-            dest.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
-        else:
-            dest.write_text("[]", encoding="utf-8")
-    return JsonDatastore(data_dir=tmp_path)
+def book_repo(db_connection: Connection) -> BookRepository:
+    return BookRepository()
 
 
 @pytest.fixture
-def book_repo(datastore: JsonDatastore) -> BookRepository:
-    return BookRepository(datastore=datastore)
+def customer_repo(db_connection: Connection) -> CustomerRepository:
+    return CustomerRepository()
 
 
 @pytest.fixture
-def customer_repo(datastore: JsonDatastore) -> CustomerRepository:
-    return CustomerRepository(datastore=datastore)
-
-
-@pytest.fixture
-def order_repo(datastore: JsonDatastore) -> OrderRepository:
-    return OrderRepository(datastore=datastore)
+def order_repo(db_connection: Connection) -> OrderRepository:
+    return OrderRepository()
 
 
 @pytest.fixture

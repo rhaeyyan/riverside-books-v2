@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { client } from '../api/client';
 import { formatMoney } from '../utils/format';
 import type { components } from '../api/types';
+import { ArrowLeft, CheckCircle2, MessageSquare, Clock, AlertCircle } from 'lucide-react';
+import './BookDetail.css';
 
 type Book = components["schemas"]["Book"];
 
@@ -10,22 +12,30 @@ export default function BookDetail() {
   const { isbn } = useParams<{ isbn: string }>();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
+  const [coverError, setCoverError] = useState(false);
   
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [needsRegistration, setNeedsRegistration] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [holdExpiresAt, setHoldExpiresAt] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let ignore = false;
     if (isbn) {
-      client.GET("/api/books/{isbn}", { params: { path: { isbn } } }).then(({ data, error }) => {
-        if (data) setBook(data as Book);
-        if (error) setError("Book not found.");
-        setLoading(false);
+      client.GET("/api/books/{isbn}", { params: { path: { isbn } } }).then(({ data, error: fetchErr }) => {
+        if (!ignore) {
+          if (data) setBook(data as Book);
+          if (fetchErr) setError("Book not found on our shelves.");
+          setLoading(false);
+        }
       });
     }
+    return () => {
+      ignore = true;
+    };
   }, [isbn]);
 
   const handlePreOrder = async (e: React.FormEvent) => {
@@ -34,123 +44,271 @@ export default function BookDetail() {
     if (!book) return;
 
     const cleanPhone = phone.replace(/\D/g, "");
-    let customerId = "";
-
-    if (needsRegistration && name.trim()) {
-      const { data: regData, error: regError } = await client.POST("/api/customers", {
-        body: { phone: cleanPhone, name, email: "" }
-      });
-      if (regError) {
-        setError("Registration failed.");
-        return;
-      }
-      customerId = (regData as any).customer_id;
-      setNeedsRegistration(false);
-    } else {
-      const { data: custData, error: custError } = await client.POST("/api/customers/lookup", {
-        body: { phone: cleanPhone }
-      });
-      if (custError) {
-        setNeedsRegistration(true);
-        return;
-      }
-      customerId = (custData as any).customer_id;
+    if (cleanPhone.length < 10) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
     }
 
-    const { data, error: orderError, response: orderResponse } = await client.POST("/api/orders", {
-      body: {
-        customer_id: customerId,
-        items: [{ isbn: book.isbn, quantity: 1 }],
-        notes: "Pre-order"
-      }
-    });
+    setSubmitting(true);
+    let customerId = "";
 
-    if (orderError) {
-      if (orderResponse.status === 409) {
-        setError("Someone just placed a hold on the last copy! Please check back later.");
-        client.GET("/api/books/{isbn}", { params: { path: { isbn: book.isbn } } }).then(res => res.data && setBook(res.data as Book));
+    try {
+      if (needsRegistration && name.trim()) {
+        const { data: regData, error: regError } = await client.POST("/api/customers", {
+          body: { phone: cleanPhone, name: name.trim(), email: "" }
+        });
+        if (regError) {
+          setError("Could not register your phone number. Please check the format.");
+          setSubmitting(false);
+          return;
+        }
+        customerId = (regData as any).customer_id;
+        setNeedsRegistration(false);
       } else {
-        setError((orderError as any).detail || "An error occurred.");
+        const { data: custData, error: custError } = await client.POST("/api/customers/lookup", {
+          body: { phone: cleanPhone }
+        });
+        if (custError) {
+          setNeedsRegistration(true);
+          setSubmitting(false);
+          return;
+        }
+        customerId = (custData as any).customer_id;
       }
-    } else if (data) {
-      setOrderId((data as any).order_id);
-      setHoldExpiresAt((data as any).hold_expires_at);
-      client.GET("/api/books/{isbn}", { params: { path: { isbn: book.isbn } } }).then(res => res.data && setBook(res.data as Book));
+
+      const { data, error: orderError, response: orderResponse } = await client.POST("/api/orders", {
+        body: {
+          customer_id: customerId,
+          items: [{ isbn: book.isbn, quantity: 1 }],
+          notes: "Customer hold"
+        }
+      });
+
+      if (orderError) {
+        if (orderResponse.status === 409) {
+          setError("Someone just placed a hold on the last copy! Please check back later or ask our bookseller.");
+          const res = await client.GET("/api/books/{isbn}", { params: { path: { isbn: book.isbn } } });
+          if (res.data) setBook(res.data as Book);
+        } else {
+          setError((orderError as any).detail || "Could not place hold. Please try again.");
+        }
+      } else if (data) {
+        setOrderId((data as any).order_id);
+        setHoldExpiresAt((data as any).hold_expires_at);
+        const res = await client.GET("/api/books/{isbn}", { params: { path: { isbn: book.isbn } } });
+        if (res.data) setBook(res.data as Book);
+      }
+    } catch {
+      setError("A connection error occurred. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (!book) return <p>{error || "Not found"}</p>;
+  if (loading) {
+    return (
+      <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text)' }}>
+        <p>Looking up book details...</p>
+      </div>
+    );
+  }
+
+  if (!book) {
+    return (
+      <div className="book-detail-page">
+        <Link to="/" className="back-link">
+          <ArrowLeft size={16} />
+          Back to browsing
+        </Link>
+        <div style={{ padding: '40px', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: '12px', textAlign: 'center' }}>
+          <h2>{error || "Book not found"}</h2>
+          <p style={{ margin: '12px 0 20px', color: '#6c6155' }}>The title you requested might have been moved or removed.</p>
+          <Link to="/" className="btn-secondary" style={{ display: 'inline-flex' }}>
+            Browse Available Books
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const outOfStock = book.available_count === 0;
+  const hasCover = Boolean(book.cover_image_url) && !coverError;
 
   return (
-    <div style={{ display: 'flex', gap: '2rem' }}>
-      <div style={{ flex: '1', maxWidth: '300px' }}>
-        {book.cover_image_url ? (
-          <img src={book.cover_image_url} alt="Cover" style={{ width: '100%' }} />
-        ) : (
-          <div style={{ background: 'var(--code-bg)', aspectRatio: '2 / 3', borderRadius: '4px' }} />
-        )}
-      </div>
-      <div style={{ flex: '2' }}>
-        <h2>{book.title}</h2>
-        <h3 style={{ color: 'var(--text)' }}>{book.author}</h3>
-        <p><strong>Genre:</strong> {book.genre} | <strong>Format:</strong> {book.format}</p>
-        <p><strong>ISBN:</strong> {book.isbn}</p>
-        <p style={{ fontSize: '1.2rem', marginTop: '1rem' }}>{book.blurb}</p>
-        <h2 style={{ color: 'var(--accent)' }}>{formatMoney(book.price_cents)}</h2>
+    <div className="book-detail-page">
+      <Link to="/" className="back-link">
+        <ArrowLeft size={16} />
+        Back to browsing
+      </Link>
 
-        <div style={{ margin: '2rem 0', padding: '1rem', background: 'var(--code-bg)', borderRadius: '8px' }}>
-          {orderId ? (
-            <div style={{ color: 'var(--status-in)' }}>
-              <h3>Success! Hold placed.</h3>
-              <p>Your order ID is <strong>{orderId}</strong>.</p>
-              <p>Please pick it up by <strong>{new Date(holdExpiresAt!).toLocaleString()}</strong>.</p>
-              <Link to="/orders">View My Orders</Link>
-            </div>
+      <div className="book-detail-layout">
+        <div className="book-detail-cover">
+          {hasCover ? (
+            <img
+              src={book.cover_image_url}
+              alt={`Cover art for ${book.title}`}
+              className="book-detail-cover-img"
+              onError={() => setCoverError(true)}
+            />
           ) : (
-            <form onSubmit={handlePreOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '300px' }}>
-              <h3>Place a 48-Hour Hold</h3>
-              {error && <p style={{ color: 'var(--status-out)' }}>{error}</p>}
-              
-              <label>
-                Phone Number:
-                <input 
-                  type="tel" 
-                  value={phone} 
-                  onChange={(e) => setPhone(e.target.value)} 
-                  required 
-                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
-                />
-              </label>
-
-              {needsRegistration && (
-                <label>
-                  Full Name (New Customer):
-                  <input 
-                    type="text" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    required 
-                    style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem' }}
-                  />
-                </label>
-              )}
-
-              {outOfStock ? (
-                <button type="button" disabled style={{ padding: '0.75rem', background: 'var(--border)', cursor: 'not-allowed' }}>
-                  Out of Stock - Cannot place hold
-                </button>
-              ) : (
-                <button type="submit" style={{ padding: '0.75rem', background: 'var(--accent-fill)', color: 'var(--ink-text)', border: 'none', cursor: 'pointer' }}>
-                  {needsRegistration ? "Register & Place Hold" : "Place Hold"}
-                </button>
-              )}
-            </form>
+            <div className="book-cover-fallback">
+              <span className="book-fallback-initial">{book.title.charAt(0).toUpperCase()}</span>
+              <span className="book-fallback-isbn">ISBN · {book.isbn}</span>
+            </div>
           )}
+        </div>
+
+        <div className="book-detail-info">
+          <h1 className="book-detail-title">{book.title}</h1>
+          <div className="book-detail-author">by {book.author}</div>
+
+          <div className="book-detail-meta-row">
+            <StockBadge status={book.stock_status} available={book.available_count} />
+            <span className="book-detail-price">{formatMoney(book.price_cents)}</span>
+          </div>
+
+          {book.blurb && <p className="book-detail-blurb">{book.blurb}</p>}
+
+          <dl className="book-detail-specs">
+            <div className="spec-item">
+              <dt>Format</dt>
+              <dd>{book.format ? book.format.charAt(0).toUpperCase() + book.format.slice(1) : "Paperback"}</dd>
+            </div>
+            <div className="spec-item">
+              <dt>Genre</dt>
+              <dd>{book.genre || "General"}</dd>
+            </div>
+            <div className="spec-item">
+              <dt>ISBN</dt>
+              <dd className="spec-isbn">{book.isbn}</dd>
+            </div>
+            <div className="spec-item">
+              <dt>On The Shelf</dt>
+              <dd>
+                {book.available_count > 0 ? (
+                  <span style={{ color: 'var(--status-in)' }}>{book.available_count} available</span>
+                ) : (
+                  <span style={{ color: 'var(--status-out)' }}>0 copies</span>
+                )}
+              </dd>
+            </div>
+          </dl>
+
+          <div className="hold-card-wrapper">
+            {orderId ? (
+              <div className="hold-success-card">
+                <div className="hold-success-title">
+                  <CheckCircle2 size={22} color="var(--status-in)" />
+                  It's behind the counter for you!
+                </div>
+                <p className="hold-success-body">
+                  Ask for hold <strong className="hold-order-id-badge">{orderId}</strong> when you arrive at the register.
+                  {holdExpiresAt && (
+                    <> We'll hold it until <strong>{new Date(holdExpiresAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong> (48 hours).</>
+                  )}
+                </p>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <Link to="/orders" className="btn-hold-submit" style={{ textDecoration: 'none' }}>
+                    View My Holds
+                  </Link>
+                  <Link to="/" className="btn-secondary" style={{ textDecoration: 'none' }}>
+                    Continue Browsing
+                  </Link>
+                </div>
+              </div>
+            ) : outOfStock ? (
+              <div className="sold-out-box">
+                <div className="sold-out-title">Not on the shelf right now</div>
+                <p className="sold-out-desc">
+                  Almost any in-print book can be special ordered at no extra charge — usually three to five days. Leave a note or ask our bookseller.
+                </p>
+                <div className="sold-out-actions">
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById("chatbot-toggle")?.click()}
+                    className="btn-hold-submit"
+                  >
+                    <MessageSquare size={16} />
+                    Ask a bookseller to order
+                  </button>
+                  <Link to="/" className="btn-secondary" style={{ textDecoration: 'none' }}>
+                    See in-stock titles
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="hold-card">
+                <div className="hold-title">Hold a copy for 48 hours</div>
+                <p className="hold-subtitle">
+                  Free, no credit card needed. Your phone number is your pickup code.
+                </p>
+
+                <form onSubmit={handlePreOrder} className="hold-form">
+                  {error && (
+                    <div className="form-error-alert" role="alert">
+                      <AlertCircle size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label htmlFor="hold-phone" className="form-label">
+                      Phone Number
+                    </label>
+                    <input
+                      id="hold-phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="e.g. (845) 555-0142"
+                      required
+                      className="form-input phone-input"
+                      autoComplete="tel"
+                    />
+                  </div>
+
+                  {needsRegistration && (
+                    <div className="form-group" style={{ animation: 'riseIn 0.2s ease' }}>
+                      <label htmlFor="customer-name" className="form-label">
+                        Your Full Name (First time with us?)
+                      </label>
+                      <input
+                        id="customer-name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. Jane Doe"
+                        required
+                        className="form-input"
+                        autoComplete="name"
+                      />
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="btn-hold-submit"
+                  >
+                    <Clock size={16} />
+                    {submitting ? "Placing hold..." : needsRegistration ? "Save & Place 48-Hour Hold" : "Place 48-Hour Hold"}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
+}
+
+function StockBadge({ status, available }: { status: string; available: number }) {
+  if (status === 'out_of_stock') {
+    return <span className="stock-pill out-of-stock">Out of stock</span>;
+  }
+  if (status === 'low_stock') {
+    return <span className="stock-pill low-stock">Only {available} left</span>;
+  }
+  return <span className="stock-pill in-stock">In stock ({available})</span>;
 }

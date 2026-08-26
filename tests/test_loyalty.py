@@ -1,9 +1,7 @@
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
+from psycopg import Connection
 
-from backend.api.core.datastore import JsonDatastore
 from backend.api.core.repositories import (
     BookRepository,
     CustomerRepository,
@@ -12,34 +10,20 @@ from backend.api.core.repositories import (
 from backend.api.deps import get_book_repo, get_customer_repo, get_order_repo
 from backend.api.main import app
 
-MOCK_DATA_DIR = Path(__file__).parent.parent / "mock_data"
+
+@pytest.fixture
+def book_repo(db_connection: Connection) -> BookRepository:
+    return BookRepository()
 
 
 @pytest.fixture
-def datastore(tmp_path: Path) -> JsonDatastore:
-    for seed_file in ["inventory.json", "customers.json", "orders.json"]:
-        source = MOCK_DATA_DIR / seed_file
-        dest = tmp_path / seed_file
-        if source.exists():
-            dest.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
-        else:
-            dest.write_text("[]", encoding="utf-8")
-    return JsonDatastore(data_dir=tmp_path)
+def customer_repo(db_connection: Connection) -> CustomerRepository:
+    return CustomerRepository()
 
 
 @pytest.fixture
-def book_repo(datastore: JsonDatastore) -> BookRepository:
-    return BookRepository(datastore=datastore)
-
-
-@pytest.fixture
-def customer_repo(datastore: JsonDatastore) -> CustomerRepository:
-    return CustomerRepository(datastore=datastore)
-
-
-@pytest.fixture
-def order_repo(datastore: JsonDatastore) -> OrderRepository:
-    return OrderRepository(datastore=datastore)
+def order_repo(db_connection: Connection) -> OrderRepository:
+    return OrderRepository()
 
 
 @pytest.fixture
@@ -62,10 +46,10 @@ def test_three_book_order_completed_awards_three_stamps(
     customer_repo.update_loyalty(customer.customer_id, 0, customer.rewards_available)
 
     books = book_repo.get_all()
-    # Find a book with stock >= 3
+    # Find a book with available stock >= 3
     target_book = None
     for b in books:
-        if b.stock_count >= 3:
+        if b.available_count >= 3:
             target_book = b
             break
 

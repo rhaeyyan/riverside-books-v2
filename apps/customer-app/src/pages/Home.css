@@ -6,6 +6,20 @@
   margin-bottom: 26px;
 }
 
+.browse-eyebrow {
+  font-size: 12.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6c6155;
+  margin: 0 0 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .browse-eyebrow {
+    color: #9e9180;
+  }
+}
+
 .browse-title {
   font-family: var(--heading);
   font-size: clamp(32px, 5vw, 46px);
@@ -105,7 +119,7 @@
   padding: 12px 22px;
   border: 1px solid var(--accent);
   background: var(--accent);
-  color: #ffffff;
+  color: var(--ink-text);
   border-radius: 8px;
   font-size: 15px;
   font-weight: 600;
@@ -191,6 +205,8 @@
   font-weight: 500;
   color: var(--text-h);
   margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .results-count {

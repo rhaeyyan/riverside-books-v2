@@ -70,6 +70,7 @@ export default function Home() {
   return (
     <div>
       <section className="browse-hero">
+        <p className="browse-eyebrow">412 Main Street, Beacon, NY 12508</p>
         <h1 className="browse-title">See what's on the shelf before you walk over.</h1>
         <p className="browse-subtitle">
           Stock counts come straight off the counter. Reserve a copy and we'll keep it by the register for 48 hours.

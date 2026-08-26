@@ -215,6 +215,9 @@ export function Inventory() {
 
   const sortArrow = (field: SortField) => sortField === field ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
 
+  const ariaSortFor = (field: SortField): 'ascending' | 'descending' | 'none' =>
+    sortField === field ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+
   return (
     <div className="inventory-page">
       <div className="inventory-header">
@@ -226,6 +229,7 @@ export function Inventory() {
           <input
             type="text"
             placeholder="Scan ISBN to add…"
+            aria-label="Scan or enter ISBN to add a book"
             value={newIsbn}
             onChange={e => setNewIsbn(e.target.value)}
             className="isbn-input"
@@ -235,7 +239,7 @@ export function Inventory() {
           </button>
         </form>
       </div>
-      {addError && <p className="isbn-error">{addError}</p>}
+      {addError && <p className="isbn-error" role="alert">{addError}</p>}
 
       <div className="alerts-summary">
         {tiles.map(t => (
@@ -260,11 +264,17 @@ export function Inventory() {
       <div className="filters-bar filters-bar--controls">
         <div className="search-box">
           <Search size={18} />
-          <input type="text" placeholder="Search title or author..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input
+            type="text"
+            placeholder="Search title or author..."
+            aria-label="Search inventory by title or author"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
         <div className="filter-group">
-          <label>Genre:</label>
-          <select value={genreFilter} onChange={e => setGenreFilter(e.target.value)}>
+          <label htmlFor="inventory-genre-filter">Genre:</label>
+          <select id="inventory-genre-filter" value={genreFilter} onChange={e => setGenreFilter(e.target.value)}>
             {genres.map(g => <option key={g} value={g}>{g}</option>)}
           </select>
         </div>
@@ -280,15 +290,15 @@ export function Inventory() {
         <table className="inventory-table">
           <thead>
             <tr>
-              <th><button type="button" className="sort-btn" onClick={() => handleSort('title')}>Title{sortArrow('title')}</button></th>
-              <th>ISBN</th>
-              <th>Genre</th>
-              <th><button type="button" className="sort-btn" onClick={() => handleSort('stock_count')}>On hand{sortArrow('stock_count')}</button></th>
-              <th><button type="button" className="sort-btn" onClick={() => handleSort('available_count')}>Avail{sortArrow('available_count')}</button></th>
-              <th>Held</th>
-              <th>Status</th>
-              <th>Price</th>
-              <th>Actions</th>
+              <th scope="col" aria-sort={ariaSortFor('title')}><button type="button" className="sort-btn" onClick={() => handleSort('title')}>Title{sortArrow('title')}</button></th>
+              <th scope="col">ISBN</th>
+              <th scope="col">Genre</th>
+              <th scope="col" aria-sort={ariaSortFor('stock_count')}><button type="button" className="sort-btn" onClick={() => handleSort('stock_count')}>On hand{sortArrow('stock_count')}</button></th>
+              <th scope="col" aria-sort={ariaSortFor('available_count')}><button type="button" className="sort-btn" onClick={() => handleSort('available_count')}>Avail{sortArrow('available_count')}</button></th>
+              <th scope="col">Held</th>
+              <th scope="col">Status</th>
+              <th scope="col">Price</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>

@@ -320,8 +320,74 @@
   flex-wrap: wrap;
 }
 
+/* Promo band — full-bleed within the app shell (matches Home.css's .browse-promo).
+   The -24px offset matches .app-main's horizontal padding; .book-detail-page adds
+   no horizontal padding of its own, so the breakout amount is the same as Home's. */
+.book-detail-promo {
+  margin: 40px -24px 0;
+  padding: 52px 24px;
+  background: var(--accent);
+  color: var(--ink-text);
+}
+
+.book-detail-promo-inner {
+  max-width: 1052px;
+  margin: 0 auto;
+}
+
+.book-detail-promo-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-text);
+}
+
+.book-detail-promo-title {
+  font-family: var(--heading);
+  font-weight: 500;
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--ink-text);
+  margin: 14px 0 0;
+  max-width: 22ch;
+}
+
+.book-detail-promo-desc {
+  margin: 14px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-text);
+  max-width: 46ch;
+}
+
+.book-detail-promo-cta {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 22px;
+  padding: 13px 22px;
+  border-radius: 8px;
+  background: var(--ink-text);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.book-detail-promo-cta:hover {
+  opacity: 0.88;
+}
+
+.book-detail-promo-cta:focus-visible {
+  outline: 2px solid var(--ink-text);
+  outline-offset: 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .back-link, .btn-hold-submit, .form-input {
+  .back-link, .btn-hold-submit, .form-input, .book-detail-promo-cta {
     transition: none !important;
   }
 }

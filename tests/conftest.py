@@ -8,8 +8,15 @@ import psycopg
 import pytest
 from psycopg import Connection
 
-from backend.api.core.db import get_pool, set_current_connection
+from backend.api.core.db import close_pool, get_pool, set_current_connection
 from backend.config import settings
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_db_pool() -> Iterator[None]:
+    """Close connection pool at end of test session."""
+    yield
+    close_pool()
 
 
 @pytest.fixture

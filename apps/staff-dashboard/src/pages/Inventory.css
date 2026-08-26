@@ -18,7 +18,7 @@
   cursor: pointer;
   flex: 1;
   max-width: 250px;
-  color: white;
+  color: var(--ink-text);
   border: none;
   font: inherit;
   text-align: left;
@@ -120,7 +120,7 @@
 }
 
 .inventory-table th:hover {
-  background: #f1f5f9;
+  background: var(--code-bg);
 }
 
 .status-badge {
@@ -163,10 +163,10 @@
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  color: #64748b;
+  color: var(--text);
 }
 
 .action-buttons button:hover, .inventory-table td > button:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--code-bg);
+  color: var(--text-h);
 }

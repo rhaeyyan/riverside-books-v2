@@ -7,7 +7,7 @@
 .marketing-setup {
   display: flex;
   gap: 32px;
-  background: white;
+  background: var(--bg-raised);
   padding: 24px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -24,19 +24,19 @@
 h3 {
   margin: 0;
   font-size: 16px;
-  color: #334155;
+  color: var(--text-h);
 }
 
 input, select {
   padding: 10px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 4px;
 }
 
 button {
   padding: 10px 16px;
-  background: #3b82f6;
-  color: white;
+  background: var(--ink);
+  color: var(--ink-text);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -44,12 +44,15 @@ button {
 }
 
 button:disabled {
-  background: #94a3b8;
+  /* No disabled-state token exists; derived from the fixed --ink token so it
+     stays muted without introducing a new hardcoded color. Disabled controls
+     are exempt from WCAG contrast requirements. */
+  background: color-mix(in srgb, var(--ink) 45%, var(--bg-raised));
   cursor: not-allowed;
 }
 
 button:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--ink-hover);
 }
 
 .search-results {
@@ -57,8 +60,8 @@ button:hover:not(:disabled) {
   top: 70px;
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid #cbd5e1;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
   border-radius: 4px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   z-index: 10;
@@ -72,19 +75,19 @@ button:hover:not(:disabled) {
 }
 
 .search-result-item:hover {
-  background: #f1f5f9;
+  background: var(--code-bg);
 }
 
 .selected-subject {
   padding: 12px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: var(--status-in-bg);
+  border: 1px solid var(--status-in);
   border-radius: 4px;
-  color: #166534;
+  color: var(--status-in);
 }
 
 .marketing-result {
-  background: white;
+  background: var(--bg-raised);
   padding: 24px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -103,15 +106,15 @@ button:hover:not(:disabled) {
 }
 
 .idea-box {
-  background: #f8fafc;
+  background: var(--code-bg);
   padding: 12px;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--accent);
   margin-bottom: 20px;
-  color: #475569;
+  color: var(--text);
 }
 
 .caption-box {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   padding: 16px;
   border-radius: 4px;
   white-space: pre-wrap;
@@ -122,6 +125,6 @@ button:hover:not(:disabled) {
 
 .info-text {
   font-size: 13px;
-  color: #64748b;
+  color: var(--text);
   font-style: italic;
 }

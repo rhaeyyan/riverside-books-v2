@@ -46,7 +46,7 @@ export default function Home() {
       {loading ? (
         <p>Loading books...</p>
       ) : books.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', background: '#f8f9fa', borderRadius: '8px' }}>
+        <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--code-bg)', borderRadius: '8px' }}>
           <h3>No books found matching "{query}"</h3>
           <p>Would you like to ask our chatbot about special orders?</p>
           <button 
@@ -59,16 +59,16 @@ export default function Home() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '2rem' }}>
           {books.map(b => (
-            <div key={b.isbn} style={{ border: '1px solid #ddd', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ background: '#eee', height: '200px', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div key={b.isbn} style={{ border: '1px solid var(--border)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: 'var(--code-bg)', height: '200px', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {b.cover_image_url && <img src={b.cover_image_url} alt="Cover" style={{ maxHeight: '100%', maxWidth: '100%' }} />}
               </div>
               <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem' }}>{b.title}</h3>
-              <p style={{ margin: '0 0 0.5rem 0', color: '#666' }}>{b.author}</p>
+              <p style={{ margin: '0 0 0.5rem 0', color: 'var(--text)' }}>{b.author}</p>
               <div style={{ marginTop: 'auto' }}>
                 <p style={{ fontWeight: 'bold', margin: '0 0 0.5rem 0' }}>{formatMoney(b.price_cents)}</p>
                 <StockBadge status={b.stock_status} available={b.available_count} />
-                <Link to={`/book/${b.isbn}`} style={{ display: 'block', marginTop: '1rem', textAlign: 'center', background: '#007bff', color: 'white', textDecoration: 'none', padding: '0.5rem', borderRadius: '4px' }}>
+                <Link to={`/book/${b.isbn}`} style={{ display: 'block', marginTop: '1rem', textAlign: 'center', background: 'var(--accent-fill)', color: 'var(--ink-text)', textDecoration: 'none', padding: '0.5rem', borderRadius: '4px' }}>
                   View Details
                 </Link>
               </div>
@@ -81,7 +81,7 @@ export default function Home() {
 }
 
 function StockBadge({ status, available }: { status: string, available: number }) {
-  if (status === 'out_of_stock') return <span style={{ color: 'red', fontWeight: 'bold' }}>Out of stock</span>;
-  if (status === 'low_stock') return <span style={{ color: 'orange', fontWeight: 'bold' }}>Only {available} left</span>;
-  return <span style={{ color: 'green', fontWeight: 'bold' }}>In stock ({available} copies)</span>;
+  if (status === 'out_of_stock') return <span style={{ color: 'var(--status-out)', fontWeight: 'bold' }}>Out of stock</span>;
+  if (status === 'low_stock') return <span style={{ color: 'var(--status-low)', fontWeight: 'bold' }}>Only {available} left</span>;
+  return <span style={{ color: 'var(--status-in)', fontWeight: 'bold' }}>In stock ({available} copies)</span>;
 }

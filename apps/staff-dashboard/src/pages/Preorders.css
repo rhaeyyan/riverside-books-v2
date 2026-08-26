@@ -12,8 +12,12 @@
 }
 
 .release-btn {
-  background: #dc2626;
-  color: white;
+  /* -fill token: fixed, non-theme-adaptive, so it stays safe to pair with the
+     fixed --ink-text below. The plain --status-out token is theme-adaptive
+     and lightens in dark mode, which would fail contrast against a fixed
+     light text color. */
+  background: var(--status-out-fill);
+  color: var(--ink-text);
   border: none;
   padding: 8px 16px;
   border-radius: 4px;
@@ -22,7 +26,9 @@
 }
 
 .release-btn:hover {
-  background: #b91c1c;
+  /* Darkened from the fixed --status-out-fill token (no dedicated hover
+     token exists for status colors) so the hover state stays fixed too. */
+  background: color-mix(in srgb, var(--status-out-fill) 82%, black);
 }
 
 .kanban-board {
@@ -33,7 +39,7 @@
 }
 
 .kanban-column {
-  background: #e2e8f0;
+  background: var(--code-bg);
   border-radius: 8px;
   padding: 16px;
   width: 320px;
@@ -46,7 +52,7 @@
   font-size: 16px;
   margin-top: 0;
   margin-bottom: 16px;
-  color: #475569;
+  color: var(--text);
   text-transform: capitalize;
 }
 
@@ -59,7 +65,7 @@
 }
 
 .kanban-card {
-  background: white;
+  background: var(--bg-raised);
   padding: 16px;
   border-radius: 6px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
@@ -69,7 +75,7 @@
 }
 
 .kanban-card.past-deadline {
-  border: 2px solid #ef4444;
+  border: 2px solid var(--status-out);
 }
 
 .card-header {
@@ -80,18 +86,18 @@
 }
 
 .customer {
-  color: #334155;
+  color: var(--text);
 }
 
 .warning {
-  color: #ef4444;
+  color: var(--status-out);
   font-size: 12px;
   font-weight: bold;
 }
 
 .items-list {
   font-size: 14px;
-  color: #64748b;
+  color: var(--text);
 }
 
 .item {
@@ -107,12 +113,12 @@
 }
 
 .deadline {
-  color: #94a3b8;
+  color: var(--text);
 }
 
 .actions button {
-  background: #3b82f6;
-  color: white;
+  background: var(--ink);
+  color: var(--ink-text);
   border: none;
   padding: 4px 12px;
   border-radius: 4px;
@@ -120,5 +126,5 @@
 }
 
 .actions button:hover {
-  background: #2563eb;
+  background: var(--ink-hover);
 }

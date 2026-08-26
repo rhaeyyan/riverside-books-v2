@@ -8,8 +8,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
 }
 .app-header h1 {
   margin: 0;
@@ -17,12 +17,27 @@
 }
 .app-header nav {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 .app-header nav a {
   text-decoration: none;
-  color: #007bff;
+  color: var(--text);
   font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 999px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.app-header nav a:hover {
+  color: var(--accent);
+  background: var(--code-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-header nav a {
+    transition: none;
+  }
 }
 .app-main {
   flex: 1;

@@ -90,20 +90,20 @@ export default function BookDetail() {
         {book.cover_image_url ? (
           <img src={book.cover_image_url} alt="Cover" style={{ width: '100%' }} />
         ) : (
-          <div style={{ background: '#eee', aspectRatio: '2 / 3', borderRadius: '4px' }} />
+          <div style={{ background: 'var(--code-bg)', aspectRatio: '2 / 3', borderRadius: '4px' }} />
         )}
       </div>
       <div style={{ flex: '2' }}>
         <h2>{book.title}</h2>
-        <h3 style={{ color: '#666' }}>{book.author}</h3>
+        <h3 style={{ color: 'var(--text)' }}>{book.author}</h3>
         <p><strong>Genre:</strong> {book.genre} | <strong>Format:</strong> {book.format}</p>
         <p><strong>ISBN:</strong> {book.isbn}</p>
         <p style={{ fontSize: '1.2rem', marginTop: '1rem' }}>{book.blurb}</p>
-        <h2 style={{ color: '#007bff' }}>{formatMoney(book.price_cents)}</h2>
-        
-        <div style={{ margin: '2rem 0', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+        <h2 style={{ color: 'var(--accent)' }}>{formatMoney(book.price_cents)}</h2>
+
+        <div style={{ margin: '2rem 0', padding: '1rem', background: 'var(--code-bg)', borderRadius: '8px' }}>
           {orderId ? (
-            <div style={{ color: 'green' }}>
+            <div style={{ color: 'var(--status-in)' }}>
               <h3>Success! Hold placed.</h3>
               <p>Your order ID is <strong>{orderId}</strong>.</p>
               <p>Please pick it up by <strong>{new Date(holdExpiresAt!).toLocaleString()}</strong>.</p>
@@ -112,7 +112,7 @@ export default function BookDetail() {
           ) : (
             <form onSubmit={handlePreOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '300px' }}>
               <h3>Place a 48-Hour Hold</h3>
-              {error && <p style={{ color: 'red' }}>{error}</p>}
+              {error && <p style={{ color: 'var(--status-out)' }}>{error}</p>}
               
               <label>
                 Phone Number:
@@ -139,11 +139,11 @@ export default function BookDetail() {
               )}
 
               {outOfStock ? (
-                <button type="button" disabled style={{ padding: '0.75rem', background: '#ccc', cursor: 'not-allowed' }}>
+                <button type="button" disabled style={{ padding: '0.75rem', background: 'var(--border)', cursor: 'not-allowed' }}>
                   Out of Stock - Cannot place hold
                 </button>
               ) : (
-                <button type="submit" style={{ padding: '0.75rem', background: '#28a745', color: 'white', border: 'none', cursor: 'pointer' }}>
+                <button type="submit" style={{ padding: '0.75rem', background: 'var(--accent-fill)', color: 'var(--ink-text)', border: 'none', cursor: 'pointer' }}>
                   {needsRegistration ? "Register & Place Hold" : "Place Hold"}
                 </button>
               )}

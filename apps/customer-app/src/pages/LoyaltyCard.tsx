@@ -42,10 +42,10 @@ export default function LoyaltyCard() {
         <button type="submit" style={{ padding: '0.5rem 1rem' }}>Check Loyalty</button>
       </form>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--status-out)' }}>{error}</p>}
 
       {customer && (
-        <div style={{ background: '#fff', border: '2px solid #007bff', borderRadius: '16px', padding: '2rem', maxWidth: '500px', textAlign: 'center' }}>
+        <div style={{ background: 'var(--bg-raised)', border: '2px solid var(--accent)', borderRadius: '16px', padding: '2rem', maxWidth: '500px', textAlign: 'center' }}>
           <h3>{customer.name}'s Rewards</h3>
           
           <div style={{ margin: '2rem 0', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
@@ -55,12 +55,12 @@ export default function LoyaltyCard() {
                 style={{
                   aspectRatio: '1',
                   borderRadius: '50%',
-                  border: '2px dashed #ccc',
+                  border: '2px dashed var(--border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: i < customer.stamps ? '#007bff' : 'transparent',
-                  color: i < customer.stamps ? 'white' : '#ccc',
+                  background: i < customer.stamps ? 'var(--accent-fill)' : 'transparent',
+                  color: i < customer.stamps ? 'var(--ink-text)' : 'var(--border)',
                   fontWeight: 'bold',
                   fontSize: '1.5rem'
                 }}
@@ -75,7 +75,7 @@ export default function LoyaltyCard() {
           </p>
           
           {customer.rewards_available > 0 && (
-            <div style={{ marginTop: '1rem', padding: '1rem', background: '#28a745', color: 'white', borderRadius: '8px' }}>
+            <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--accent-fill)', color: 'var(--ink-text)', borderRadius: '8px' }}>
               <h3>🎉 You have {customer.rewards_available} free book reward{customer.rewards_available > 1 ? 's' : ''}!</h3>
               <p>Redeem in-store today.</p>
             </div>

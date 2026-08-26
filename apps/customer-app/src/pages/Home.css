@@ -1,28 +1,28 @@
 /* Home.css — Riverside Books Customer Browse */
 
 .browse-hero {
-  padding: 32px 0 28px;
+  padding: 46px 0 30px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 24px;
+  margin-bottom: 26px;
 }
 
 .browse-title {
   font-family: var(--heading);
-  font-size: clamp(32px, 5vw, 44px);
+  font-size: clamp(32px, 5vw, 46px);
   font-weight: 500;
   color: var(--text-h);
   margin: 0;
-  letter-spacing: -0.8px;
-  line-height: 1.1;
-  max-width: 680px;
+  letter-spacing: -1px;
+  line-height: 1.06;
+  max-width: 620px;
 }
 
 .browse-subtitle {
-  margin: 12px 0 0;
-  font-size: 16px;
-  line-height: 1.55;
+  margin: 14px 0 0;
+  font-size: 17px;
+  line-height: 1.5;
   color: #6c6155;
-  max-width: 580px;
+  max-width: 520px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,7 +32,7 @@
 }
 
 .search-section {
-  margin-top: 22px;
+  margin-top: 24px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -40,8 +40,8 @@
 
 .search-bar-form {
   display: flex;
-  gap: 10px;
-  max-width: 580px;
+  gap: 9px;
+  max-width: 560px;
   width: 100%;
 }
 
@@ -130,12 +130,12 @@
 .filter-chips-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   flex-wrap: wrap;
 }
 
 .filter-label {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   color: #8a7e6f;
   margin-right: 4px;
@@ -181,20 +181,20 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
 .results-heading {
   font-family: var(--heading);
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 500;
   color: var(--text-h);
   margin: 0;
 }
 
 .results-count {
-  font-size: 13.5px;
+  font-size: 13px;
   color: #8a7e6f;
   font-variant-numeric: tabular-nums;
 }
@@ -202,8 +202,8 @@
 /* Book Grid */
 .book-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 28px 20px;
+  grid-template-columns: repeat(auto-fill, minmax(222px, 1fr));
+  gap: 26px 22px;
 }
 
 .book-card {

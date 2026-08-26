@@ -6,6 +6,7 @@ for Books, Customers, Orders, Events, StoreInfo, and Messages.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 
 from psycopg import Connection
@@ -562,16 +563,29 @@ class OrderRepository:
     """Repository encapsulating customer order and hold reservation operations."""
 
     def __init__(
-        self, datastore: JsonDatastore, collection_name: str = "orders.json"
+        self,
+        datastore: JsonDatastore | None = None,
+        collection_name: str = "orders.json",
+        conn: Connection | None = None,
     ) -> None:
-        """Initialize repository with datastore instance.
+        """Initialize repository with optional datastore or connection.
 
         Args:
-            datastore: JsonDatastore instance for underlying file I/O.
-            collection_name: File name for the orders collection.
+            datastore: Optional JsonDatastore instance for backward compatibility.
+            collection_name: Optional file name for backward compatibility.
+            conn: Optional psycopg Connection instance. If omitted, queries use
+                the active scoped connection or the connection pool.
         """
         self.datastore = datastore
         self.collection_name = collection_name
+        self.conn = conn
+
+    def _use_datastore(self) -> bool:
+        return (
+            self.datastore is not None
+            and self.conn is None
+            and db.get_current_connection() is None
+        )
 
     def get_all(self, status: str | None = None) -> list[Order]:
         """Retrieve orders with optional status filtering.
@@ -582,11 +596,43 @@ class OrderRepository:
         Returns:
             List of Order domain models.
         """
-        raw_data = self.datastore.load(self.collection_name)
-        orders = [Order.model_validate(item) for item in raw_data]
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            orders = [Order.model_validate(item) for item in raw_data]
+            if status is not None:
+                orders = [o for o in orders if o.status == status]
+            return orders
+
+        sql = """
+            SELECT o.order_id, o.customer_id, o.status,
+                   to_char(
+                       o.created_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS created_at,
+                   to_char(
+                       o.hold_expires_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS hold_expires_at,
+                   o.total_cents, o.notes,
+                   COALESCE(
+                       json_agg(
+                           json_build_object(
+                               'isbn', oi.isbn, 'quantity', oi.quantity
+                           )
+                       ) FILTER (WHERE oi.isbn IS NOT NULL),
+                       '[]'::json
+                   ) AS items
+            FROM orders o
+            LEFT JOIN order_items oi ON o.order_id = oi.order_id
+        """
+        params: list[Any] = []
         if status is not None:
-            orders = [o for o in orders if o.status == status]
-        return orders
+            sql += " WHERE o.status = %s"
+            params.append(status)
+        sql += " GROUP BY o.order_id ORDER BY o.created_at DESC"
+        rows = db.fetch_all(sql, params, conn=self.conn)
+        return [Order.model_validate(r) for r in rows]
 
     def get_by_id(self, order_id: str) -> Order | None:
         """Retrieve an order by its unique order ID.
@@ -597,11 +643,40 @@ class OrderRepository:
         Returns:
             Order domain model, or None if not found.
         """
-        raw_data = self.datastore.load(self.collection_name)
-        for item in raw_data:
-            if item.get("order_id") == order_id:
-                return Order.model_validate(item)
-        return None
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            for item in raw_data:
+                if item.get("order_id") == order_id:
+                    return Order.model_validate(item)
+            return None
+
+        sql = """
+            SELECT o.order_id, o.customer_id, o.status,
+                   to_char(
+                       o.created_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS created_at,
+                   to_char(
+                       o.hold_expires_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS hold_expires_at,
+                   o.total_cents, o.notes,
+                   COALESCE(
+                       json_agg(
+                           json_build_object(
+                               'isbn', oi.isbn, 'quantity', oi.quantity
+                           )
+                       ) FILTER (WHERE oi.isbn IS NOT NULL),
+                       '[]'::json
+                   ) AS items
+            FROM orders o
+            LEFT JOIN order_items oi ON o.order_id = oi.order_id
+            WHERE o.order_id = %s
+            GROUP BY o.order_id
+        """
+        row = db.fetch_one(sql, (order_id,), conn=self.conn)
+        return Order.model_validate(row) if row else None
 
     def get_by_customer_id(self, customer_id: str) -> list[Order]:
         """Retrieve all orders placed by a specific customer.
@@ -612,15 +687,45 @@ class OrderRepository:
         Returns:
             List of Order domain models belonging to customer.
         """
-        raw_data = self.datastore.load(self.collection_name)
-        return [
-            Order.model_validate(item)
-            for item in raw_data
-            if item.get("customer_id") == customer_id
-        ]
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            return [
+                Order.model_validate(item)
+                for item in raw_data
+                if item.get("customer_id") == customer_id
+            ]
+
+        sql = """
+            SELECT o.order_id, o.customer_id, o.status,
+                   to_char(
+                       o.created_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS created_at,
+                   to_char(
+                       o.hold_expires_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS hold_expires_at,
+                   o.total_cents, o.notes,
+                   COALESCE(
+                       json_agg(
+                           json_build_object(
+                               'isbn', oi.isbn, 'quantity', oi.quantity
+                           )
+                       ) FILTER (WHERE oi.isbn IS NOT NULL),
+                       '[]'::json
+                   ) AS items
+            FROM orders o
+            LEFT JOIN order_items oi ON o.order_id = oi.order_id
+            WHERE o.customer_id = %s
+            GROUP BY o.order_id
+            ORDER BY o.created_at DESC
+        """
+        rows = db.fetch_all(sql, (customer_id,), conn=self.conn)
+        return [Order.model_validate(r) for r in rows]
 
     def create(self, order: Order) -> Order:
-        """Persist a new order record into the datastore.
+        """Persist a new order record into the database.
 
         Args:
             order: Order domain model instance to persist.
@@ -631,16 +736,54 @@ class OrderRepository:
         Raises:
             ValueError: If an order with the same order_id already exists.
         """
-        with self.datastore.get_lock(self.collection_name):
-            raw_data = self.datastore.load(self.collection_name)
-            for item in raw_data:
-                if item.get("order_id") == order.order_id:
-                    raise ValueError(
-                        f"Order with ID '{order.order_id}' already exists."
+        if self._use_datastore():
+            assert self.datastore is not None
+            with self.datastore.get_lock(self.collection_name):
+                raw_data = self.datastore.load(self.collection_name)
+                for item in raw_data:
+                    if item.get("order_id") == order.order_id:
+                        raise ValueError(
+                            f"Order with ID '{order.order_id}' already exists."
+                        )
+                raw_data.append(order.model_dump())
+                self.datastore.save(self.collection_name, raw_data)
+                return order
+
+        order_sql = """
+            INSERT INTO orders (
+                order_id, customer_id, status, created_at,
+                hold_expires_at, total_cents, notes
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        item_sql = """
+            INSERT INTO order_items (order_id, isbn, quantity)
+            VALUES (%s, %s, %s)
+        """
+        try:
+            with db.transaction(self.conn) as conn:
+                conn.execute(
+                    order_sql,
+                    (
+                        order.order_id,
+                        order.customer_id,
+                        order.status,
+                        order.created_at,
+                        order.hold_expires_at,
+                        order.total_cents,
+                        order.notes,
+                    ),
+                )
+                for item in order.items:
+                    conn.execute(
+                        item_sql,
+                        (order.order_id, item.isbn, item.quantity),
                     )
-            raw_data.append(order.model_dump())
-            self.datastore.save(self.collection_name, raw_data)
-            return order
+        except UniqueViolation as err:
+            raise ValueError(
+                f"Order with ID '{order.order_id}' already exists."
+            ) from err
+
+        return order
 
     def update_status(self, order_id: str, new_status: str) -> Order:
         """Update the status of an existing order.
@@ -655,46 +798,113 @@ class OrderRepository:
         Raises:
             KeyError: If order is not found.
         """
-        with self.datastore.get_lock(self.collection_name):
-            raw_data = self.datastore.load(self.collection_name)
-            found_idx = -1
-            for idx, item in enumerate(raw_data):
-                if item.get("order_id") == order_id:
-                    found_idx = idx
-                    break
+        if self._use_datastore():
+            assert self.datastore is not None
+            with self.datastore.get_lock(self.collection_name):
+                raw_data = self.datastore.load(self.collection_name)
+                found_idx = -1
+                for idx, item in enumerate(raw_data):
+                    if item.get("order_id") == order_id:
+                        found_idx = idx
+                        break
 
-            if found_idx == -1:
+                if found_idx == -1:
+                    raise KeyError(f"Order with ID '{order_id}' not found.")
+
+                raw_data[found_idx]["status"] = new_status
+                updated_order = Order.model_validate(raw_data[found_idx])
+                self.datastore.save(self.collection_name, raw_data)
+                return updated_order
+
+        sql = """
+            UPDATE orders
+            SET status = %s
+            WHERE order_id = %s
+        """
+        with db.transaction(self.conn) as conn:
+            cur = conn.execute(sql, (new_status, order_id))
+            if cur.rowcount == 0:
                 raise KeyError(f"Order with ID '{order_id}' not found.")
+        updated = self.get_by_id(order_id)
+        if not updated:
+            raise KeyError(f"Order with ID '{order_id}' not found.")
+        return updated
 
-            raw_data[found_idx]["status"] = new_status
-            updated_order = Order.model_validate(raw_data[found_idx])
-            self.datastore.save(self.collection_name, raw_data)
-            return updated_order
-
-    def get_expired_pending_orders(self) -> list[Order]:
+    def get_expired_pending_orders(
+        self, now_iso: str | None = None
+    ) -> list[Order]:
         """Retrieve all pending orders whose hold reservation has expired.
+
+        Args:
+            now_iso: Optional ISO timestamp to evaluate expiry against.
 
         Returns:
             List of expired pending Order domain models.
         """
-        pending_orders = self.get_all(status="pending")
-        return [order for order in pending_orders if order.is_expired()]
+        if self._use_datastore():
+            pending_orders = self.get_all(status="pending")
+            return [order for order in pending_orders if order.is_expired()]
+
+        sql = """
+            SELECT o.order_id, o.customer_id, o.status,
+                   to_char(
+                       o.created_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS created_at,
+                   to_char(
+                       o.hold_expires_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS hold_expires_at,
+                   o.total_cents, o.notes,
+                   COALESCE(
+                       json_agg(
+                           json_build_object(
+                               'isbn', oi.isbn, 'quantity', oi.quantity
+                           )
+                       ) FILTER (WHERE oi.isbn IS NOT NULL),
+                       '[]'::json
+                   ) AS items
+            FROM orders o
+            LEFT JOIN order_items oi ON o.order_id = oi.order_id
+            WHERE o.status = 'pending' AND o.hold_expires_at < %s
+            GROUP BY o.order_id
+            ORDER BY o.hold_expires_at ASC
+        """
+        if now_iso:
+            now_dt = datetime.fromisoformat(now_iso.replace("Z", "+00:00"))
+        else:
+            now_dt = datetime.now(UTC)
+        rows = db.fetch_all(sql, (now_dt,), conn=self.conn)
+        return [Order.model_validate(r) for r in rows]
 
 
 class EventRepository:
     """Repository encapsulating store author events and workshops."""
 
     def __init__(
-        self, datastore: JsonDatastore, collection_name: str = "events.json"
+        self,
+        datastore: JsonDatastore | None = None,
+        collection_name: str = "events.json",
+        conn: Connection | None = None,
     ) -> None:
-        """Initialize repository with datastore instance.
+        """Initialize repository with optional datastore or connection.
 
         Args:
-            datastore: JsonDatastore instance for underlying file I/O.
-            collection_name: File name for the events collection.
+            datastore: Optional JsonDatastore instance for backward compatibility.
+            collection_name: Optional file name for backward compatibility.
+            conn: Optional psycopg Connection instance. If omitted, queries use
+                the active scoped connection or the connection pool.
         """
         self.datastore = datastore
         self.collection_name = collection_name
+        self.conn = conn
+
+    def _use_datastore(self) -> bool:
+        return (
+            self.datastore is not None
+            and self.conn is None
+            and db.get_current_connection() is None
+        )
 
     def get_all(self) -> list[Event]:
         """Retrieve all upcoming store events.
@@ -702,8 +912,23 @@ class EventRepository:
         Returns:
             List of Event domain models.
         """
-        raw_data = self.datastore.load(self.collection_name)
-        return [Event.model_validate(item) for item in raw_data]
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            return [Event.model_validate(item) for item in raw_data]
+
+        sql = """
+            SELECT event_id, title, author_name,
+                   to_char(
+                       starts_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS starts_at,
+                   capacity, tickets_sold, description
+            FROM events
+            ORDER BY starts_at ASC
+        """
+        rows = db.fetch_all(sql, conn=self.conn)
+        return [Event.model_validate(r) for r in rows]
 
     def get_by_id(self, event_id: str) -> Event | None:
         """Retrieve a specific event by ID.
@@ -714,11 +939,26 @@ class EventRepository:
         Returns:
             Event domain model, or None if not found.
         """
-        raw_data = self.datastore.load(self.collection_name)
-        for item in raw_data:
-            if item.get("event_id") == event_id:
-                return Event.model_validate(item)
-        return None
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            for item in raw_data:
+                if item.get("event_id") == event_id:
+                    return Event.model_validate(item)
+            return None
+
+        sql = """
+            SELECT event_id, title, author_name,
+                   to_char(
+                       starts_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS starts_at,
+                   capacity, tickets_sold, description
+            FROM events
+            WHERE event_id = %s
+        """
+        row = db.fetch_one(sql, (event_id,), conn=self.conn)
+        return Event.model_validate(row) if row else None
 
 
 class StoreInfoRepository:
@@ -778,16 +1018,29 @@ class MessageRepository:
     """Repository encapsulating customer support escalation messages."""
 
     def __init__(
-        self, datastore: JsonDatastore, collection_name: str = "messages.json"
+        self,
+        datastore: JsonDatastore | None = None,
+        collection_name: str = "messages.json",
+        conn: Connection | None = None,
     ) -> None:
-        """Initialize repository with datastore instance.
+        """Initialize repository with optional datastore or connection.
 
         Args:
-            datastore: JsonDatastore instance for underlying file I/O.
-            collection_name: File name for customer messages collection.
+            datastore: Optional JsonDatastore instance for backward compatibility.
+            collection_name: Optional file name for customer messages collection.
+            conn: Optional psycopg Connection instance. If omitted, queries use
+                the active scoped connection or the connection pool.
         """
         self.datastore = datastore
         self.collection_name = collection_name
+        self.conn = conn
+
+    def _use_datastore(self) -> bool:
+        return (
+            self.datastore is not None
+            and self.conn is None
+            and db.get_current_connection() is None
+        )
 
     def get_all(self, status: str | None = None) -> list[Message]:
         """Retrieve all customer escalation messages.
@@ -798,11 +1051,60 @@ class MessageRepository:
         Returns:
             List of Message domain models.
         """
-        raw_data = self.datastore.load(self.collection_name)
-        messages = [Message.model_validate(item) for item in raw_data]
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            messages = [Message.model_validate(item) for item in raw_data]
+            if status is not None:
+                messages = [m for m in messages if m.status == status]
+            return messages
+
+        sql = """
+            SELECT message_id, name, contact, body,
+                   to_char(
+                       created_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS created_at,
+                   status
+            FROM messages
+        """
+        params: list[Any] = []
         if status is not None:
-            messages = [m for m in messages if m.status == status]
-        return messages
+            sql += " WHERE status = %s"
+            params.append(status)
+        sql += " ORDER BY created_at DESC"
+        rows = db.fetch_all(sql, params, conn=self.conn)
+        return [Message.model_validate(r) for r in rows]
+
+    def get_by_id(self, message_id: str) -> Message | None:
+        """Retrieve a customer escalation message by ID.
+
+        Args:
+            message_id: Unique message identifier.
+
+        Returns:
+            Message domain model, or None if not found.
+        """
+        if self._use_datastore():
+            assert self.datastore is not None
+            raw_data = self.datastore.load(self.collection_name)
+            for item in raw_data:
+                if item.get("message_id") == message_id:
+                    return Message.model_validate(item)
+            return None
+
+        sql = """
+            SELECT message_id, name, contact, body,
+                   to_char(
+                       created_at AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                   ) AS created_at,
+                   status
+            FROM messages
+            WHERE message_id = %s
+        """
+        row = db.fetch_one(sql, (message_id,), conn=self.conn)
+        return Message.model_validate(row) if row else None
 
     def create(self, message: Message) -> Message:
         """Persist a new escalation message into the datastore.
@@ -813,11 +1115,32 @@ class MessageRepository:
         Returns:
             The created Message instance.
         """
-        with self.datastore.get_lock(self.collection_name):
-            raw_data = self.datastore.load(self.collection_name)
-            raw_data.append(message.model_dump())
-            self.datastore.save(self.collection_name, raw_data)
-            return message
+        if self._use_datastore():
+            assert self.datastore is not None
+            with self.datastore.get_lock(self.collection_name):
+                raw_data = self.datastore.load(self.collection_name)
+                raw_data.append(message.model_dump())
+                self.datastore.save(self.collection_name, raw_data)
+                return message
+
+        sql = """
+            INSERT INTO messages (
+                message_id, name, contact, body, created_at, status
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        with db.transaction(self.conn) as conn:
+            conn.execute(
+                sql,
+                (
+                    message.message_id,
+                    message.name,
+                    message.contact,
+                    message.body,
+                    message.created_at,
+                    message.status,
+                ),
+            )
+        return message
 
     def update_status(self, message_id: str, new_status: str) -> Message:
         """Update status of a customer escalation message.
@@ -832,18 +1155,38 @@ class MessageRepository:
         Raises:
             KeyError: If message is not found.
         """
-        with self.datastore.get_lock(self.collection_name):
-            raw_data = self.datastore.load(self.collection_name)
-            found_idx = -1
-            for idx, item in enumerate(raw_data):
-                if item.get("message_id") == message_id:
-                    found_idx = idx
-                    break
+        if self._use_datastore():
+            assert self.datastore is not None
+            with self.datastore.get_lock(self.collection_name):
+                raw_data = self.datastore.load(self.collection_name)
+                found_idx = -1
+                for idx, item in enumerate(raw_data):
+                    if item.get("message_id") == message_id:
+                        found_idx = idx
+                        break
 
-            if found_idx == -1:
+                if found_idx == -1:
+                    raise KeyError(f"Message with ID '{message_id}' not found.")
+
+                raw_data[found_idx]["status"] = new_status
+                updated_msg = Message.model_validate(raw_data[found_idx])
+                self.datastore.save(self.collection_name, raw_data)
+                return updated_msg
+
+        sql = """
+            UPDATE messages
+            SET status = %s
+            WHERE message_id = %s
+            RETURNING message_id, name, contact, body,
+                      to_char(
+                          created_at AT TIME ZONE 'UTC',
+                          'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+                      ) AS created_at,
+                      status
+        """
+        with db.transaction(self.conn) as conn:
+            cur = conn.execute(sql, (new_status, message_id))
+            row = cur.fetchone()
+            if not row:
                 raise KeyError(f"Message with ID '{message_id}' not found.")
-
-            raw_data[found_idx]["status"] = new_status
-            updated_msg = Message.model_validate(raw_data[found_idx])
-            self.datastore.save(self.collection_name, raw_data)
-            return updated_msg
+            return Message.model_validate(row)

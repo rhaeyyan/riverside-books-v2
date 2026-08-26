@@ -20,12 +20,16 @@ from backend.api.core.db import set_current_connection
 from backend.api.core.repositories import (
     BookRepository,
     CustomerRepository,
+    EventRepository,
+    MessageRepository,
     OrderRepository,
     StoreInfoRepository,
 )
 from backend.api.models import (
     Book,
     Customer,
+    Event,
+    Message,
     Order,
     OrderItem,
     StoreInfo,
@@ -81,9 +85,21 @@ def store_info_repo(db_connection: Connection) -> StoreInfoRepository:
 
 
 @pytest.fixture
-def order_repo(datastore: JsonDatastore) -> OrderRepository:
-    """Provide OrderRepository instance."""
-    return OrderRepository(datastore=datastore)
+def order_repo(db_connection: Connection) -> OrderRepository:
+    """Provide OrderRepository instance backed by Postgres transaction."""
+    return OrderRepository()
+
+
+@pytest.fixture
+def event_repo(db_connection: Connection) -> EventRepository:
+    """Provide EventRepository instance backed by Postgres transaction."""
+    return EventRepository()
+
+
+@pytest.fixture
+def message_repo(db_connection: Connection) -> MessageRepository:
+    """Provide MessageRepository instance backed by Postgres transaction."""
+    return MessageRepository()
 
 
 # ============================================================================
@@ -506,13 +522,12 @@ class TestRepositoryConcurrencyAndLocking:
             assert cust is not None
             assert isinstance(cust, Customer)
 
-    def test_cross_collection_concurrency_no_deadlock(
-        self, order_repo: OrderRepository
-    ) -> None:
+    def test_cross_collection_concurrency_no_deadlock(self) -> None:
         """Verify distinct repositories operate without deadlock."""
         set_current_connection(None)
         book_repo = BookRepository()
         customer_repo = CustomerRepository()
+        order_repo = OrderRepository()
         num_iterations = 20
 
         def mutate_books() -> None:
@@ -528,6 +543,7 @@ class TestRepositoryConcurrencyAndLocking:
                 )
 
         def mutate_orders() -> None:
+            set_current_connection(None)
             for k in range(num_iterations):
                 status = "ready_for_pickup" if k % 2 == 0 else "pending"
                 order_repo.update_status("order_001", new_status=status)
@@ -545,6 +561,7 @@ class TestRepositoryConcurrencyAndLocking:
             t.join(timeout=10)
             assert not t.is_alive(), f"Thread {t.name} timed out or deadlocked"
 
+        order_repo.update_status("order_001", new_status="pending")
         book_repo.update_stock("9780143039433", stock_count=0)
 
 
@@ -565,4 +582,77 @@ class TestStoreInfoRepository:
         assert "Riverside Books" in info.name
         assert info.hours.tuesday is not None
         assert len(info.faqs) >= 6
+
+
+# ============================================================================
+# EventRepository Tests
+# ============================================================================
+
+
+class TestEventRepository:
+    """Unit and behavioral tests for EventRepository."""
+
+    def test_get_all_returns_typed_domain_models(
+        self, event_repo: EventRepository
+    ) -> None:
+        """Ensure get_all returns a list of Event domain models."""
+        events = event_repo.get_all()
+        assert len(events) >= 1
+        for event in events:
+            assert isinstance(event, Event)
+            assert event.capacity > 0
+            assert event.tickets_sold <= event.capacity
+
+    def test_get_by_id(self, event_repo: EventRepository) -> None:
+        """Ensure get_by_id returns specific event or None."""
+        first_event = event_repo.get_all()[0]
+        found = event_repo.get_by_id(first_event.event_id)
+        assert found is not None
+        assert found.event_id == first_event.event_id
+
+        assert event_repo.get_by_id("event_nonexistent") is None
+
+
+# ============================================================================
+# MessageRepository Tests
+# ============================================================================
+
+
+class TestMessageRepository:
+    """Unit and behavioral tests for MessageRepository."""
+
+    def test_get_all_and_filtering(
+        self, message_repo: MessageRepository
+    ) -> None:
+        """Ensure get_all returns messages and supports status filtering."""
+        all_msgs = message_repo.get_all()
+        assert len(all_msgs) >= 1
+        for msg in all_msgs:
+            assert isinstance(msg, Message)
+
+        new_msgs = message_repo.get_all(status="new")
+        for msg in new_msgs:
+            assert msg.status == "new"
+
+    def test_create_and_update_status(
+        self, message_repo: MessageRepository
+    ) -> None:
+        """Ensure creating and updating status works cleanly."""
+        msg = Message(
+            message_id="msg_test_999",
+            name="Jane Doe",
+            contact="555-0199",
+            body="Can you hold a copy of Dune?",
+            created_at="2026-08-25T14:00:00Z",
+            status="new",
+        )
+        created = message_repo.create(msg)
+        assert created.message_id == "msg_test_999"
+
+        found = message_repo.get_by_id("msg_test_999")
+        assert found is not None
+        assert found.body == "Can you hold a copy of Dune?"
+
+        updated = message_repo.update_status("msg_test_999", new_status="read")
+        assert updated.status == "read"
 

@@ -1,0 +1,218 @@
+/* MyOrders.css — Riverside Books Customer Holds & Orders
+   Mirrors the hero / feature-strip / promo pattern established in Home.css.
+   Reuses Home.css's shared, unprefixed .rule-item / .rule-number /
+   .rule-title / .rule-desc classes rather than redefining them here — those
+   classes are always loaded because Home.tsx is statically imported by
+   App.tsx regardless of route. */
+
+.myorders-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 20px 44px;
+  padding: 46px 0 30px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 26px;
+}
+
+.myorders-hero-copy {
+  min-width: 0;
+}
+
+/* Illustrated "held book on a reserved shelf slot" graphic — self-contained
+   inline SVG, no external asset. */
+.myorders-hero-art {
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.myorders-hero-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 760px) {
+  .myorders-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .myorders-hero-art {
+    display: none;
+  }
+}
+
+.myorders-eyebrow {
+  font-size: 12.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6c6155;
+  margin: 0 0 10px;
+}
+
+.myorders-title {
+  font-family: var(--heading);
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 500;
+  color: var(--text-h);
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.myorders-subtitle {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: #6c6155;
+  max-width: 460px;
+}
+
+.myorders-lookup-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+  max-width: 480px;
+  flex-wrap: wrap;
+}
+
+.myorders-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+}
+
+.myorders-search-icon {
+  position: absolute;
+  left: 14px;
+  color: #8a7e6f;
+  pointer-events: none;
+}
+
+.myorders-phone-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px 12px 42px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-raised);
+  font-size: 15px;
+  font-family: var(--mono);
+  color: var(--text-h);
+  min-height: 44px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.myorders-phone-input:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+/* Feature strip — reuses Home.css's .rule-item / .rule-number / .rule-title /
+   .rule-desc. This wrapper only sets the grid; collapses to one column at
+   the same 900px breakpoint Home.css uses for .browse-rule. */
+.myorders-rule {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 40px;
+  padding-bottom: 40px;
+  margin-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .myorders-rule {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .myorders-rule .rule-item {
+    padding-bottom: 26px;
+  }
+}
+
+/* Promo band — full-bleed within the app shell, restates the stamp-card
+   facts from LoyaltyCard.tsx and mirrors .browse-promo. */
+.myorders-promo {
+  margin: 0 -24px 40px;
+  padding: 52px 24px;
+  background: var(--accent);
+  color: var(--ink-text);
+}
+
+.myorders-promo-inner {
+  max-width: 1052px;
+  margin: 0 auto;
+}
+
+.myorders-promo-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-text);
+}
+
+.myorders-promo-title {
+  font-family: var(--heading);
+  font-weight: 500;
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--ink-text);
+  margin: 14px 0 0;
+  max-width: 22ch;
+}
+
+.myorders-promo-desc {
+  margin: 14px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-text);
+  max-width: 46ch;
+}
+
+.myorders-promo-cta {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 22px;
+  padding: 13px 22px;
+  border-radius: 8px;
+  background: var(--ink-text);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.myorders-promo-cta:hover {
+  opacity: 0.88;
+}
+
+.myorders-promo-cta:focus-visible {
+  outline: 2px solid var(--ink-text);
+  outline-offset: 3px;
+}
+
+/* Results — keeps the existing order-card list at its original reading
+   width; the list markup itself is untouched. */
+.myorders-results {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .myorders-phone-input,
+  .myorders-promo-cta {
+    transition: none !important;
+  }
+}

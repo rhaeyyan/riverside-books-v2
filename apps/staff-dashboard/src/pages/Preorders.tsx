@@ -23,6 +23,7 @@ export function Preorders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [books, setBooks] = useState<Record<string, Book>>({});
   const [customers, setCustomers] = useState<Record<string, Customer>>({});
+  const [moveAnnouncement, setMoveAnnouncement] = useState('');
 
   const fetchOrders = () => {
     client.GET("/api/orders", {}).then((res) => {
@@ -68,6 +69,9 @@ export function Preorders() {
       setOrders(prevOrders);
     } else if (res.data) {
       setOrders(orders.map(o => o.order_id === order.order_id ? res.data : o));
+      const customer = customers[order.customer_id];
+      const destColumn = columns.find(c => c.key === newStatus);
+      setMoveAnnouncement(`${customer ? customer.name : order.customer_id}'s order moved to ${destColumn ? destColumn.label : newStatus}.`);
     }
   };
 
@@ -100,6 +104,8 @@ export function Preorders() {
           <span className="sr-only" role="status" aria-live="polite">{releaseLabel}</span>
         </div>
       </div>
+
+      <span className="sr-only" role="status" aria-live="polite">{moveAnnouncement}</span>
 
       <div className="kanban-board">
         {columns.map(col => {

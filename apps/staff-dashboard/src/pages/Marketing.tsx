@@ -102,14 +102,15 @@ export function Marketing() {
             {searchQuery && (
               <div className="absolute z-10 w-full mt-1 bg-[var(--bg-raised)] border border-[var(--border)] rounded-xl shadow-lg max-h-60 overflow-y-auto">
                 {searchResults().map(res => (
-                  <div
+                  <button
                     key={res.id}
-                    className="px-4 py-3 cursor-pointer hover:bg-[var(--code-bg)] border-b border-[var(--border)] last:border-0"
+                    type="button"
                     onClick={() => handleSelectSubject(res)}
+                    className="block w-full appearance-none bg-transparent text-left px-4 py-3 cursor-pointer hover:bg-[var(--code-bg)] border-b border-[var(--border)] last:border-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                   >
                     <div className="font-medium text-[var(--text-h)]">{res.name}</div>
                     <div className="text-xs text-[var(--text)] capitalize">{res.type}</div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}

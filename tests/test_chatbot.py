@@ -1,9 +1,7 @@
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
+from psycopg import Connection
 
-from backend.api.core.datastore import JsonDatastore
 from backend.api.core.repositories import (
     BookRepository,
     EventRepository,
@@ -18,44 +16,25 @@ from backend.api.deps import (
 )
 from backend.api.main import app
 
-MOCK_DATA_DIR = Path(__file__).parent.parent / "mock_data"
+
+@pytest.fixture
+def book_repo(db_connection: Connection) -> BookRepository:
+    return BookRepository()
 
 
 @pytest.fixture
-def datastore(tmp_path: Path) -> JsonDatastore:
-    for seed_file in [
-        "inventory.json",
-        "store_info.json",
-        "events.json",
-        "messages.json",
-    ]:
-        source = MOCK_DATA_DIR / seed_file
-        dest = tmp_path / seed_file
-        if source.exists():
-            dest.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
-        else:
-            dest.write_text("[]", encoding="utf-8")
-    return JsonDatastore(data_dir=tmp_path)
+def store_repo(db_connection: Connection) -> StoreInfoRepository:
+    return StoreInfoRepository()
 
 
 @pytest.fixture
-def book_repo(datastore: JsonDatastore) -> BookRepository:
-    return BookRepository(datastore=datastore)
+def event_repo(db_connection: Connection) -> EventRepository:
+    return EventRepository()
 
 
 @pytest.fixture
-def store_repo(datastore: JsonDatastore) -> StoreInfoRepository:
-    return StoreInfoRepository(datastore=datastore)
-
-
-@pytest.fixture
-def event_repo(datastore: JsonDatastore) -> EventRepository:
-    return EventRepository(datastore=datastore)
-
-
-@pytest.fixture
-def msg_repo(datastore: JsonDatastore) -> MessageRepository:
-    return MessageRepository(datastore=datastore)
+def msg_repo(db_connection: Connection) -> MessageRepository:
+    return MessageRepository()
 
 
 @pytest.fixture
@@ -137,4 +116,4 @@ def test_escalated_message_lands_in_inbox(client: TestClient, msg_repo):
 
     final_msgs = msg_repo.get_all()
     assert len(final_msgs) == len(initial_msgs) + 1
-    assert final_msgs[-1].body == "Help me"
+    assert any(m.body == "Help me" for m in final_msgs)

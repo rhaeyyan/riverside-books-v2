@@ -1,4 +1,4 @@
-"""Repository pattern implementation encapsulating JSON datastore operations.
+"""Repository pattern implementation encapsulating PostgreSQL database operations.
 
 Provides domain-level data access, filtering, search, pagination, and atomic mutations
 for Books, Customers, Orders, Events, StoreInfo, and Messages.
@@ -13,7 +13,6 @@ from psycopg import Connection
 from psycopg.errors import UniqueViolation
 
 from backend.api.core import db
-from backend.api.core.datastore import JsonDatastore
 from backend.api.models import (
     Book,
     Customer,
@@ -29,30 +28,14 @@ from backend.api.models import (
 class BookRepository:
     """Repository encapsulating book catalog and inventory operations."""
 
-    def __init__(
-        self,
-        datastore: JsonDatastore | None = None,
-        collection_name: str = "inventory.json",
-        conn: Connection | None = None,
-    ) -> None:
-        """Initialize repository with optional datastore or connection.
+    def __init__(self, conn: Connection | None = None) -> None:
+        """Initialize repository with optional database connection.
 
         Args:
-            datastore: Optional JsonDatastore instance for backward compatibility.
-            collection_name: Optional file name for backward compatibility.
             conn: Optional psycopg Connection instance. If omitted, queries use
                 the active scoped connection or the connection pool.
         """
-        self.datastore = datastore
-        self.collection_name = collection_name
         self.conn = conn
-
-    def _use_datastore(self) -> bool:
-        return (
-            self.datastore is not None
-            and self.conn is None
-            and db.get_current_connection() is None
-        )
 
     def get_all(
         self,
@@ -72,29 +55,6 @@ class BookRepository:
         Returns:
             List of Book domain models matching criteria.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            books = [Book.model_validate(item) for item in raw_data]
-            if query:
-                q = query.strip().lower()
-                q_norm = normalize_isbn(q)
-                books = [
-                    b
-                    for b in books
-                    if q in b.title.lower()
-                    or q in b.author.lower()
-                    or q in b.isbn.lower()
-                    or (q_norm and q_norm in normalize_isbn(b.isbn))
-                ]
-            if in_stock_only:
-                books = [b for b in books if b.available_count > 0]
-            if offset > 0:
-                books = books[offset:]
-            if limit is not None:
-                books = books[:limit]
-            return books
-
         sql = """
             SELECT isbn, title, author, format, price_cents, stock_count,
                    reserved_count, low_stock_threshold, genre, blurb,
@@ -150,15 +110,6 @@ class BookRepository:
         Returns:
             Matching Book domain model, or None if not found.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            target_isbn = normalize_isbn(isbn)
-            raw_data = self.datastore.load(self.collection_name)
-            for item in raw_data:
-                if normalize_isbn(item.get("isbn", "")) == target_isbn:
-                    return Book.model_validate(item)
-            return None
-
         target_isbn = normalize_isbn(isbn) or isbn.strip()
         sql = """
             SELECT isbn, title, author, format, price_cents, stock_count,
@@ -183,20 +134,6 @@ class BookRepository:
         Raises:
             ValueError: If a book with the same ISBN already exists.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            target_isbn = normalize_isbn(book.isbn)
-            with self.datastore.get_lock(self.collection_name):
-                raw_data = self.datastore.load(self.collection_name)
-                for item in raw_data:
-                    if normalize_isbn(item.get("isbn", "")) == target_isbn:
-                        raise ValueError(
-                            f"Book with ISBN '{book.isbn}' already exists in inventory."
-                        )
-                raw_data.append(book.model_dump())
-                self.datastore.save(self.collection_name, raw_data)
-                return book
-
         target_isbn = normalize_isbn(book.isbn) or book.isbn
         if self.get_by_isbn(target_isbn) is not None:
             raise ValueError(
@@ -256,23 +193,6 @@ class BookRepository:
         if stock_count < 0:
             raise ValueError("stock_count cannot be negative.")
 
-        if self._use_datastore():
-            assert self.datastore is not None
-            target_isbn = normalize_isbn(isbn)
-            with self.datastore.get_lock(self.collection_name):
-                raw_data = self.datastore.load(self.collection_name)
-                found_idx = -1
-                for idx, item in enumerate(raw_data):
-                    if normalize_isbn(item.get("isbn", "")) == target_isbn:
-                        found_idx = idx
-                        break
-                if found_idx == -1:
-                    raise KeyError(f"Book with ISBN '{isbn}' not found.")
-                raw_data[found_idx]["stock_count"] = stock_count
-                updated_book = Book.model_validate(raw_data[found_idx])
-                self.datastore.save(self.collection_name, raw_data)
-                return updated_book
-
         target_isbn = normalize_isbn(isbn) or isbn.strip()
         sql = """
             UPDATE books
@@ -303,24 +223,6 @@ class BookRepository:
         Raises:
             KeyError: If book is not found.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            target_isbn = normalize_isbn(isbn)
-            with self.datastore.get_lock(self.collection_name):
-                raw_data = self.datastore.load(self.collection_name)
-                found_idx = -1
-                for idx, item in enumerate(raw_data):
-                    if normalize_isbn(item.get("isbn", "")) == target_isbn:
-                        found_idx = idx
-                        break
-                if found_idx == -1:
-                    raise KeyError(f"Book with ISBN '{isbn}' not found.")
-                current_reserved = raw_data[found_idx].get("reserved_count", 0)
-                raw_data[found_idx]["reserved_count"] = current_reserved + delta
-                updated_book = Book.model_validate(raw_data[found_idx])
-                self.datastore.save(self.collection_name, raw_data)
-                return updated_book
-
         target_isbn = normalize_isbn(isbn) or isbn.strip()
         sql = """
             UPDATE books
@@ -342,30 +244,14 @@ class BookRepository:
 class CustomerRepository:
     """Repository encapsulating customer profiles and loyalty card operations."""
 
-    def __init__(
-        self,
-        datastore: JsonDatastore | None = None,
-        collection_name: str = "customers.json",
-        conn: Connection | None = None,
-    ) -> None:
-        """Initialize repository with optional datastore or connection.
+    def __init__(self, conn: Connection | None = None) -> None:
+        """Initialize repository with optional database connection.
 
         Args:
-            datastore: Optional JsonDatastore instance for backward compatibility.
-            collection_name: Optional file name for backward compatibility.
             conn: Optional psycopg Connection instance. If omitted, queries use
                 the active scoped connection or the connection pool.
         """
-        self.datastore = datastore
-        self.collection_name = collection_name
         self.conn = conn
-
-    def _use_datastore(self) -> bool:
-        return (
-            self.datastore is not None
-            and self.conn is None
-            and db.get_current_connection() is None
-        )
 
     def get_all(self) -> list[Customer]:
         """Retrieve all customer records.
@@ -373,11 +259,6 @@ class CustomerRepository:
         Returns:
             List of Customer domain models.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            return [Customer.model_validate(item) for item in raw_data]
-
         sql = """
             SELECT customer_id, phone, name, email, stamps,
                    rewards_available, joined_date::text AS joined_date
@@ -396,14 +277,6 @@ class CustomerRepository:
         Returns:
             Customer domain model, or None if not found.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            for item in raw_data:
-                if item.get("customer_id") == customer_id:
-                    return Customer.model_validate(item)
-            return None
-
         sql = """
             SELECT customer_id, phone, name, email, stamps,
                    rewards_available, joined_date::text AS joined_date
@@ -422,15 +295,6 @@ class CustomerRepository:
         Returns:
             Customer domain model, or None if not found.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            norm_phone = normalize_phone(phone)
-            raw_data = self.datastore.load(self.collection_name)
-            for item in raw_data:
-                if normalize_phone(item.get("phone", "")) == norm_phone:
-                    return Customer.model_validate(item)
-            return None
-
         norm_phone = normalize_phone(phone)
         sql = """
             SELECT customer_id, phone, name, email, stamps,
@@ -453,24 +317,6 @@ class CustomerRepository:
         Raises:
             ValueError: If a customer with the same phone or customer_id exists.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            norm_phone = normalize_phone(customer.phone)
-            with self.datastore.get_lock(self.collection_name):
-                raw_data = self.datastore.load(self.collection_name)
-                for item in raw_data:
-                    if normalize_phone(item.get("phone", "")) == norm_phone:
-                        raise ValueError(
-                            f"Customer with phone '{customer.phone}' already exists."
-                        )
-                    if item.get("customer_id") == customer.customer_id:
-                        raise ValueError(
-                            f"Customer with ID '{customer.customer_id}' already exists."
-                        )
-                raw_data.append(customer.model_dump())
-                self.datastore.save(self.collection_name, raw_data)
-                return customer
-
         norm_phone = normalize_phone(customer.phone)
         check_sql = """
             SELECT customer_id, phone FROM customers
@@ -527,23 +373,6 @@ class CustomerRepository:
         Raises:
             KeyError: If customer is not found.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            with self.datastore.get_lock(self.collection_name):
-                raw_data = self.datastore.load(self.collection_name)
-                found_idx = -1
-                for idx, item in enumerate(raw_data):
-                    if item.get("customer_id") == customer_id:
-                        found_idx = idx
-                        break
-                if found_idx == -1:
-                    raise KeyError(f"Customer with ID '{customer_id}' not found.")
-                raw_data[found_idx]["stamps"] = stamps
-                raw_data[found_idx]["rewards_available"] = rewards_available
-                updated_customer = Customer.model_validate(raw_data[found_idx])
-                self.datastore.save(self.collection_name, raw_data)
-                return updated_customer
-
         sql = """
             UPDATE customers
             SET stamps = %s, rewards_available = %s
@@ -562,30 +391,14 @@ class CustomerRepository:
 class OrderRepository:
     """Repository encapsulating customer order and hold reservation operations."""
 
-    def __init__(
-        self,
-        datastore: JsonDatastore | None = None,
-        collection_name: str = "orders.json",
-        conn: Connection | None = None,
-    ) -> None:
-        """Initialize repository with optional datastore or connection.
+    def __init__(self, conn: Connection | None = None) -> None:
+        """Initialize repository with optional database connection.
 
         Args:
-            datastore: Optional JsonDatastore instance for backward compatibility.
-            collection_name: Optional file name for backward compatibility.
             conn: Optional psycopg Connection instance. If omitted, queries use
                 the active scoped connection or the connection pool.
         """
-        self.datastore = datastore
-        self.collection_name = collection_name
         self.conn = conn
-
-    def _use_datastore(self) -> bool:
-        return (
-            self.datastore is not None
-            and self.conn is None
-            and db.get_current_connection() is None
-        )
 
     def get_all(self, status: str | None = None) -> list[Order]:
         """Retrieve orders with optional status filtering.
@@ -596,14 +409,6 @@ class OrderRepository:
         Returns:
             List of Order domain models.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            orders = [Order.model_validate(item) for item in raw_data]
-            if status is not None:
-                orders = [o for o in orders if o.status == status]
-            return orders
-
         sql = """
             SELECT o.order_id, o.customer_id, o.status,
                    to_char(
@@ -643,14 +448,6 @@ class OrderRepository:
         Returns:
             Order domain model, or None if not found.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            for item in raw_data:
-                if item.get("order_id") == order_id:
-                    return Order.model_validate(item)
-            return None
-
         sql = """
             SELECT o.order_id, o.customer_id, o.status,
                    to_char(
@@ -687,15 +484,6 @@ class OrderRepository:
         Returns:
             List of Order domain models belonging to customer.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            return [
-                Order.model_validate(item)
-                for item in raw_data
-                if item.get("customer_id") == customer_id
-            ]
-
         sql = """
             SELECT o.order_id, o.customer_id, o.status,
                    to_char(
@@ -736,19 +524,6 @@ class OrderRepository:
         Raises:
             ValueError: If an order with the same order_id already exists.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            with self.datastore.get_lock(self.collection_name):
-                raw_data = self.datastore.load(self.collection_name)
-                for item in raw_data:
-                    if item.get("order_id") == order.order_id:
-                        raise ValueError(
-                            f"Order with ID '{order.order_id}' already exists."
-                        )
-                raw_data.append(order.model_dump())
-                self.datastore.save(self.collection_name, raw_data)
-                return order
-
         order_sql = """
             INSERT INTO orders (
                 order_id, customer_id, status, created_at,
@@ -798,24 +573,6 @@ class OrderRepository:
         Raises:
             KeyError: If order is not found.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            with self.datastore.get_lock(self.collection_name):
-                raw_data = self.datastore.load(self.collection_name)
-                found_idx = -1
-                for idx, item in enumerate(raw_data):
-                    if item.get("order_id") == order_id:
-                        found_idx = idx
-                        break
-
-                if found_idx == -1:
-                    raise KeyError(f"Order with ID '{order_id}' not found.")
-
-                raw_data[found_idx]["status"] = new_status
-                updated_order = Order.model_validate(raw_data[found_idx])
-                self.datastore.save(self.collection_name, raw_data)
-                return updated_order
-
         sql = """
             UPDATE orders
             SET status = %s
@@ -841,10 +598,6 @@ class OrderRepository:
         Returns:
             List of expired pending Order domain models.
         """
-        if self._use_datastore():
-            pending_orders = self.get_all(status="pending")
-            return [order for order in pending_orders if order.is_expired()]
-
         sql = """
             SELECT o.order_id, o.customer_id, o.status,
                    to_char(
@@ -881,30 +634,14 @@ class OrderRepository:
 class EventRepository:
     """Repository encapsulating store author events and workshops."""
 
-    def __init__(
-        self,
-        datastore: JsonDatastore | None = None,
-        collection_name: str = "events.json",
-        conn: Connection | None = None,
-    ) -> None:
-        """Initialize repository with optional datastore or connection.
+    def __init__(self, conn: Connection | None = None) -> None:
+        """Initialize repository with optional database connection.
 
         Args:
-            datastore: Optional JsonDatastore instance for backward compatibility.
-            collection_name: Optional file name for backward compatibility.
             conn: Optional psycopg Connection instance. If omitted, queries use
                 the active scoped connection or the connection pool.
         """
-        self.datastore = datastore
-        self.collection_name = collection_name
         self.conn = conn
-
-    def _use_datastore(self) -> bool:
-        return (
-            self.datastore is not None
-            and self.conn is None
-            and db.get_current_connection() is None
-        )
 
     def get_all(self) -> list[Event]:
         """Retrieve all upcoming store events.
@@ -912,11 +649,6 @@ class EventRepository:
         Returns:
             List of Event domain models.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            return [Event.model_validate(item) for item in raw_data]
-
         sql = """
             SELECT event_id, title, author_name,
                    to_char(
@@ -939,14 +671,6 @@ class EventRepository:
         Returns:
             Event domain model, or None if not found.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            for item in raw_data:
-                if item.get("event_id") == event_id:
-                    return Event.model_validate(item)
-            return None
-
         sql = """
             SELECT event_id, title, author_name,
                    to_char(
@@ -964,30 +688,14 @@ class EventRepository:
 class StoreInfoRepository:
     """Repository encapsulating store metadata, hours, policies, and FAQs."""
 
-    def __init__(
-        self,
-        datastore: JsonDatastore | None = None,
-        collection_name: str = "store_info.json",
-        conn: Connection | None = None,
-    ) -> None:
-        """Initialize repository with optional datastore or connection.
+    def __init__(self, conn: Connection | None = None) -> None:
+        """Initialize repository with optional database connection.
 
         Args:
-            datastore: Optional JsonDatastore instance for backward compatibility.
-            collection_name: Optional file name for backward compatibility.
             conn: Optional psycopg Connection instance. If omitted, queries use
                 the active scoped connection or the connection pool.
         """
-        self.datastore = datastore
-        self.collection_name = collection_name
         self.conn = conn
-
-    def _use_datastore(self) -> bool:
-        return (
-            self.datastore is not None
-            and self.conn is None
-            and db.get_current_connection() is None
-        )
 
     def get_store_info(self) -> StoreInfo:
         """Retrieve full store information, policies, hours, and FAQs.
@@ -998,11 +706,6 @@ class StoreInfoRepository:
         Raises:
             RuntimeError: If store_info is not found in database.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            return StoreInfo.model_validate(raw_data)
-
         sql = """
             SELECT name, address, phone, email, hours, policies, faqs
             FROM store_info
@@ -1017,30 +720,14 @@ class StoreInfoRepository:
 class MessageRepository:
     """Repository encapsulating customer support escalation messages."""
 
-    def __init__(
-        self,
-        datastore: JsonDatastore | None = None,
-        collection_name: str = "messages.json",
-        conn: Connection | None = None,
-    ) -> None:
-        """Initialize repository with optional datastore or connection.
+    def __init__(self, conn: Connection | None = None) -> None:
+        """Initialize repository with optional database connection.
 
         Args:
-            datastore: Optional JsonDatastore instance for backward compatibility.
-            collection_name: Optional file name for customer messages collection.
             conn: Optional psycopg Connection instance. If omitted, queries use
                 the active scoped connection or the connection pool.
         """
-        self.datastore = datastore
-        self.collection_name = collection_name
         self.conn = conn
-
-    def _use_datastore(self) -> bool:
-        return (
-            self.datastore is not None
-            and self.conn is None
-            and db.get_current_connection() is None
-        )
 
     def get_all(self, status: str | None = None) -> list[Message]:
         """Retrieve all customer escalation messages.
@@ -1051,14 +738,6 @@ class MessageRepository:
         Returns:
             List of Message domain models.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            messages = [Message.model_validate(item) for item in raw_data]
-            if status is not None:
-                messages = [m for m in messages if m.status == status]
-            return messages
-
         sql = """
             SELECT message_id, name, contact, body,
                    to_char(
@@ -1085,14 +764,6 @@ class MessageRepository:
         Returns:
             Message domain model, or None if not found.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            raw_data = self.datastore.load(self.collection_name)
-            for item in raw_data:
-                if item.get("message_id") == message_id:
-                    return Message.model_validate(item)
-            return None
-
         sql = """
             SELECT message_id, name, contact, body,
                    to_char(
@@ -1107,7 +778,7 @@ class MessageRepository:
         return Message.model_validate(row) if row else None
 
     def create(self, message: Message) -> Message:
-        """Persist a new escalation message into the datastore.
+        """Persist a new escalation message into the database.
 
         Args:
             message: Message domain model to persist.
@@ -1115,14 +786,6 @@ class MessageRepository:
         Returns:
             The created Message instance.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            with self.datastore.get_lock(self.collection_name):
-                raw_data = self.datastore.load(self.collection_name)
-                raw_data.append(message.model_dump())
-                self.datastore.save(self.collection_name, raw_data)
-                return message
-
         sql = """
             INSERT INTO messages (
                 message_id, name, contact, body, created_at, status
@@ -1155,24 +818,6 @@ class MessageRepository:
         Raises:
             KeyError: If message is not found.
         """
-        if self._use_datastore():
-            assert self.datastore is not None
-            with self.datastore.get_lock(self.collection_name):
-                raw_data = self.datastore.load(self.collection_name)
-                found_idx = -1
-                for idx, item in enumerate(raw_data):
-                    if item.get("message_id") == message_id:
-                        found_idx = idx
-                        break
-
-                if found_idx == -1:
-                    raise KeyError(f"Message with ID '{message_id}' not found.")
-
-                raw_data[found_idx]["status"] = new_status
-                updated_msg = Message.model_validate(raw_data[found_idx])
-                self.datastore.save(self.collection_name, raw_data)
-                return updated_msg
-
         sql = """
             UPDATE messages
             SET status = %s

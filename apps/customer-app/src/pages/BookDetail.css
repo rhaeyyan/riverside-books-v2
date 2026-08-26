@@ -1,0 +1,339 @@
+/* BookDetail.css — Riverside Books */
+
+.book-detail-page {
+  max-width: 1020px;
+  margin: 0 auto;
+  padding-top: 12px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+  margin-bottom: 24px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+  min-height: 40px;
+}
+
+.back-link:hover {
+  background-color: var(--accent-bg);
+}
+
+.back-link:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 1px;
+}
+
+.book-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(300px, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .book-detail-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+.book-detail-cover {
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--code-bg);
+  box-shadow: rgba(36, 29, 22, 0.12) 0 16px 28px -6px, rgba(36, 29, 22, 0.06) 0 6px 12px -2px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.book-detail-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.book-detail-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.book-detail-title {
+  font-family: var(--heading);
+  font-size: clamp(28px, 4.5vw, 40px);
+  font-weight: 500;
+  color: var(--text-h);
+  margin: 0;
+  line-height: 1.12;
+  letter-spacing: -0.6px;
+  text-wrap: pretty;
+}
+
+.book-detail-author {
+  font-size: 18px;
+  color: #6c6155;
+  margin: 8px 0 18px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .book-detail-author {
+    color: #9e9180;
+  }
+}
+
+.book-detail-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.book-detail-price {
+  font-family: var(--heading);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+}
+
+.book-detail-blurb {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+  margin: 0 0 24px;
+  max-width: 620px;
+}
+
+.book-detail-specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
+  margin: 0 0 32px;
+  padding: 18px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.spec-item dt {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a7e6f;
+  margin: 0;
+}
+
+.spec-item dd {
+  margin: 4px 0 0;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.spec-isbn {
+  font-family: var(--mono);
+  font-size: 13.5px;
+}
+
+/* Hold Box */
+.hold-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 500px;
+  box-shadow: rgba(36, 29, 22, 0.06) 0 8px 18px -4px;
+}
+
+.hold-title {
+  font-family: var(--heading);
+  font-size: 21px;
+  font-weight: 500;
+  color: var(--text-h);
+  margin: 0 0 6px;
+}
+
+.hold-subtitle {
+  font-size: 13.5px;
+  color: #6c6155;
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  .hold-subtitle {
+    color: #9e9180;
+  }
+}
+
+.hold-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.form-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 15px;
+  color: var(--text-h);
+  min-height: 44px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input.phone-input {
+  font-family: var(--mono);
+}
+
+.form-input:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.form-error-alert {
+  padding: 10px 14px;
+  background: var(--status-out-bg);
+  border: 1px solid var(--status-out);
+  border-radius: 8px;
+  color: var(--status-out);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.btn-hold-submit {
+  padding: 13px 20px;
+  background: var(--accent);
+  color: #ffffff;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.15s ease;
+  margin-top: 4px;
+}
+
+.btn-hold-submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-hold-submit:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
+.btn-hold-submit:disabled {
+  background: var(--border);
+  border-color: var(--border);
+  color: var(--text);
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Success state */
+.hold-success-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--status-in);
+  border-radius: 12px;
+  padding: 22px;
+  max-width: 500px;
+  box-shadow: var(--shadow);
+}
+
+.hold-success-title {
+  font-family: var(--heading);
+  font-size: 21px;
+  font-weight: 500;
+  color: var(--text-h);
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hold-success-body {
+  font-size: 14.5px;
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0 0 18px;
+}
+
+.hold-order-id-badge {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Out of stock box */
+.sold-out-box {
+  background: var(--code-bg);
+  border-radius: 10px;
+  padding: 18px;
+}
+
+.sold-out-title {
+  font-family: var(--heading);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-h);
+  margin: 0 0 6px;
+}
+
+.sold-out-desc {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+
+.sold-out-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back-link, .btn-hold-submit, .form-input {
+    transition: none !important;
+  }
+}

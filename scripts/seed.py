@@ -1078,19 +1078,152 @@ def write_json(seed: dict[str, Any], data_dir: Path) -> None:
     for filename, payload in seed.items():
         path = data_dir / filename
         temp_path = path.with_suffix(".tmp")
-        temp_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        temp_path.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
         temp_path.replace(path)
+
+
+def write_db(seed: dict[str, Any]) -> None:
+    """Write the seed data to the Postgres database."""
+    try:
+        import psycopg
+        from psycopg.rows import dict_row
+        from psycopg.types.json import Jsonb
+    except ImportError:
+        print("psycopg not installed, skipping database seed")
+        return
+
+    from backend.config import settings
+
+    if not settings.database_url:
+        print("DATABASE_URL not set, skipping database seed")
+        return
+
+    # Check if we can connect; if not, bail gracefully rather than crashing
+    try:
+        conn = psycopg.connect(settings.database_url, row_factory=dict_row)
+    except Exception as e:
+        print(f"Could not connect to database at {settings.database_url}: {e}")
+        return
+
+    with conn:
+        with conn.transaction():
+            # Clear all data
+            conn.execute(
+                "TRUNCATE TABLE messages, store_info, events, order_items, orders, customers, books CASCADE"
+            )
+
+            # Books
+            books = seed["inventory.json"]
+            conn.executemany(
+                """INSERT INTO books (
+                    isbn, title, author, format, price_cents, stock_count, 
+                    reserved_count, low_stock_threshold, genre, blurb, 
+                    cover_image_url, publisher, published_date
+                ) VALUES (
+                    %(isbn)s, %(title)s, %(author)s, %(format)s, %(price_cents)s, %(stock_count)s, 
+                    %(reserved_count)s, %(low_stock_threshold)s, %(genre)s, %(blurb)s, 
+                    %(cover_image_url)s, %(publisher)s, %(published_date)s
+                )""",
+                books,
+            )
+
+            # Customers
+            customers = seed["customers.json"]
+            conn.executemany(
+                """INSERT INTO customers (
+                    customer_id, phone, name, email, stamps, rewards_available, joined_date
+                ) VALUES (
+                    %(customer_id)s, %(phone)s, %(name)s, %(email)s, %(stamps)s, %(rewards_available)s, %(joined_date)s
+                )""",
+                customers,
+            )
+
+            # Orders
+            orders = seed["orders.json"]
+            conn.executemany(
+                """INSERT INTO orders (
+                    order_id, customer_id, status, created_at, hold_expires_at, total_cents, notes
+                ) VALUES (
+                    %(order_id)s, %(customer_id)s, %(status)s, %(created_at)s, %(hold_expires_at)s, %(total_cents)s, %(notes)s
+                )""",
+                orders,
+            )
+
+            # Order items
+            order_items = []
+            for o in orders:
+                for item in o["items"]:
+                    order_items.append(
+                        {
+                            "order_id": o["order_id"],
+                            "isbn": item["isbn"],
+                            "quantity": item["quantity"],
+                        }
+                    )
+            conn.executemany(
+                """INSERT INTO order_items (order_id, isbn, quantity) VALUES (%(order_id)s, %(isbn)s, %(quantity)s)""",
+                order_items,
+            )
+
+            # Events
+            events = seed["events.json"]
+            conn.executemany(
+                """INSERT INTO events (
+                    event_id, title, author_name, starts_at, capacity, tickets_sold, description
+                ) VALUES (
+                    %(event_id)s, %(title)s, %(author_name)s, %(starts_at)s, %(capacity)s, %(tickets_sold)s, %(description)s
+                )""",
+                events,
+            )
+
+            # Messages
+            messages = seed["messages.json"]
+            conn.executemany(
+                """INSERT INTO messages (
+                    message_id, name, contact, body, created_at, status
+                ) VALUES (
+                    %(message_id)s, %(name)s, %(contact)s, %(body)s, %(created_at)s, %(status)s
+                )""",
+                messages,
+            )
+
+            # Store info
+            store_info = seed["store_info.json"]
+            conn.execute(
+                """INSERT INTO store_info (
+                    name, address, phone, email, hours, policies, faqs
+                ) VALUES (
+                    %(name)s, %(address)s, %(phone)s, %(email)s, %(hours)s, %(policies)s, %(faqs)s
+                )""",
+                {
+                    "name": store_info["name"],
+                    "address": store_info["address"],
+                    "phone": store_info["phone"],
+                    "email": store_info["email"],
+                    "hours": Jsonb(store_info["hours"]),
+                    "policies": Jsonb(store_info["policies"]),
+                    "faqs": Jsonb(store_info["faqs"]),
+                },
+            )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", default="mock_data", type=Path)
+    parser.add_argument(
+        "--db", action="store_true", help="Also write to the Postgres database"
+    )
     args = parser.parse_args()
 
     now = datetime.now(UTC)
     seed = build_seed(now)
     check_minimums(seed, now)
+
     write_json(seed, args.data_dir)
+    if args.db:
+        write_db(seed)
 
     orders = seed["orders.json"]
     stamp_now = now.strftime(ISO)

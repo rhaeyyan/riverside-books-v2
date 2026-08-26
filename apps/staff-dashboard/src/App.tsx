@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, Outlet } from 'react-router-dom';
 import { Inventory } from './pages/Inventory';
 import { Preorders } from './pages/Preorders';
 import { Messages } from './pages/Messages';
@@ -9,16 +9,24 @@ import { SignIn } from './components/SignIn';
 import { getStaffSession, clearStaffSession } from './lib/staffAuth';
 import './App.css';
 
-function Layout({ staffName, onSignOut }: { staffName: string, onSignOut: () => void }) {
+function Layout({ staffName, onSignOut }: { staffName: string; onSignOut: () => void }) {
   return (
     <div className="layout">
-      <nav className="sidebar">
+      <nav className="sidebar" aria-label="Staff Dashboard Navigation">
         <div className="logo">Riverside Staff</div>
         <div className="nav-links">
-          <Link to="/" className="nav-link"><Book size={18}/> Inventory</Link>
-          <Link to="/preorders" className="nav-link"><CalendarClock size={18}/> Pre-orders</Link>
-          <Link to="/messages" className="nav-link"><Inbox size={18}/> Messages</Link>
-          <Link to="/marketing" className="nav-link"><Megaphone size={18}/> Marketing</Link>
+          <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <Book size={18} aria-hidden="true" /> Inventory
+          </NavLink>
+          <NavLink to="/preorders" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <CalendarClock size={18} aria-hidden="true" /> Pre-orders
+          </NavLink>
+          <NavLink to="/messages" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <Inbox size={18} aria-hidden="true" /> Messages
+          </NavLink>
+          <NavLink to="/marketing" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <Megaphone size={18} aria-hidden="true" /> Marketing
+          </NavLink>
         </div>
         <div className="sidebar-footer">
           <div className="staff-name">{staffName}</div>

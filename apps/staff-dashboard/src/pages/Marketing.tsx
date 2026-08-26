@@ -71,15 +71,15 @@ export function Marketing() {
   };
 
   return (
-    <section aria-labelledby="generator-heading" className="min-w-0 p-8 max-w-7xl mx-auto font-sans">
+    <section aria-labelledby="generator-heading" className="min-w-0 p-8 max-w-7xl mx-auto">
       <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--text)]">
           Deterministic preview
         </p>
-        <h2 id="generator-heading" className="mt-2 text-3xl font-semibold tracking-[-0.025em] text-slate-900">
+        <h2 id="generator-heading" className="mt-2 text-3xl font-semibold tracking-[-0.025em] text-[var(--text-h)]">
           Create social content
         </h2>
-        <p className="mt-3 text-base leading-7 text-slate-600">
+        <p className="mt-3 text-base leading-7 text-[var(--text)]">
           Choose a trusted record and channel, then review stable options.
           There is no free-text prompt and nothing is published automatically.
         </p>
@@ -88,59 +88,59 @@ export function Marketing() {
       <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div className="min-w-0 space-y-5">
           <div className="relative">
-            <label htmlFor="search" className="text-sm font-semibold text-slate-900">
+            <label htmlFor="search" className="text-sm font-semibold text-[var(--text-h)]">
               Search Record
             </label>
-            <input 
+            <input
               id="search"
-              type="text" 
-              placeholder="Search for a book or event..." 
-              value={searchQuery} 
+              type="text"
+              placeholder="Search for a book or event..."
+              value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="mt-2 min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="mt-2 min-h-11 w-full min-w-0 rounded-xl border border-[var(--border)] bg-[var(--bg-raised)] text-[var(--text-h)] px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
             />
             {searchQuery && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-1 bg-[var(--bg-raised)] border border-[var(--border)] rounded-xl shadow-lg max-h-60 overflow-y-auto">
                 {searchResults().map(res => (
-                  <div 
-                    key={res.id} 
-                    className="px-4 py-3 cursor-pointer hover:bg-slate-50 border-b border-slate-100 last:border-0"
+                  <div
+                    key={res.id}
+                    className="px-4 py-3 cursor-pointer hover:bg-[var(--code-bg)] border-b border-[var(--border)] last:border-0"
                     onClick={() => handleSelectSubject(res)}
                   >
-                    <div className="font-medium text-slate-900">{res.name}</div>
-                    <div className="text-xs text-slate-500 capitalize">{res.type}</div>
+                    <div className="font-medium text-[var(--text-h)]">{res.name}</div>
+                    <div className="text-xs text-[var(--text)] capitalize">{res.type}</div>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          <section aria-label="Source facts" className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <section aria-label="Source facts" className="min-w-0 rounded-2xl border border-[var(--border)] bg-[var(--code-bg)] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text)]">
               Source facts
             </p>
             <dl className="mt-4 grid min-w-0 gap-4 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
               <div className="min-w-0">
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <dt className="text-xs font-medium uppercase tracking-wide text-[var(--text)]">
                   Title
                 </dt>
-                <dd className="mt-1 break-words font-semibold text-slate-900">
+                <dd className="mt-1 break-words font-semibold text-[var(--text-h)]">
                   {selectedSubject ? selectedSubject.name : "—"}
                 </dd>
               </div>
               <div className="min-w-0">
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <dt className="text-xs font-medium uppercase tracking-wide text-[var(--text)]">
                   Author / Type
                 </dt>
-                <dd className="mt-1 break-words text-slate-700">
+                <dd className="mt-1 break-words text-[var(--text)]">
                   {selectedSubject?.author || selectedSubject?.type || "—"}
                 </dd>
               </div>
               <div className="min-w-0">
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <dt className="text-xs font-medium uppercase tracking-wide text-[var(--text)]">
                   Price
                 </dt>
-                <dd className="mt-1 text-slate-700">
+                <dd className="mt-1 text-[var(--text)]">
                   {selectedSubject?.price ? `$${selectedSubject.price.toFixed(2)}` : "—"}
                 </dd>
               </div>
@@ -148,7 +148,7 @@ export function Marketing() {
           </section>
 
           <fieldset role="radiogroup" aria-labelledby="channel-legend" className="min-w-0">
-            <legend id="channel-legend" className="text-sm font-semibold text-slate-900">
+            <legend id="channel-legend" className="text-sm font-semibold text-[var(--text-h)]">
               Tone / Channel
             </legend>
             <div className="mt-2 grid grid-cols-2 gap-3">
@@ -156,7 +156,7 @@ export function Marketing() {
                 tones[selectedSubject.type]?.map(t => (
                   <label
                     key={t}
-                    className="flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-indigo-600"
+                    className="flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-raised)] px-3 py-2 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--accent)]"
                   >
                     <input
                       type="radio"
@@ -164,24 +164,27 @@ export function Marketing() {
                       value={t}
                       checked={selectedTone === t}
                       onChange={() => setSelectedTone(t)}
-                      className="size-5 shrink-0 accent-indigo-600"
+                      className="size-5 shrink-0 accent-[var(--accent)]"
                     />
-                    <span className="min-w-0 break-words capitalize text-slate-900">
+                    <span className="min-w-0 break-words capitalize text-[var(--text-h)]">
                       {t.replace('_', ' ')}
                     </span>
                   </label>
                 ))
               ) : (
-                <div className="col-span-2 text-sm text-slate-500">Select a record first</div>
+                <div className="col-span-2 text-sm text-[var(--text)]">Select a record first</div>
               )}
             </div>
           </fieldset>
 
+          {/* --ink/--ink-hover/--ink-text are fixed, non-theme-adaptive tokens (no
+              dark-mode override in index.css), matching the same pairing already
+              used for filled dark-surface buttons in Inventory/Preorders/SignIn. */}
           <button
             type="button"
             onClick={() => generate(0)}
             disabled={!selectedSubject || !selectedTone || isGenerating}
-            className="min-h-11 w-full rounded-xl bg-slate-900 px-5 py-3 text-base font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-wait disabled:opacity-65"
+            className="min-h-11 w-full rounded-xl bg-[var(--ink)] px-5 py-3 text-base font-semibold text-[var(--ink-text)] transition-colors hover:bg-[var(--ink-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-wait disabled:opacity-65"
           >
             {isGenerating ? "Generating…" : "Generate Draft"}
           </button>
@@ -189,25 +192,31 @@ export function Marketing() {
 
         <div className="min-w-0" aria-live="polite" aria-busy={isGenerating}>
           {!generated ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm leading-6 text-slate-500 flex items-center justify-center min-h-[300px] text-center">
+            <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg-raised)] p-6 text-sm leading-6 text-[var(--text)] flex items-center justify-center min-h-[300px] text-center">
               Generated variations will appear here after you choose Generate.
             </div>
           ) : (
             <div className="grid min-w-0 gap-4">
-              <article role="region" aria-label="Variation" className="min-w-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <article role="region" aria-label="Variation" className="min-w-0 rounded-2xl border border-[var(--border)] bg-[var(--bg-raised)] p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold text-slate-900">Draft {variant + 1}</h3>
+                  <h3 className="text-xl font-semibold text-[var(--text-h)]">Draft {variant + 1}</h3>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => generate(variant + 1)} 
+                    <button
+                      onClick={() => generate(variant + 1)}
                       disabled={isGenerating}
-                      className="text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50"
+                      className="text-sm font-medium text-[var(--text)] hover:text-[var(--text-h)] px-3 py-1.5 rounded-lg border border-[var(--border)] hover:bg-[var(--code-bg)]"
                     >
                       Regenerate
                     </button>
-                    <button 
+                    <button
                       onClick={copyToClipboard}
-                      className="text-sm font-medium text-indigo-600 hover:text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 bg-indigo-50 hover:bg-indigo-100"
+                      /* --accent-hover, not --accent, at rest: --accent on --accent-bg
+                         computes to ~4.36:1 in dark mode, below the 4.5:1 minimum for
+                         this text size -- --accent-hover clears it in both schemes
+                         (~5.57 dark, ~7.24 light). hover darkens the background via
+                         color-mix, matching the pattern already used for fixed-token
+                         hover states elsewhere in this app (e.g. Preorders.css). */
+                      className="text-sm font-medium text-[var(--accent-hover)] px-3 py-1.5 rounded-lg border border-[var(--accent-border)] bg-[var(--accent-bg)] hover:bg-[color-mix(in_srgb,var(--accent)_18%,var(--bg-raised))]"
                     >
                       Copy Caption
                     </button>
@@ -215,20 +224,20 @@ export function Marketing() {
                 </div>
 
                 <div className="mt-4 min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Caption</p>
-                  <p aria-label="Caption" className="mt-2 break-words text-base leading-7 text-slate-900 whitespace-pre-wrap">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text)]">Caption</p>
+                  <p aria-label="Caption" className="mt-2 break-words text-base leading-7 text-[var(--text-h)] whitespace-pre-wrap">
                     {generated.caption}
                   </p>
                 </div>
 
-                <div className="mt-6 min-w-0 border-t border-slate-100 pt-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Post idea</p>
-                  <p aria-label="Post idea" className="mt-2 break-words text-sm leading-6 text-slate-600">
+                <div className="mt-6 min-w-0 border-t border-[var(--border)] pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text)]">Post idea</p>
+                  <p aria-label="Post idea" className="mt-2 break-words text-sm leading-6 text-[var(--text)]">
                     {generated.post_idea}
                   </p>
                 </div>
-                
-                <p className="mt-6 flex items-start gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900">
+
+                <p className="mt-6 flex items-start gap-2 rounded-xl bg-[var(--status-in-bg)] px-3 py-2 text-sm font-medium text-[var(--status-in)]">
                   <span aria-hidden="true" className="font-bold">✓</span>
                   <span>No unsupported facts flagged</span>
                 </p>

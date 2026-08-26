@@ -1,9 +1,42 @@
 /* Home.css — Riverside Books Customer Browse */
 
 .browse-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 20px 44px;
   padding: 46px 0 30px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 26px;
+}
+
+.browse-hero-copy {
+  min-width: 0;
+}
+
+/* Illustrated bookshelf graphic — self-contained inline SVG, no external asset. */
+.browse-hero-art {
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.browse-hero-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 760px) {
+  .browse-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .browse-hero-art {
+    display: none;
+  }
 }
 
 .browse-eyebrow {
@@ -175,6 +208,152 @@
   border-color: var(--text-h);
   color: var(--bg);
   font-weight: 600;
+}
+
+/* Feature strip — numbered rule-grid restating real store facts */
+.browse-rule {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 40px;
+  padding-bottom: 40px;
+  margin-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rule-item {
+  border-top: 2px solid var(--text-h);
+  padding: 18px 0 0;
+}
+
+.rule-item:not(:first-child) {
+  border-top-color: var(--border);
+}
+
+.rule-number {
+  font-family: var(--heading);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+
+.rule-title {
+  font-family: var(--heading);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--text-h);
+  margin: 10px 0 0;
+  max-width: 20ch;
+}
+
+.rule-desc {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #6c6155;
+  max-width: 32ch;
+}
+
+.rule-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.rule-link:hover {
+  color: var(--accent-hover);
+}
+
+.rule-link:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@media (max-width: 900px) {
+  .browse-rule {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .rule-item {
+    padding-bottom: 26px;
+  }
+}
+
+/* Promo band — full-bleed within the app shell, mirrors the loyalty program facts */
+.browse-promo {
+  margin: 0 -24px 40px;
+  padding: 52px 24px;
+  background: var(--accent);
+  color: var(--ink-text);
+}
+
+.browse-promo-inner {
+  max-width: 1052px;
+  margin: 0 auto;
+}
+
+.browse-promo-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-text);
+}
+
+.browse-promo-title {
+  font-family: var(--heading);
+  font-weight: 500;
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--ink-text);
+  margin: 14px 0 0;
+  max-width: 22ch;
+}
+
+.browse-promo-desc {
+  margin: 14px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-text);
+  max-width: 46ch;
+}
+
+.browse-promo-cta {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 22px;
+  padding: 13px 22px;
+  border-radius: 8px;
+  background: var(--ink-text);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.browse-promo-cta:hover {
+  opacity: 0.88;
+}
+
+.browse-promo-cta:focus-visible {
+  outline: 2px solid var(--ink-text);
+  outline-offset: 3px;
 }
 
 /* Results header */
@@ -425,7 +604,7 @@
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .book-card, .search-submit-btn, .filter-chip, .btn-secondary {
+  .book-card, .search-submit-btn, .filter-chip, .btn-secondary, .rule-link, .browse-promo-cta {
     transition: none !important;
     transform: none !important;
   }

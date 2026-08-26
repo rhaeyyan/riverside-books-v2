@@ -89,12 +89,6 @@
   margin: 8px 0 18px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .book-detail-author {
-    color: #9e9180;
-  }
-}
-
 .book-detail-meta-row {
   display: flex;
   align-items: center;
@@ -172,12 +166,6 @@
   color: #6c6155;
   margin: 0 0 18px;
   line-height: 1.5;
-}
-
-@media (prefers-color-scheme: dark) {
-  .hold-subtitle {
-    color: #9e9180;
-  }
 }
 
 .hold-form {

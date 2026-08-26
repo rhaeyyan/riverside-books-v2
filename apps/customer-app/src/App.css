@@ -17,12 +17,6 @@
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  .app-header {
-    background: rgba(27, 23, 18, 0.94);
-  }
-}
-
 .header-inner {
   max-width: 1100px;
   margin: 0 auto;
@@ -152,13 +146,6 @@
   color: #6c6155;
   margin: 4px 0 0;
   font-size: 13px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .footer-meta,
-  .footer-hours {
-    color: #9e9180;
-  }
 }
 
 .footer-links {

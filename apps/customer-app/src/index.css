@@ -34,7 +34,7 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -44,35 +44,6 @@
 
   @media (max-width: 1024px) {
     font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #c9bfae;
-    --text-h: #f2ece2;
-    --bg: #1b1712;
-    --bg-raised: #242019;
-    --border: #3a3327;
-    --code-bg: #241f18;
-    --accent: #e07a5f;
-    --accent-hover: #ef9376;
-    --accent-bg: rgba(224, 122, 95, 0.15);
-    --accent-border: rgba(224, 122, 95, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-
-    --status-in: #6fae8c;
-    --status-in-bg: rgba(111, 174, 140, 0.1);
-    --status-low: #e0a44f;
-    --status-low-bg: rgba(224, 164, 79, 0.1);
-    --status-out: #e27164;
-    --status-out-bg: rgba(226, 113, 100, 0.1);
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
   }
 }
 

@@ -38,17 +38,26 @@ export function Messages() {
 
   return (
     <div className="messages-page">
-      <h1>Message Inbox</h1>
+      <div className="messages-header">
+        <h1>Messages</h1>
+        <p className="messages-subtitle">Anything the chatbot could not answer lands here.</p>
+      </div>
+      <span className="sr-only" role="status" aria-live="polite">
+        {messages.length === 0 ? 'Inbox clear' : `${messages.length} unread message${messages.length === 1 ? '' : 's'}`}
+      </span>
       {messages.length === 0 ? (
-        <div className="empty-state">No new messages.</div>
+        <div className="empty-state">
+          <div className="empty-title">Inbox clear</div>
+          <div className="empty-hint">The bot handled everything today.</div>
+        </div>
       ) : (
         <div className="messages-list">
           {messages.map(m => (
             <div key={m.message_id} className="message-card">
               <div className="message-header">
                 <div>
-                  <strong>{m.name}</strong> 
-                  <span className="contact-info"> ({m.contact})</span>
+                  <strong>{m.name}</strong>
+                  <span className="contact-info"> {m.contact}</span>
                 </div>
                 <div className="message-time">
                   {new Date(m.created_at).toLocaleString()}
@@ -58,7 +67,7 @@ export function Messages() {
                 {m.body}
               </div>
               <div className="message-actions">
-                <button onClick={() => markAsRead(m.message_id)}>Mark as Read</button>
+                <button onClick={() => markAsRead(m.message_id)}>Mark handled</button>
               </div>
             </div>
           ))}

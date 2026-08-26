@@ -4,12 +4,46 @@
   gap: 20px;
 }
 
-.empty-state {
-  padding: 40px;
-  text-align: center;
+.messages-header h1 {
+  margin: 0;
+}
+
+.messages-subtitle {
+  margin: 5px 0 0;
+  font-size: 13px;
   color: var(--text);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.empty-state {
+  padding: 52px 20px;
+  text-align: center;
   background: var(--bg-raised);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.empty-title {
+  font-family: var(--heading);
+  font-size: 20px;
+  color: var(--text-h);
+}
+
+.empty-hint {
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 6px;
 }
 
 .messages-list {
@@ -36,7 +70,8 @@
 
 .contact-info {
   color: var(--text);
-  font-size: 14px;
+  font-size: 12px;
+  font-family: var(--mono);
 }
 
 .message-time {
@@ -69,4 +104,9 @@
 
 .message-actions button:hover {
   background: var(--border);
+}
+
+.message-actions button:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
 }

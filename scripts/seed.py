@@ -1115,7 +1115,7 @@ def write_db(seed: dict[str, Any]) -> None:
 
         # Books
         books = seed["inventory.json"]
-        conn.executemany(
+        conn.cursor().executemany(
             """INSERT INTO books (
                     isbn, title, author, format, price_cents, stock_count,
                     reserved_count, low_stock_threshold, genre, blurb,
@@ -1130,7 +1130,7 @@ def write_db(seed: dict[str, Any]) -> None:
 
         # Customers
         customers = seed["customers.json"]
-        conn.executemany(
+        conn.cursor().executemany(
             """INSERT INTO customers (
                     customer_id, phone, name, email, stamps, rewards_available, joined_date
                 ) VALUES (
@@ -1141,7 +1141,7 @@ def write_db(seed: dict[str, Any]) -> None:
 
         # Orders
         orders = seed["orders.json"]
-        conn.executemany(
+        conn.cursor().executemany(
             """INSERT INTO orders (
                     order_id, customer_id, status, created_at, hold_expires_at, total_cents, notes
                 ) VALUES (
@@ -1161,14 +1161,14 @@ def write_db(seed: dict[str, Any]) -> None:
                         "quantity": item["quantity"],
                     }
                 )
-        conn.executemany(
+        conn.cursor().executemany(
             """INSERT INTO order_items (order_id, isbn, quantity) VALUES (%(order_id)s, %(isbn)s, %(quantity)s)""",
             order_items,
         )
 
         # Events
         events = seed["events.json"]
-        conn.executemany(
+        conn.cursor().executemany(
             """INSERT INTO events (
                     event_id, title, author_name, starts_at, capacity, tickets_sold, description
                 ) VALUES (
@@ -1179,7 +1179,7 @@ def write_db(seed: dict[str, Any]) -> None:
 
         # Messages
         messages = seed["messages.json"]
-        conn.executemany(
+        conn.cursor().executemany(
             """INSERT INTO messages (
                     message_id, name, contact, body, created_at, status
                 ) VALUES (

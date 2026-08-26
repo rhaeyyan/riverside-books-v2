@@ -45,7 +45,7 @@ export default function LoyaltyCard() {
 
   return (
     <div style={{ maxWidth: '640px', margin: '0 auto', paddingTop: '12px' }}>
-      <h1 style={{ fontFamily: 'var(--heading)', fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: 500, color: 'var(--text-h)', margin: '0 0 8px' }}>
+      <h1 style={{ fontFamily: 'var(--heading)', fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: 500, color: 'var(--text-h)', margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.12 }}>
         Frequent Reader Stamp Card
       </h1>
       <p style={{ fontSize: '15.5px', color: '#6c6155', margin: '0 0 24px', lineHeight: 1.5 }}>
@@ -60,6 +60,7 @@ export default function LoyaltyCard() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="e.g. (845) 555-0142"
+            aria-label="Phone number"
             required
             style={{
               width: '100%',
@@ -94,6 +95,8 @@ export default function LoyaltyCard() {
 
       {customer && (
         <div
+          role="status"
+          aria-live="polite"
           style={{
             background: 'var(--bg-raised)',
             border: '2px solid var(--border)',
@@ -187,7 +190,7 @@ export default function LoyaltyCard() {
                 marginTop: '20px',
                 padding: '16px 20px',
                 background: 'var(--accent)',
-                color: '#ffffff',
+                color: 'var(--ink-text)',
                 borderRadius: '10px',
                 display: 'flex',
                 alignItems: 'center',

@@ -48,6 +48,44 @@ body {
   color: var(--ink-text);
 }
 
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(251, 247, 240, 0.12);
+  font-size: 12.5px;
+}
+
+.staff-name {
+  color: color-mix(in srgb, var(--ink-text) 82%, transparent);
+}
+
+.sign-out-btn {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: color-mix(in srgb, var(--ink-text) 72%, transparent);
+  font-size: 12.5px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s ease;
+}
+
+.sign-out-btn:hover {
+  color: var(--ink-text);
+}
+
+.sign-out-btn:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sign-out-btn {
+    transition: none;
+  }
+}
+
 .content {
   flex: 1;
   padding: 32px;

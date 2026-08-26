@@ -1,6 +1,6 @@
 # Product Requirements Document — Riverside Books Suite
 
-**Cycle 4 Fellowship · v0.3.1 · Last updated 2026-08-25**
+**Cycle 4 Fellowship · v0.4 · Last updated 2026-08-25**
 
 > **How to read this document.** Sections 5–7 (Shared Architecture, Data Model, API
 > Contract) are **binding contracts**. All four products read and write the same
@@ -50,8 +50,10 @@ Explicitly **out of scope** for Cycle 4. Listed so nobody builds them by acciden
 - **Portability across database engines.** One database, reached through the
   repository layer that already exists (§5.2). No dialect-abstraction layer, no
   second engine kept working "just in case."
-- **Authentication, passwords, or sessions.** See §5.3 for the identity model that
-  replaces it.
+- **Server-side authentication, or any access control gating what the API
+  returns.** See §5.3 for the identity model that replaces it, including the
+  v0.4 staff PIN screen, which identifies who is using the dashboard and does
+  not gate access to it.
 - **Generative AI anywhere.** Products C and D are deterministic by mandate
   (§5.5).
 - **A native mobile app.** Products A and B are browser applications.
@@ -208,20 +210,34 @@ application's environment. See R8.
   (`5551234567`). A customer "signs in" by typing their number; if it matches a
   record they see their orders and stamps, if not they are offered a one-field
   registration (phone + name). There are no passwords and no sessions.
-- **Staff** are not authenticated at all. The dashboard is served from a machine
-  inside the shop and is not reachable from outside the shop's own network. That
-  — not the absence of a database — is what makes it acceptable. It remains an
-  accepted, documented risk (§11, R3), not an oversight.
+- **Staff** are not authenticated server-side. The dashboard's API calls carry
+  no token or session and are exactly as reachable as they were in v0.3.1. The
+  dashboard is served from a machine inside the shop and is not reachable from
+  outside the shop's own network. That — not the absence of a database, and not
+  the PIN screen below — is what makes it acceptable. It remains an accepted,
+  documented risk (§11, R3), not an oversight.
 
-  *Corrected in v0.3.* This previously read "only acceptable because deployment
+  *Corrected in v0.3.1.* This previously read "only acceptable because deployment
   is local-only," citing a §2.2 non-goal that v0.3 struck. The reasoning was
   always about **who can reach the dashboard**, and that is unchanged. What did
   change is that the data no longer lives on that machine: with a hosted
   database, anyone holding the connection string can read the store's data
-  without ever touching the unauthenticated UI. The exposure moved from the
-  screen to the credentials, which is why R8 exists. Nothing here argues for
-  adding staff auth — §2.2 still rules it out — but "nobody can reach it" is now
-  a claim about the network, and it no longer covers the data.
+  without ever touching the UI. The exposure moved from the screen to the
+  credentials, which is why R8 exists. "Nobody can reach it" is now a claim
+  about the network, and it no longer covers the data.
+
+  *Added in v0.4:* the dashboard shows a **staff PIN screen** before rendering
+  any product content. A fixed set of PINs maps to a staff display name; a
+  match writes that name to `sessionStorage` and the screen is replaced by the
+  dashboard, which shows the name in the sidebar with a sign-out control. This
+  is client-side only — there is no PIN check on the backend, no
+  `Authorization` header, and no change to which API calls succeed or what they
+  return. It is the same shape as the customer identity model above (a
+  low-friction "who is this" prompt, not access control), and it does not
+  change the risk R3 describes: anyone on the shop network, PIN or not, can
+  already call every dashboard endpoint directly. The screen exists so the
+  sidebar can say *whose* session it is, the way Product A already needs to
+  answer "whose orders?". §2.2's non-goal is narrowed accordingly — see there.
 
 *Why this is in the PRD:* Product A cannot show "your stamps" or "your pre-orders"
 without answering "whose?". This was the largest gap in v0.1.
@@ -702,7 +718,7 @@ restart:
 |---|---|---|---|
 | R1 | Data model churn after products are built | High — reworks all four | §6 frozen and committed before product code starts |
 | R2 | ~~Concurrent writes to JSON corrupt the file~~ **Superseded in v0.3:** read-modify-write sequences ported to SQL without transactions | High — silently wrong stock counts, the exact bug §5.4 exists to prevent | Each of the nine `get_lock` sites in `repositories.py` rewritten as an explicit transaction or atomic update, with a concurrency test per site. Not a mechanical port |
-| R3 | No staff authentication | Low for the dashboard, which is unreachable from outside the shop network; high if it is ever served publicly | Accepted risk, on the basis in §5.3 — reachability, not storage. **Must be revisited before the dashboard is served anywhere public.** Note the v0.3 caveat: the *data* is now reachable off-site by anyone holding the connection string, so the store's exposure no longer depends on this row alone — see R8 |
+| R3 | No staff authentication *(server-side; the v0.4 PIN screen is client-side identification, not a gate — see §5.3)* | Low for the dashboard, which is unreachable from outside the shop network; high if it is ever served publicly | Accepted risk, on the basis in §5.3 — reachability, not storage. **Must be revisited before the dashboard is served anywhere public.** Note the v0.3 caveat: the *data* is now reachable off-site by anyone holding the connection string, so the store's exposure no longer depends on this row alone — see R8 |
 | R4 | C and D have no host UI and slip late | High — two products undemoable | Resolve §12 Q1 in week one |
 | R5 | `backend/api/` unowned, blocking everyone | High | §9 Option 1 on day one |
 | R6 | Node not installed on dev machines | Blocks A and B entirely | Verify Node 20+ before frontend work starts |
@@ -749,13 +765,16 @@ Each is reversible, but reversing one after products are built is expensive.
 6. **Catalogue is books only** (§2.2) — cards and gifts answered by policy text.
 7. **Product D variants are explicit and deterministic** (§8.D.4) — "random
    template" would break §5.5 and make D untestable.
-8. **Staff are unauthenticated** (§5.3, R3) — unchanged in v0.3, but rebased on
-   dashboard reachability rather than on the absence of a database.
+8. **Staff are unauthenticated server-side** (§5.3, R3) — unchanged in v0.3,
+   rebased on dashboard reachability rather than on the absence of a database.
+   **v0.4** adds a client-side staff PIN screen for identification only; it
+   does not gate the API and does not change R3.
 
 ## Appendix B — Changelog
 
 | Version | Date | Changes |
 |---|---|---|
+| 0.4 | 2026-08-25 | **Narrowed the authentication non-goal.** §2.2's "Authentication, passwords, or sessions" bullet now reads "server-side authentication, or any access control gating what the API returns." §5.3 adds a client-side staff PIN screen (fixed PIN→name map, `sessionStorage`, no backend check) that identifies who is using the dashboard without gating it — same shape as the existing customer identity model. R3 and decision #8 reworded to make explicit that "no staff authentication" was always about the server side; the risk itself is unchanged, since every dashboard endpoint remains exactly as reachable as before. Decided by @rhaeyyan (PRD owner) to match the approved Staff Dashboard design mockup |
 | 0.1 | 2026-08-24 | Initial draft: summary, market research, per-product feature lists, technical constraints |
 | 0.2 | 2026-08-24 | Added goals/non-goals, personas, binding architecture decisions (§5), canonical data model (§6), API contract (§7), user stories + acceptance criteria + edge cases per product, ownership matrix, demo acceptance, risks, open questions. Resolved: customer identity, stock accounting, hold expiry, two-tier stock thresholds, determinism of Product D, C/D client surfaces. Reconciled the app-fatigue finding against Product A |
 | 0.3.1 | 2026-08-25 | Repaired two references v0.3 left dangling. §5.3 and R3 justified having no staff authentication by citing "local-only (§2.2)" — the exact bullet v0.3 struck. Both now rest on the reasoning that was always doing the work: the dashboard is unreachable from outside the shop network. Adds the caveat v0.3 should have carried — a hosted database puts the store's data within reach of anyone holding the connection string, so R3 no longer describes the whole exposure (see R8). No decision changed; staff authentication remains out of scope per §2.2 |

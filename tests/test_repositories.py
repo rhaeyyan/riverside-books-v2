@@ -10,12 +10,10 @@ Covers:
 
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 
 import pytest
 from psycopg import Connection
 
-from backend.api.core.datastore import JsonDatastore
 from backend.api.core.db import set_current_connection
 from backend.api.core.repositories import (
     BookRepository,
@@ -35,35 +33,6 @@ from backend.api.models import (
     StoreInfo,
 )
 from backend.config import settings
-
-MOCK_DATA_DIR = Path(__file__).resolve().parent.parent / "mock_data"
-
-
-# ============================================================================
-# Fixtures
-# ============================================================================
-
-
-@pytest.fixture
-def datastore(tmp_path: Path) -> JsonDatastore:
-    """Create a JsonDatastore populated with seed data copies in a temp directory."""
-    for seed_file in ["inventory.json", "customers.json", "orders.json"]:
-        source = MOCK_DATA_DIR / seed_file
-        dest = tmp_path / seed_file
-        if source.exists():
-            dest.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
-        else:
-            dest.write_text("[]", encoding="utf-8")
-    return JsonDatastore(data_dir=tmp_path)
-
-
-@pytest.fixture
-def empty_datastore(tmp_path: Path) -> JsonDatastore:
-    """Create a datastore with empty collections."""
-    (tmp_path / "inventory.json").write_text("[]", encoding="utf-8")
-    (tmp_path / "customers.json").write_text("[]", encoding="utf-8")
-    (tmp_path / "orders.json").write_text("[]", encoding="utf-8")
-    return JsonDatastore(data_dir=tmp_path)
 
 
 @pytest.fixture

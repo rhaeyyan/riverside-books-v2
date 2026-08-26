@@ -79,7 +79,7 @@
   color: var(--text-h);
   margin: 0;
   line-height: 1.12;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.02em;
   text-wrap: pretty;
 }
 
@@ -234,7 +234,7 @@
 .btn-hold-submit {
   padding: 13px 20px;
   background: var(--accent);
-  color: #ffffff;
+  color: var(--ink-text);
   border: 1px solid var(--accent);
   border-radius: 8px;
   font-size: 15px;

@@ -110,3 +110,48 @@
   outline: 2px solid var(--accent-border);
   outline-offset: 2px;
 }
+
+.draft-reply-btn {
+  background-color: var(--color-brand);
+  color: white;
+  margin-left: 8px;
+}
+
+.draft-reply-btn:hover {
+  background-color: var(--color-brand-dark);
+}
+
+.draft-reply-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.draft-container {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.draft-container label {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.draft-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.draft-textarea:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}

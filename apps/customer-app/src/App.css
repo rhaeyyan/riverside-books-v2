@@ -141,6 +141,28 @@
   outline-offset: 2px;
 }
 
+.header-session-signin {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--ink-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+  transition: background-color 0.15s ease;
+}
+
+.header-session-signin:hover {
+  background: var(--accent-hover);
+}
+
+.header-session-signin:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
 .app-main {
   flex: 1;
   width: 100%;
@@ -207,7 +229,8 @@
 @media (prefers-reduced-motion: reduce) {
   .nav-item,
   .footer-link,
-  .header-session-signout {
+  .header-session-signout,
+  .header-session-signin {
     transition: none !important;
   }
 }

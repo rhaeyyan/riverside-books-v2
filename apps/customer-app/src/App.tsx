@@ -6,6 +6,7 @@ import MyOrders from './pages/MyOrders';
 import LoyaltyCard from './pages/LoyaltyCard';
 import Support from './pages/Support';
 import ChatPanel from './components/ChatPanel';
+import AuthDialog, { AUTH_OPEN_EVENT } from './components/AuthDialog';
 import { BookOpen } from 'lucide-react';
 import { getCustomerSession, clearCustomerSession, subscribeToCustomerSession } from './lib/customerSession';
 import './App.css';
@@ -64,7 +65,7 @@ function App() {
               </NavLink>
             </nav>
 
-            {session && (
+            {session ? (
               <div className="header-session">
                 <span className="header-session-name">Signed in as {session.name}</span>
                 <button
@@ -75,6 +76,14 @@ function App() {
                   Sign out
                 </button>
               </div>
+            ) : (
+              <button
+                type="button"
+                className="header-session-signin"
+                onClick={() => window.dispatchEvent(new Event(AUTH_OPEN_EVENT))}
+              >
+                Sign in
+              </button>
             )}
           </div>
         </header>
@@ -105,6 +114,7 @@ function App() {
         </footer>
 
         <ChatPanel />
+        <AuthDialog />
       </div>
     </BrowserRouter>
   );

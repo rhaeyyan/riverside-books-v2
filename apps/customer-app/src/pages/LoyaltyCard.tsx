@@ -1,47 +1,42 @@
 import { useEffect, useRef, useState } from 'react';
 import { client } from '../api/client';
 import type { components } from '../api/types';
-import { Search, Gift, Award, Check, BookOpen, AlertCircle } from 'lucide-react';
+import { Gift, Award, Check, BookOpen, AlertCircle, LogIn } from 'lucide-react';
 import { getCustomerSession, clearCustomerSession, subscribeToCustomerSession } from '../lib/customerSession';
+import { AUTH_OPEN_EVENT } from '../components/AuthDialog';
 import { prefersReducedMotion } from '../utils/motion';
 import './LoyaltyCard.css';
 
 type Customer = components["schemas"]["Customer"];
 
-const DEMO_PHONE = "(555) 100-0005";
-
 export default function LoyaltyCard() {
-  const [phone, setPhone] = useState("");
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState(() => getCustomerSession());
-  const [showManualLookup, setShowManualLookup] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
-  // Set true right before a lookup (session auto-load or manual submit)
-  // resolves into `customer`, so the scroll effect below only fires as the
-  // direct result of a lookup, not on first mount.
+  // Set true right before a session auto-load resolves into `customer`, so
+  // the scroll effect below only fires as the direct result of that load,
+  // not on first mount.
   const shouldScrollToResults = useRef(false);
 
   // Session auto-load: the loyalty endpoint returns only the stamp counters,
-  // so the display fields the card already knows (name, phone, id) come from
-  // the session itself. The `customer &&` render block below is unchanged
-  // and shared with the manual phone-lookup path.
-  useEffect(() => {
-    if (!session) return;
+  // so the display fields the card already knows (name, email, phone, id)
+  // come from the session itself.
+  const loadLoyaltyForSession = (s: NonNullable<ReturnType<typeof getCustomerSession>>) => {
     shouldScrollToResults.current = true;
     setLoading(true);
     setError(null);
     client.GET("/api/customers/{customer_id}/loyalty", {
-      params: { path: { customer_id: session.customer_id } }
+      params: { path: { customer_id: s.customer_id } }
     })
       .then(({ data, error: fetchError, response }) => {
         if (data) {
           setCustomer({
-            customer_id: session.customer_id,
-            phone: session.phone,
-            name: session.name,
-            email: "",
+            customer_id: s.customer_id,
+            email: s.email,
+            name: s.name,
+            phone: s.phone,
             stamps: data.stamps,
             rewards_available: data.rewards_available,
             joined_date: "",
@@ -50,12 +45,12 @@ export default function LoyaltyCard() {
           if (response.status === 404) {
             // The session's customer_id no longer resolves server-side —
             // the session itself is stale/broken, not "wrong person is
-            // signed in". Clear it and fall back to the manual lookup form
-            // rather than rendering a "Not you?" link that implies the
-            // wrong customer is signed in.
+            // signed in". Clear it and fall back to the sign-in prompt
+            // rather than rendering a stamp card for a customer that no
+            // longer exists.
             clearCustomerSession();
             setCustomer(null);
-            setError("Your saved session looks out of date. Please look yourself up again.");
+            setError("Your saved session looks out of date. Please sign in again.");
           } else {
             setError("Could not retrieve your stamp card.");
           }
@@ -65,27 +60,35 @@ export default function LoyaltyCard() {
         setError("Unable to connect to the store database. Please try again.");
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    if (session) loadLoyaltyForSession(session);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Reactive to sign-out (and cross-tab sign-in/out) happening while this
-  // page is already mounted. When the session disappears out from under an
+  // page is already mounted, and to a sign-in completed through AuthDialog
+  // while this page is open. When the session disappears out from under an
   // already-loaded stamp card, fall back to the same "no session" state:
   // clear the loaded customer data and let the render below fall through to
-  // the manual lookup form.
+  // the sign-in prompt. When a session appears, load its stamp card.
   useEffect(() => {
     return subscribeToCustomerSession(() => {
       const next = getCustomerSession();
       setSession(next);
-      if (!next) {
+      if (next) {
+        loadLoyaltyForSession(next);
+      } else {
         setCustomer(null);
         setError(null);
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Scroll the stamp card into view once it arrives from a lookup (session
-  // auto-load or manual submit), not on initial mount.
+  // Scroll the stamp card into view once it arrives from a session load,
+  // not on initial mount.
   useEffect(() => {
     if (customer && shouldScrollToResults.current) {
       shouldScrollToResults.current = false;
@@ -95,39 +98,6 @@ export default function LoyaltyCard() {
       });
     }
   }, [customer]);
-
-  const fetchLoyalty = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const cleanPhone = phone.replace(/\D/g, "");
-    if (cleanPhone.length < 10) {
-      setError("Please enter a valid 10-digit phone number.");
-      return;
-    }
-
-    shouldScrollToResults.current = true;
-    setLoading(true);
-    try {
-      const { data, error: fetchError, response: fetchResponse } = await client.POST("/api/customers/lookup", {
-        body: { phone: cleanPhone }
-      });
-
-      if (fetchError) {
-        if (fetchResponse.status === 404) {
-          setError("No customer record found with that number. Place a hold on any book to automatically register!");
-        } else {
-          setError("An error occurred while finding your loyalty card.");
-        }
-        setCustomer(null);
-      } else if (data) {
-        setCustomer(data as Customer);
-      }
-    } catch {
-      setError("Unable to connect to the store database. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div>
@@ -139,56 +109,19 @@ export default function LoyaltyCard() {
             Earn 1 stamp for every book purchased. Collect 10 stamps to earn a free paperback of your choice!
           </p>
 
-          {session && !showManualLookup ? (
+          {!session && (
             <button
               type="button"
-              className="rule-link"
-              onClick={() => setShowManualLookup(true)}
+              className="loyalty-submit-btn"
+              onClick={() => window.dispatchEvent(new Event(AUTH_OPEN_EVENT))}
             >
-              Not you? Look up another number
+              <LogIn size={16} aria-hidden="true" style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
+              Sign in to see your stamp card
             </button>
-          ) : (
-            <>
-              <form onSubmit={fetchLoyalty} className="loyalty-lookup-form">
-                <div className="loyalty-input-wrapper">
-                  <Search size={18} className="loyalty-input-icon" aria-hidden="true" />
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. (845) 555-0142"
-                    aria-label="Phone number"
-                    required
-                    className="loyalty-input"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="loyalty-submit-btn"
-                >
-                  {loading ? "Checking..." : "View Stamp Card"}
-                </button>
-              </form>
+          )}
 
-              <button
-                type="button"
-                className="loyalty-demo-hint"
-                onClick={() => setPhone(DEMO_PHONE)}
-              >
-                Demo: try {DEMO_PHONE}
-              </button>
-
-              {session && (
-                <button
-                  type="button"
-                  className="rule-link"
-                  onClick={() => setShowManualLookup(false)}
-                >
-                  Back to my stamp card
-                </button>
-              )}
-            </>
+          {loading && !customer && (
+            <p className="loyalty-subtitle" style={{ marginTop: '16px' }}>Checking your stamp card…</p>
           )}
 
           {error && (
@@ -277,7 +210,7 @@ export default function LoyaltyCard() {
 
             <div className="loyalty-card-footer">
               <BookOpen size={15} aria-hidden="true" />
-              <span>Stamps are automatically added whenever you buy or pick up a book with this phone number.</span>
+              <span>Stamps are automatically added whenever you buy or pick up a book on your account.</span>
             </div>
           </div>
         )}
@@ -302,7 +235,7 @@ export default function LoyaltyCard() {
           <div className="rule-number" aria-hidden="true">03</div>
           <h2 className="rule-title">Added automatically</h2>
           <p className="rule-desc">
-            Stamps are automatically added whenever you buy or pick up a book with this phone number.
+            Stamps are automatically added whenever you buy or pick up a book on your account.
           </p>
         </div>
       </section>

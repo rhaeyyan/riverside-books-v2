@@ -107,6 +107,40 @@
   font-weight: 600;
 }
 
+.header-session {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-session-name {
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.header-session-signout {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 36px;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.header-session-signout:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
+.header-session-signout:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
 .app-main {
   flex: 1;
   width: 100%;
@@ -172,7 +206,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .nav-item,
-  .footer-link {
+  .footer-link,
+  .header-session-signout {
     transition: none !important;
   }
 }

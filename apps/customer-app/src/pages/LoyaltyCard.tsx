@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { client } from '../api/client';
 import type { components } from '../api/types';
 import { Search, Gift, Award, Check, BookOpen, AlertCircle } from 'lucide-react';
+import { getCustomerSession, clearCustomerSession, subscribeToCustomerSession } from '../lib/customerSession';
 import './LoyaltyCard.css';
 
 type Customer = components["schemas"]["Customer"];
@@ -11,6 +12,68 @@ export default function LoyaltyCard() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [session, setSession] = useState(() => getCustomerSession());
+  const [showManualLookup, setShowManualLookup] = useState(false);
+
+  // Session auto-load: the loyalty endpoint returns only the stamp counters,
+  // so the display fields the card already knows (name, phone, id) come from
+  // the session itself. The `customer &&` render block below is unchanged
+  // and shared with the manual phone-lookup path.
+  useEffect(() => {
+    if (!session) return;
+    setLoading(true);
+    setError(null);
+    client.GET("/api/customers/{customer_id}/loyalty", {
+      params: { path: { customer_id: session.customer_id } }
+    })
+      .then(({ data, error: fetchError, response }) => {
+        if (data) {
+          setCustomer({
+            customer_id: session.customer_id,
+            phone: session.phone,
+            name: session.name,
+            email: "",
+            stamps: data.stamps,
+            rewards_available: data.rewards_available,
+            joined_date: "",
+          });
+        } else if (fetchError) {
+          if (response.status === 404) {
+            // The session's customer_id no longer resolves server-side —
+            // the session itself is stale/broken, not "wrong person is
+            // signed in". Clear it and fall back to the manual lookup form
+            // rather than rendering a "Not you?" link that implies the
+            // wrong customer is signed in.
+            clearCustomerSession();
+            setCustomer(null);
+            setError("Your saved session looks out of date. Please look yourself up again.");
+          } else {
+            setError("Could not retrieve your stamp card.");
+          }
+        }
+      })
+      .catch(() => {
+        setError("Unable to connect to the store database. Please try again.");
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reactive to sign-out (and cross-tab sign-in/out) happening while this
+  // page is already mounted. When the session disappears out from under an
+  // already-loaded stamp card, fall back to the same "no session" state:
+  // clear the loaded customer data and let the render below fall through to
+  // the manual lookup form.
+  useEffect(() => {
+    return subscribeToCustomerSession(() => {
+      const next = getCustomerSession();
+      setSession(next);
+      if (!next) {
+        setCustomer(null);
+        setError(null);
+      }
+    });
+  }, []);
 
   const fetchLoyalty = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,27 +117,49 @@ export default function LoyaltyCard() {
             Earn 1 stamp for every book purchased. Collect 10 stamps to earn a free paperback of your choice!
           </p>
 
-          <form onSubmit={fetchLoyalty} className="loyalty-lookup-form">
-            <div className="loyalty-input-wrapper">
-              <Search size={18} className="loyalty-input-icon" aria-hidden="true" />
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="e.g. (845) 555-0142"
-                aria-label="Phone number"
-                required
-                className="loyalty-input"
-              />
-            </div>
+          {session && !showManualLookup ? (
             <button
-              type="submit"
-              disabled={loading}
-              className="loyalty-submit-btn"
+              type="button"
+              className="rule-link"
+              onClick={() => setShowManualLookup(true)}
             >
-              {loading ? "Checking..." : "View Stamp Card"}
+              Not you? Look up another number
             </button>
-          </form>
+          ) : (
+            <>
+              <form onSubmit={fetchLoyalty} className="loyalty-lookup-form">
+                <div className="loyalty-input-wrapper">
+                  <Search size={18} className="loyalty-input-icon" aria-hidden="true" />
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. (845) 555-0142"
+                    aria-label="Phone number"
+                    required
+                    className="loyalty-input"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="loyalty-submit-btn"
+                >
+                  {loading ? "Checking..." : "View Stamp Card"}
+                </button>
+              </form>
+
+              {session && (
+                <button
+                  type="button"
+                  className="rule-link"
+                  onClick={() => setShowManualLookup(false)}
+                >
+                  Back to my stamp card
+                </button>
+              )}
+            </>
+          )}
         </div>
 
         <div className="loyalty-hero-art">

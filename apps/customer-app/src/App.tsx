@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import BookDetail from './pages/BookDetail';
@@ -6,9 +7,22 @@ import LoyaltyCard from './pages/LoyaltyCard';
 import Support from './pages/Support';
 import ChatPanel from './components/ChatPanel';
 import { BookOpen } from 'lucide-react';
+import { getCustomerSession, clearCustomerSession, subscribeToCustomerSession } from './lib/customerSession';
 import './App.css';
 
 function App() {
+  const [session, setSession] = useState(() => getCustomerSession());
+
+  // Reactive rather than a one-shot mount-time read, so a sign-out (or a
+  // cross-tab sign-in) is reflected in the header without a route remount.
+  useEffect(() => {
+    return subscribeToCustomerSession(() => setSession(getCustomerSession()));
+  }, []);
+
+  const handleSignOut = () => {
+    clearCustomerSession();
+  };
+
   return (
     <BrowserRouter basename={import.meta.env.PROD ? '/shop' : undefined}>
       <div className="app-container">
@@ -49,6 +63,19 @@ function App() {
                 Store Info
               </NavLink>
             </nav>
+
+            {session && (
+              <div className="header-session">
+                <span className="header-session-name">Signed in as {session.name}</span>
+                <button
+                  type="button"
+                  className="header-session-signout"
+                  onClick={handleSignOut}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </header>
 

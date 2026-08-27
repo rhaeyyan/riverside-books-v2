@@ -28,7 +28,7 @@ This monorepo contains four interconnected products and a unified gateway landin
   - Tracks orders through `Pending`, `Ready for Pickup`, `Fulfilled`, and `Expired` states.
   - One-click status transitions (e.g. mark ready, complete pickup, release expired hold).
   - Shows hold expiration timers relative to current time.
-- **Customer Messages Inbox**: Review and resolve customer inquiries submitted through the chatbot's leave-a-message workflow, with status filtering (`new`/`read`) and mark-as-read actions. A "Draft Reply with AI" action calls Gemini to draft a reply grounded in the store's real hours and policies, given a `GEMINI_API_KEY` — there's no template fallback for this one, so it 400s without a key configured.
+- **Customer Messages Inbox**: Review and resolve customer inquiries submitted through the chatbot's leave-a-message workflow, with status filtering (`new`/`read`) and mark-as-read actions. A "Draft Reply with AI" action calls Gemini to draft a reply grounded in the store's real hours and policies, given a `GEMINI_API_KEY` — there's no template fallback for this one, so it 400s without a key configured. *(Currently turned off in the UI — `AI_DRAFT_REPLY_ENABLED` in `Messages.tsx` — after exceeding the Gemini free-tier quota; flip it back once that's resolved.)*
 - **Embedded Marketing Assistant**: Direct access to Product D from within the staff dashboard.
 
 ### Product C: Customer Support Chatbot (`backend/chatbot/`)

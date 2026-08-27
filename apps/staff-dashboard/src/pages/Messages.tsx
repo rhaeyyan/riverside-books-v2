@@ -5,6 +5,10 @@ import './Messages.css';
 
 type Message = components["schemas"]["Message"];
 
+// Off for now -- exceeded the Gemini free-tier quota. Flip back to true once
+// that's sorted; nothing else about the feature needs to change.
+const AI_DRAFT_REPLY_ENABLED = false;
+
 export function Messages() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isDrafting, setIsDrafting] = useState<Record<string, boolean>>({});
@@ -102,17 +106,19 @@ export function Messages() {
                 >
                   Mark handled
                 </button>
-                <button
-                  type="button"
-                  className="draft-reply-btn"
-                  onClick={() => handleDraftReply(m.message_id)}
-                  disabled={isDrafting[m.message_id]}
-                  aria-label={`Draft an AI reply to the message from ${m.name}`}
-                >
-                  {isDrafting[m.message_id] ? "Drafting..." : "Draft Reply with AI"}
-                </button>
+                {AI_DRAFT_REPLY_ENABLED && (
+                  <button
+                    type="button"
+                    className="draft-reply-btn"
+                    onClick={() => handleDraftReply(m.message_id)}
+                    disabled={isDrafting[m.message_id]}
+                    aria-label={`Draft an AI reply to the message from ${m.name}`}
+                  >
+                    {isDrafting[m.message_id] ? "Drafting..." : "Draft Reply with AI"}
+                  </button>
+                )}
               </div>
-              {drafts[m.message_id] && (
+              {AI_DRAFT_REPLY_ENABLED && drafts[m.message_id] && (
                 <div className="draft-container">
                   <label>Draft Reply:</label>
                   <textarea 

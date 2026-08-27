@@ -1,0 +1,225 @@
+/* StaffSelections.css — rotating staff-picks card on the Browse shelf page.
+   Sits in the space freed up by shrinking .browse-promo (see Home.css). */
+
+.staff-picks {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  margin-bottom: 32px;
+}
+
+.staff-picks-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.staff-picks-eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.staff-picks-hint {
+  font-size: 12.5px;
+  color: #8a7e6f;
+}
+
+.staff-picks-body {
+  display: flex;
+  gap: 18px;
+}
+
+.staff-picks-cover {
+  flex-shrink: 0;
+  width: 76px;
+  aspect-ratio: 2 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--code-bg);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  display: block;
+}
+
+.staff-picks-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.staff-picks-cover-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--heading);
+  font-size: 28px;
+  font-weight: 600;
+  color: rgba(36, 29, 22, 0.16);
+}
+
+.staff-picks-content {
+  min-width: 0;
+  animation: staffPickFade 0.4s ease;
+}
+
+@keyframes staffPickFade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.staff-picks-title-link {
+  text-decoration: none;
+  color: inherit;
+  border-radius: 4px;
+}
+
+.staff-picks-title-link:hover .staff-picks-title {
+  color: var(--accent);
+}
+
+.staff-picks-title-link:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
+.staff-picks-title {
+  font-family: var(--heading);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-h);
+  margin: 0;
+  transition: color 0.15s ease;
+}
+
+.staff-picks-author {
+  font-size: 12.5px;
+  color: #6c6155;
+  margin: 2px 0 0;
+}
+
+.staff-picks-quote {
+  font-family: var(--heading);
+  font-style: italic;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 10px 0 0;
+}
+
+.staff-picks-attribution {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.staff-picks-attribution-rule {
+  width: 18px;
+  height: 1px;
+  background: var(--accent);
+  display: block;
+}
+
+.staff-picks-attribution-name {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.staff-picks-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.staff-picks-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.staff-picks-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--border);
+  cursor: pointer;
+}
+
+.staff-picks-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.staff-picks-dot:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
+.staff-picks-arrow {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.staff-picks-arrow:hover {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.staff-picks-arrow:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .staff-picks-body {
+    gap: 14px;
+  }
+
+  .staff-picks-cover {
+    width: 60px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staff-picks-content {
+    animation: none !important;
+  }
+
+  .staff-picks-title,
+  .staff-picks-arrow {
+    transition: none !important;
+  }
+}

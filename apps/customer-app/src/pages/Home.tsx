@@ -5,6 +5,7 @@ import { formatMoney } from '../utils/format';
 import type { components } from '../api/types';
 import { Search, X, MessageSquare, BookOpen } from 'lucide-react';
 import { CHAT_ESCALATE_EVENT } from '../components/ChatPanel';
+import StaffSelections from '../components/StaffSelections';
 import './Home.css';
 
 type Book = components["schemas"]["Book"];
@@ -72,7 +73,7 @@ export default function Home() {
     <div>
       <section className="browse-hero">
         <div className="browse-hero-copy">
-          <p className="browse-eyebrow">412 Main Street, Beacon, NY 12508</p>
+          <p className="browse-eyebrow">128 Main Street, Standing Stone, NY 12508</p>
           <h1 className="browse-title">See what's on the shelf before you walk over.</h1>
           <p className="browse-subtitle">
             Stock counts come straight off the counter. Reserve a copy and we'll keep it by the register for 48 hours.
@@ -122,16 +123,24 @@ export default function Home() {
               >
                 In Stock Only
               </button>
-              {availableGenres.slice(0, 4).map((genre) => (
-                <button
-                  key={genre}
-                  type="button"
-                  onClick={() => setActiveFilter(genre)}
-                  className={`filter-chip ${activeFilter.toLowerCase() === genre.toLowerCase() ? "active" : ""}`}
+              <div className="genre-filter">
+                <label htmlFor="genre-filter-select" className="filter-label">
+                  Genre
+                </label>
+                <select
+                  id="genre-filter-select"
+                  className="genre-filter-select"
+                  value={availableGenres.includes(activeFilter) ? activeFilter : ""}
+                  onChange={(e) => setActiveFilter(e.target.value || "all")}
                 >
-                  {genre}
-                </button>
-              ))}
+                  <option value="">All genres</option>
+                  {[...availableGenres].sort((a, b) => a.localeCompare(b)).map((genre) => (
+                    <option key={genre} value={genre}>
+                      {genre}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -230,16 +239,17 @@ export default function Home() {
 
       <section className="browse-promo">
         <div className="browse-promo-inner">
-          <p className="browse-promo-eyebrow">The reader card</p>
-          <h2 className="browse-promo-title">Ten stamps, and the eleventh book is on us.</h2>
-          <p className="browse-promo-desc">
-            Earn 1 stamp for every book purchased. Collect 10 stamps to earn a free paperback of your choice.
-          </p>
+          <div className="browse-promo-copy">
+            <p className="browse-promo-eyebrow">The reader card</p>
+            <h2 className="browse-promo-title">Ten stamps, and the eleventh book is on us.</h2>
+          </div>
           <Link to="/loyalty" className="browse-promo-cta">
             See my stamp card
           </Link>
         </div>
       </section>
+
+      <StaffSelections books={books} />
 
       <div className="results-header">
         <h2 className="results-heading">

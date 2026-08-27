@@ -95,6 +95,7 @@ export function Preorders() {
         </div>
         <div className="release-btn-wrap">
           <button
+            type="button"
             className="release-btn"
             onClick={releaseExpired}
             disabled={expiredCount === 0}
@@ -142,8 +143,24 @@ export function Preorders() {
                           By: {order.hold_expires_at ? new Date(order.hold_expires_at).toLocaleDateString() : 'N/A'}
                         </span>
                         <div className="actions">
-                          {col.key === 'pending' && <button onClick={() => moveOrder(order, 'ready_for_pickup')}>Mark ready</button>}
-                          {col.key === 'ready_for_pickup' && <button onClick={() => moveOrder(order, 'completed')}>Complete</button>}
+                          {col.key === 'pending' && (
+                            <button
+                              type="button"
+                              onClick={() => moveOrder(order, 'ready_for_pickup')}
+                              aria-label={`Mark ${customer ? customer.name : order.customer_id}'s order ready for pickup`}
+                            >
+                              Mark ready
+                            </button>
+                          )}
+                          {col.key === 'ready_for_pickup' && (
+                            <button
+                              type="button"
+                              onClick={() => moveOrder(order, 'completed')}
+                              aria-label={`Mark ${customer ? customer.name : order.customer_id}'s order as picked up`}
+                            >
+                              Complete
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

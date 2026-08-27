@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.api.core.repositories import (
     BookRepository,
@@ -16,7 +16,7 @@ from backend.api.deps import (
     get_message_repo,
     get_store_info_repo,
 )
-from backend.api.models import Message
+from backend.api.models import EMAIL_PATTERN, Message
 from backend.chatbot.service import get_node, handle_stock_query
 from backend.chatbot.tree import CHAT_TREE
 
@@ -30,7 +30,7 @@ class ChatMessageRequest(BaseModel):
 
 class EscalateRequest(BaseModel):
     name: str
-    contact: str
+    contact: str = Field(pattern=EMAIL_PATTERN)
     body: str
 
 

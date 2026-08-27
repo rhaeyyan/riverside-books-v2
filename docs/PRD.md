@@ -1,6 +1,6 @@
 # Product Requirements Document — Riverside Books Suite
 
-**Cycle 4 Fellowship · v0.4 · Last updated 2026-08-25**
+**Cycle 4 Fellowship · v0.6 · Last updated 2026-08-27**
 
 > **How to read this document.** Sections 5–7 (Shared Architecture, Data Model, API
 > Contract) are **binding contracts**. All four products read and write the same
@@ -427,7 +427,7 @@ those aren't in the catalogue (§2.2).
 | Field | Type | Notes |
 |---|---|---|
 | `message_id` | string | **Primary key.** `msg_001` |
-| `name`, `contact`, `body` | string | Contact is a phone or email, as typed |
+| `name`, `contact`, `body` | string | `contact` must be an email address (validated server-side, same pattern as `customers.email`) |
 | `created_at` | string | ISO 8601 UTC |
 | `status` | enum | `new` \| `read` |
 
@@ -821,6 +821,7 @@ Each is reversible, but reversing one after products are built is expensive.
 
 | Version | Date | Changes |
 |---|---|---|
+| 0.6 | 2026-08-27 | **`messages.contact` must be an email, not "a phone or email, as typed."** §6.6 field table updated; `Message.contact` and `EscalateRequest.contact` (`POST /chat/escalate`) both now validate against the same `EMAIL_PATTERN` as `customers.email`. Seed data's one phone-form contact (`msg_002`, Marcus Vance) changed to an email so the seeded data doesn't itself violate the new constraint. Product A's escalation form (`Support.tsx`, `ChatPanel.tsx`) relabeled from "Email or phone" to "Email," with an `type="email"` input for basic client-side validation ahead of the server check. Decided by @rhaeyyan (PRD owner): the staff Messages inbox needs a real reply address, and a bare 10-digit string was silently accepted before. |
 | 0.5 | 2026-08-27 | **Real email/password authentication, replacing the phone/PIN identity model entirely.** §2.2's access-control non-goal narrowed further: login is now real (bcrypt-verified, server-side) for both customers and staff, but everything past login is unchanged — no endpoint gates on a token, matching the existing risk in R3. §5.3 rewritten (old text kept as superseded history in the same section). §6.2 `customers`: `email` (not `phone`) is now the unique, required identity key; `phone` becomes optional pickup-contact info; new `password_hash` column (storage-only, never an API field — the `Customer` response model doesn't declare it, so it can't leak via `response_model`). New §6.8 `staff` table — v0.4's PIN screen had no server-side table at all; staff accounts are seed-provisioned only, no self-registration endpoint. §7: `POST /customers/lookup` removed outright (not kept alongside the new flow); `POST /customers` body shape changed (adds required `password`, optional `phone` instead of required); new `POST /customers/login` and `POST /staff/login`. §8.A.3/4 updated: pre-order and My Orders now require sign-in instead of a phone lookup; My Orders also gains per-item book title + cover thumbnail (previously ISBN only). §10 walkthrough updated to sign-in instead of phone lookup. Appendix A #1 and #8 revised (both explicitly reversed, not just narrowed — see the strikethrough + note in each). R3 reworded: the login screen is now real, but the underlying risk (no per-endpoint gating) is unchanged, so the "must be revisited before public" mitigation still stands and now explicitly says what "revisited" means. Migration: `supabase/migrations/20260827030000_email_password_auth.sql` truncates `customers`/`orders`/`order_items` before adding the new constraints — demo data with no real customer to preserve (R8), immediately repopulated by `scripts/seed.py --db`. Decided by @rhaeyyan (PRD owner), after being told this reverses a decision Appendix A explicitly flagged as "reversible, but reversing one after products are built is expensive" — confirmed as the intended tradeoff, not an oversight |
 | 0.4 | 2026-08-25 | **Narrowed the authentication non-goal.** §2.2's "Authentication, passwords, or sessions" bullet now reads "server-side authentication, or any access control gating what the API returns." §5.3 adds a client-side staff PIN screen (fixed PIN→name map, `sessionStorage`, no backend check) that identifies who is using the dashboard without gating it — same shape as the existing customer identity model. R3 and decision #8 reworded to make explicit that "no staff authentication" was always about the server side; the risk itself is unchanged, since every dashboard endpoint remains exactly as reachable as before. Decided by @rhaeyyan (PRD owner) to match the approved Staff Dashboard design mockup |
 | 0.1 | 2026-08-24 | Initial draft: summary, market research, per-product feature lists, technical constraints |

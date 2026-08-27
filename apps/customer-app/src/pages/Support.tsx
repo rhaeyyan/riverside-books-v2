@@ -75,7 +75,7 @@ export default function Support() {
             {isEscalating && (
               <form onSubmit={submitEscalation} className="flex flex-col gap-2 rounded-[24px] border border-[var(--border)] bg-[var(--code-bg)] p-4">
                 <TextField id="chat-page-name" label="Name" required value={escName} onChange={setEscName} placeholder="Name" />
-                <TextField id="chat-page-contact" label="Email or phone" required value={escContact} onChange={setEscContact} placeholder="Email or Phone" />
+                <TextField id="chat-page-contact" label="Email" type="email" required value={escContact} onChange={setEscContact} placeholder="you@example.com" />
                 <TextField id="chat-page-body" label="Your message" required multiline value={escBody} onChange={setEscBody} placeholder="Your message..." />
                 <div className="mt-1 flex gap-2">
                   <QuickReply type="submit" filled disabled={isLoading}>Send</QuickReply>

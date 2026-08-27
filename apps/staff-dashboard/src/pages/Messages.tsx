@@ -13,11 +13,11 @@ export function Messages() {
   const handleDraftReply = async (messageId: string) => {
     setIsDrafting(prev => ({ ...prev, [messageId]: true }));
     try {
-      const res = await client.POST("/api/messages/{message_id}/draft-reply" as any, {
-        params: { path: { message_id: messageId } } as any
+      const res = await client.POST("/api/messages/{message_id}/draft-reply", {
+        params: { path: { message_id: messageId } }
       });
       if (res.data) {
-        setDrafts(prev => ({ ...prev, [messageId]: (res.data as any).draft_text }));
+        setDrafts(prev => ({ ...prev, [messageId]: res.data.draft_text }));
       } else {
         alert("Failed to generate draft");
       }

@@ -6,10 +6,10 @@ import { Messages } from './pages/Messages';
 import { Marketing } from './pages/Marketing';
 import { Book, Inbox, CalendarClock, Megaphone } from 'lucide-react';
 import { SignIn } from './components/SignIn';
-import { getStaffSession, clearStaffSession } from './lib/staffAuth';
+import { getStaffSession, clearStaffSession, type StaffSession } from './lib/staffAuth';
 import './App.css';
 
-function Layout({ staffName, onSignOut }: { staffName: string; onSignOut: () => void }) {
+function Layout({ staff, onSignOut }: { staff: StaffSession; onSignOut: () => void }) {
   return (
     <div className="layout">
       <nav className="sidebar" aria-label="Staff Dashboard Navigation">
@@ -29,7 +29,7 @@ function Layout({ staffName, onSignOut }: { staffName: string; onSignOut: () => 
           </NavLink>
         </div>
         <div className="sidebar-footer">
-          <div className="staff-name">{staffName}</div>
+          <div className="staff-name">{staff.name} · {staff.role}</div>
           <button type="button" className="sign-out-btn" onClick={onSignOut}>Sign out</button>
         </div>
       </nav>
@@ -41,21 +41,21 @@ function Layout({ staffName, onSignOut }: { staffName: string; onSignOut: () => 
 }
 
 function App() {
-  const [staffName, setStaffName] = useState<string | null>(() => getStaffSession());
+  const [staff, setStaff] = useState<StaffSession | null>(() => getStaffSession());
 
-  if (!staffName) {
-    return <SignIn onSignIn={setStaffName} />;
+  if (!staff) {
+    return <SignIn onSignIn={setStaff} />;
   }
 
   const handleSignOut = () => {
     clearStaffSession();
-    setStaffName(null);
+    setStaff(null);
   };
 
   return (
     <BrowserRouter basename={import.meta.env.PROD ? '/staff' : undefined}>
       <Routes>
-        <Route path="/" element={<Layout staffName={staffName} onSignOut={handleSignOut} />}>
+        <Route path="/" element={<Layout staff={staff} onSignOut={handleSignOut} />}>
           <Route index element={<Inventory />} />
           <Route path="preorders" element={<Preorders />} />
           <Route path="messages" element={<Messages />} />

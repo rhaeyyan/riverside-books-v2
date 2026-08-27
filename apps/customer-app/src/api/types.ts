@@ -76,23 +76,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/customers/lookup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Lookup Customer */
-        post: operations["lookup_customer_api_customers_lookup_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/customers": {
         parameters: {
             query?: never;
@@ -104,6 +87,23 @@ export interface paths {
         put?: never;
         /** Register Customer */
         post: operations["register_customer_api_customers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/customers/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login Customer */
+        post: operations["login_customer_api_customers_login_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -383,6 +383,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/staff/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login Staff */
+        post: operations["login_staff_api_staff_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -491,19 +508,22 @@ export interface components {
         /**
          * Customer
          * @description Domain model representing a bookstore customer and loyalty card.
+         *
+         *     email is the identity key (§5.3, v0.5) and is verified against
+         *     password_hash at login. password_hash deliberately has no field here:
+         *     the repository layer reads/writes it at the DB row level, but a Customer
+         *     instance built for an API response can never carry it, since the field
+         *     does not exist on this model for response_model to (mis)handle.
          */
         Customer: {
             /** Customer Id */
             customer_id: string;
-            /** Phone */
-            phone: string;
+            /** Email */
+            email: string;
             /** Name */
             name: string;
-            /**
-             * Email
-             * @default
-             */
-            email: string;
+            /** Phone */
+            phone?: string | null;
             /**
              * Stamps
              * @default 0
@@ -517,22 +537,23 @@ export interface components {
             /** Joined Date */
             joined_date: string;
         };
-        /** CustomerLookup */
-        CustomerLookup: {
-            /** Phone */
-            phone: string;
+        /** CustomerLogin */
+        CustomerLogin: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
         };
         /** CustomerRegister */
         CustomerRegister: {
-            /** Phone */
-            phone: string;
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
             /** Name */
             name: string;
-            /**
-             * Email
-             * @default
-             */
-            email: string | null;
+            /** Phone */
+            phone?: string | null;
         };
         /** EscalateRequest */
         EscalateRequest: {
@@ -720,6 +741,34 @@ export interface components {
         ReleaseExpiredResponse: {
             /** Released Count */
             released_count: number;
+        };
+        /** StaffLogin */
+        StaffLogin: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+        };
+        /**
+         * StaffMember
+         * @description Domain model representing a staff account (§5.3, v0.5).
+         *
+         *     Provisioned by seed data only -- no self-registration. password_hash is
+         *     handled the same way as on Customer: it exists at the DB row level, never
+         *     on this model, so it cannot leak through an API response.
+         */
+        StaffMember: {
+            /** Staff Id */
+            staff_id: string;
+            /** Email */
+            email: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "Manager" | "Bookseller";
         };
         /** StockUpdate */
         StockUpdate: {
@@ -957,7 +1006,7 @@ export interface operations {
             };
         };
     };
-    lookup_customer_api_customers_lookup_post: {
+    register_customer_api_customers_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -966,7 +1015,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CustomerLookup"];
+                "application/json": components["schemas"]["CustomerRegister"];
             };
         };
         responses: {
@@ -990,7 +1039,7 @@ export interface operations {
             };
         };
     };
-    register_customer_api_customers_post: {
+    login_customer_api_customers_login_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -999,7 +1048,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CustomerRegister"];
+                "application/json": components["schemas"]["CustomerLogin"];
             };
         };
         responses: {
@@ -1498,6 +1547,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    login_staff_api_staff_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffLogin"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMember"];
                 };
             };
             /** @description Validation Error */

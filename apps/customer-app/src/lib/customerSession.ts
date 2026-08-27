@@ -1,14 +1,21 @@
+import { client } from '../api/client';
+import type { components } from '../api/types';
+
+export type Customer = components['schemas']['Customer'];
+
 const CUSTOMER_SESSION_KEY = 'riverside_customer';
 
 // Same-tab listeners can't rely on the native `storage` event — it only
-// fires in *other* tabs/windows — so clearCustomerSession() also dispatches
-// this custom event for same-tab subscribers (see subscribeToCustomerSession).
+// fires in *other* tabs/windows — so any same-tab write (clearCustomerSession,
+// or a successful login()/register() below) also dispatches this custom
+// event for same-tab subscribers (see subscribeToCustomerSession).
 const CUSTOMER_SESSION_CHANGE_EVENT = 'riverside-customer-session-change';
 
 export interface CustomerSession {
   customer_id: string;
-  phone: string;
+  email: string;
   name: string;
+  phone: string | null;
 }
 
 function isCustomerSession(value: unknown): value is CustomerSession {
@@ -16,14 +23,17 @@ function isCustomerSession(value: unknown): value is CustomerSession {
   const v = value as Record<string, unknown>;
   return (
     typeof v.customer_id === 'string' &&
-    typeof v.phone === 'string' &&
-    typeof v.name === 'string'
+    typeof v.email === 'string' &&
+    typeof v.name === 'string' &&
+    (v.phone === null || typeof v.phone === 'string')
   );
 }
 
-// Reads the session the landing page (web/index.html) writes to localStorage.
-// localStorage, not sessionStorage — a customer session should persist across
-// tabs/reloads, unlike the staff PIN gate in staff-dashboard's staffAuth.ts.
+// Reads the session that either this file's login()/register() (below) or
+// the landing page (web/index.html) has written to localStorage — both
+// write the same shape (see the module doc on CustomerSession). localStorage,
+// not sessionStorage — a customer session should persist across tabs/reloads,
+// unlike the staff PIN gate in staff-dashboard's staffAuth.ts.
 export function getCustomerSession(): CustomerSession | null {
   const raw = localStorage.getItem(CUSTOMER_SESSION_KEY);
   if (!raw) return null;
@@ -33,6 +43,20 @@ export function getCustomerSession(): CustomerSession | null {
   } catch {
     return null;
   }
+}
+
+function writeCustomerSession(session: CustomerSession): void {
+  localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(session));
+  window.dispatchEvent(new Event(CUSTOMER_SESSION_CHANGE_EVENT));
+}
+
+function sessionFromCustomer(customer: Customer): CustomerSession {
+  return {
+    customer_id: customer.customer_id,
+    email: customer.email,
+    name: customer.name,
+    phone: customer.phone ?? null,
+  };
 }
 
 export function clearCustomerSession(): void {
@@ -59,4 +83,70 @@ export function subscribeToCustomerSession(callback: () => void): () => void {
     window.removeEventListener(CUSTOMER_SESSION_CHANGE_EVENT, onCustomEvent);
     window.removeEventListener('storage', onStorageEvent);
   };
+}
+
+export type AuthResult = { ok: true; customer: Customer } | { ok: false; error: string };
+
+// Shared connection-failure copy — matches the wording already used for
+// fetch failures elsewhere in this app (MyOrders.tsx, LoyaltyCard.tsx).
+const CONNECTION_ERROR = 'Unable to connect to the store database. Please try again.';
+
+/**
+ * Signs an existing customer in against POST /api/customers/login. On
+ * success, writes the session (see CustomerSession above) and returns the
+ * customer. Never throws — a 401 or a network failure both resolve to
+ * `{ ok: false, error }` with copy safe to show directly in a form.
+ */
+export async function login(email: string, password: string): Promise<AuthResult> {
+  try {
+    const { data, error, response } = await client.POST('/api/customers/login', {
+      body: { email, password },
+    });
+    if (error || !data) {
+      if (response.status === 401) {
+        return { ok: false, error: 'Incorrect email or password.' };
+      }
+      return { ok: false, error: 'Could not sign in. Please try again.' };
+    }
+    writeCustomerSession(sessionFromCustomer(data));
+    return { ok: true, customer: data };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR };
+  }
+}
+
+/**
+ * Registers a new customer against POST /api/customers (now the
+ * email/password registration endpoint, not the old phone-only one). On
+ * success, writes the session and returns the customer. A 400 (duplicate
+ * email) surfaces as a clear, user-facing message rather than a raw detail
+ * string.
+ */
+export async function register(
+  email: string,
+  password: string,
+  name: string,
+  phone?: string
+): Promise<AuthResult> {
+  try {
+    const { data, error, response } = await client.POST('/api/customers', {
+      body: { email, password, name, phone: phone?.trim() || null },
+    });
+    if (error || !data) {
+      if (response.status === 400) {
+        return { ok: false, error: 'An account with this email already exists.' };
+      }
+      if (response.status === 422) {
+        return {
+          ok: false,
+          error: 'Please check your details — the email must look valid and the password needs at least 8 characters.',
+        };
+      }
+      return { ok: false, error: 'Could not create your account. Please try again.' };
+    }
+    writeCustomerSession(sessionFromCustomer(data));
+    return { ok: true, customer: data };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR };
+  }
 }

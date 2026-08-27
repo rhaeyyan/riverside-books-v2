@@ -19,7 +19,11 @@ export function Messages() {
       if (res.data) {
         setDrafts(prev => ({ ...prev, [messageId]: res.data.draft_text }));
       } else {
-        alert("Failed to generate draft");
+        const detail =
+          res.error && typeof res.error === 'object' && 'detail' in res.error
+            ? String((res.error as { detail: unknown }).detail)
+            : `HTTP ${res.response.status}`;
+        alert(`Failed to generate draft: ${detail}`);
       }
     } catch (e) {
       console.error(e);
@@ -105,7 +109,7 @@ export function Messages() {
                   disabled={isDrafting[m.message_id]}
                   aria-label={`Draft an AI reply to the message from ${m.name}`}
                 >
-                  {isDrafting[m.message_id] ? "Drafting..." : "Draft Reply with AI ✨"}
+                  {isDrafting[m.message_id] ? "Drafting..." : "Draft Reply with AI"}
                 </button>
               </div>
               {drafts[m.message_id] && (

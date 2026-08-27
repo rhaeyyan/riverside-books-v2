@@ -1100,9 +1100,16 @@ def write_db(seed: dict[str, Any]) -> None:
         print("DATABASE_URL not set, skipping database seed")
         return
 
-    # Check if we can connect; if not, bail gracefully rather than crashing
+    # Check if we can connect; if not, bail gracefully rather than crashing.
+    # prepare_threshold=None: DATABASE_URL points at Supabase's Transaction
+    # pooler, which doesn't preserve server-side prepared statements across
+    # its connection multiplexing (see backend/api/core/db.py's get_pool for
+    # the full explanation) -- the bulk executemany() below hits this
+    # reliably without it.
     try:
-        conn = psycopg.connect(settings.database_url, row_factory=dict_row)
+        conn = psycopg.connect(
+            settings.database_url, row_factory=dict_row, prepare_threshold=None
+        )
     except Exception as e:
         print(f"Could not connect to database at {settings.database_url}: {e}")
         return

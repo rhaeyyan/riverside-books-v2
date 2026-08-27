@@ -9,28 +9,26 @@ This monorepo contains four interconnected products and a unified gateway landin
 ### Unified Gateway Landing Page (`/`)
 - Curated editorial landing page matching the physical bookstore's warm aesthetic.
 - Highlights real-time store hours, Beacon, NY address, and upcoming literary events.
-- **Customer Sign-In Modal**: Allows customers to sign in by phone/name from the homepage, automatically carrying their authenticated session into the customer app (`/shop`).
-- **Discreet Staff Entry**: Direct link to the PIN-protected staff dashboard.
+- **Customer Sign-In Modal**: Allows customers to sign in with email/password from the homepage, automatically carrying their authenticated session into the customer app (`/shop`).
+- **Discreet Staff Entry**: Direct link to the email/password-protected staff dashboard.
 
 ### Product A: Customer Ordering & Loyalty App (`/shop`)
 - **Shelf Catalog & Search**: Browse titles by category/genre with instant keyword search across title, author, and description.
 - **Live Shelf Availability**: Real-time stock status matching what the store register sees (In Stock, Low Stock count, or Out of Stock).
 - **48-Hour In-Store Holds**: Place pre-orders for in-store pickup without upfront credit card requirements. Holds expire automatically after 48 hours.
-- **Loyalty Stamp Card**: Phone-based customer lookup. Every physical book purchase earns 1 stamp; 10 stamps redeem a $10 store credit reward.
+- **Loyalty Stamp Card**: Tied to the signed-in customer's account. Every physical book purchase earns 1 stamp; 10 stamps redeem a $10 store credit reward.
 - **My Holds Management**: Real-time tracking of pending, ready-for-pickup, and fulfilled orders with hold countdown indicators.
 - **Integrated Customer Chat**: Embedded chat bubble with instant answers to common questions and a direct "Ask a bookseller" escalation form.
 - **Design & Polish**: Warm cream and ink editorial palette (Fraunces serif + Inter sans-serif) optimized across desktop and mobile screens.
 
 ### Product B: Staff Inventory & Ops Dashboard (`/staff`)
-- **PIN-Protected Authentication**: Access secured by staff PINs:
-  - **Manager**: `1234`
-  - **Bookseller**: `5678`
+- **Email/Password Authentication**: Access secured by per-account credentials, with `Manager` and `Bookseller` roles (see [Demo Logins](#demo-logins) below).
 - **Inventory Overview**: View real-time stock levels, filter by low-stock/out-of-stock, search by title/ISBN, and perform inline stock adjustments or restocks with screen-reader status announcements.
 - **Pre-orders Board**: Visual kanban-style fulfillment workflow for in-store holds:
   - Tracks orders through `Pending`, `Ready for Pickup`, `Fulfilled`, and `Expired` states.
   - One-click status transitions (e.g. mark ready, complete pickup, release expired hold).
   - Shows hold expiration timers relative to current time.
-- **Customer Messages Inbox**: Review and resolve customer inquiries submitted through the chatbot's leave-a-message workflow, with status filtering (`new`/`read`) and mark-as-read actions.
+- **Customer Messages Inbox**: Review and resolve customer inquiries submitted through the chatbot's leave-a-message workflow, with status filtering (`new`/`read`) and mark-as-read actions. A "Draft Reply with AI" action calls Gemini to draft a reply grounded in the store's real hours and policies, given a `GEMINI_API_KEY` — there's no template fallback for this one, so it 400s without a key configured.
 - **Embedded Marketing Assistant**: Direct access to Product D from within the staff dashboard.
 
 ### Product C: Customer Support Chatbot (`backend/chatbot/`)
@@ -40,7 +38,8 @@ This monorepo contains four interconnected products and a unified gateway landin
 - **Staff Escalation Workflow**: If an inquiry cannot be answered or requires human assistance, prompts the customer to submit a message directly into the Staff Messages inbox (`/api/messages`).
 
 ### Product D: Marketing Content Generator (`backend/marketing/`)
-- **Strictly Deterministic**: Built using metadata-driven string templating — zero generative AI.
+- **Deterministic by Default**: Built using metadata-driven string templating — zero generative AI in the default path.
+- **Opt-In "Generate with AI"**: A `use_ai` flag on `POST /api/marketing/generate` calls Gemini instead, given a `GEMINI_API_KEY`. Falls back to the same deterministic templating on any failure or missing key, so the feature degrades silently rather than erroring.
 - **Multi-Channel Copy**: Generates ready-to-publish social captions and announcements for:
   - Instagram (with thematic hashtag blocks)
   - Twitter / X (within character limits)
@@ -68,7 +67,7 @@ Every technology in this project was chosen to support the practical realities o
 - **All Under One Roof, Minimal Overhead**: Rather than paying for and juggling multiple separate cloud hosting platforms, servers, and subscriptions that can break independently, the entire storefront, staff dashboard, and backend operate as a single unified service on Render. For a local bookshop without a dedicated IT department, this keeps hosting simple, reliable, cost-effective, and easy to maintain.
 - **Fast, Responsive Experience Without App Downloads**: Customers browsing on their phones while walking down Main Street and booksellers managing holds behind the register both get instant responses without sluggish page reloads. It delivers the responsiveness of a native app while remaining an accessible website anyone can open instantly in any browser.
 - **Accurate Shelf Counts, Zero "Phantom" Holds**: In a neighborhood bookstore, inventory is finite and popular titles often have only one or two copies on hand. When a customer places a hold on the last copy of a novel, the system locks and updates stock instantly across every screen. Two customers can never accidentally reserve the same final copy simultaneously, preventing awkward pickup mix-ups and protecting customer trust.
-- **Truthful Answers Over Unpredictable AI**: Generic AI chatbots can easily "hallucinate" incorrect store policies, invent inaccurate opening hours, or run up expensive recurring fees. Riverside Books relies on dependable, rule-based systems instead. The support assistant always gives 100% verified answers about store hours, upcoming events, and shelf stock—and when a question requires a personal touch, it seamlessly lets the customer leave a note for staff. The marketing assistant similarly delivers publication-ready announcements in seconds using real book metadata, with zero risk of fabricated facts.
+- **Truthful Answers Over Unpredictable AI**: Generic AI chatbots can easily "hallucinate" incorrect store policies, invent inaccurate opening hours, or run up expensive recurring fees. Riverside Books relies on dependable, rule-based systems for the chatbot and, by default, for marketing copy too. The support assistant always gives 100% verified answers about store hours, upcoming events, and shelf stock—and when a question requires a personal touch, it seamlessly lets the customer leave a note for staff. The marketing assistant similarly delivers publication-ready announcements in seconds using real book metadata, with zero risk of fabricated facts — an owner who'd rather not touch Gemini at all can leave `GEMINI_API_KEY` unset and both products stay fully deterministic.
 - **A Thoughtful, Welcoming Community Feel**: The visual styling intentionally reflects the quiet warmth of a neighborhood bookstore—creamy paper tones, deep ink accents, and classic typography—rather than the sterile look of a mass-market retail corporation.
 
 ## Project Structure
@@ -85,7 +84,7 @@ riverside-books-v2/
 │   └── staff-dashboard/       # Product B: Staff Inventory & Ops Dashboard SPA (Vite + React)
 │       ├── src/
 │       │   ├── pages/         # Inventory, Preorders, Messages, Marketing
-│       │   ├── components/    # PIN SignIn, navigation layout
+│       │   ├── components/    # Email/password SignIn, navigation layout
 │       │   └── lib/           # Staff session management
 │       └── package.json
 ├── backend/
@@ -95,8 +94,9 @@ riverside-books-v2/
 │   │   ├── deps.py            # FastAPI dependency injection for repositories
 │   │   ├── models.py          # Pydantic schemas & data contract
 │   │   └── main.py            # FastAPI application & unified SPA static file mounts
-│   ├── chatbot/               # Product C: Deterministic decision tree & FAQ engine
-│   └── marketing/             # Product D: Deterministic metadata string templater
+│   ├── chatbot/                # Product C: Deterministic decision tree & FAQ engine
+│   ├── marketing/               # Product D: Deterministic metadata string templater, plus an opt-in Gemini-backed mode
+│   └── messages/                # Product B's Gemini-backed reply drafter for the staff Messages inbox
 ├── mock_data/                 # Base JSON seed snapshots for offline testing
 ├── scripts/
 │   ├── seed.py                # Database and JSON seeder with relative runtime timestamps
@@ -141,6 +141,8 @@ Riverside Books is deployed as a **single, unified service on Render**, where a 
 | `DATABASE_URL` | **Yes** | Production PostgreSQL connection string (see pooler note below). |
 | `PORT` | Auto | Assigned dynamically by Render. |
 | `CORS_ORIGINS` | Optional | Additional allowed CORS origins if external clients call the API (defaults to local dev ports). |
+| `GEMINI_API_KEY` | Optional | Enables Product D's "Generate with AI" and Product B's Messages inbox "Draft a reply". Leave unset to keep both products fully deterministic — marketing generation still works via templating either way. |
+| `GEMINI_MODEL` | Optional | Defaults to `gemini-3.6-flash`. |
 
 ### Supabase Connection Gotcha: Use the Transaction Pooler (Port 6543)
 > [!IMPORTANT]
@@ -180,6 +182,13 @@ render deploys create <serviceID>                   # Trigger a manual rebuild /
 - Python 3.12+ and [`uv`](https://docs.astral.sh/uv/)
 - Node.js 18+ and `npm`
 - PostgreSQL database (Supabase project or local PostgreSQL container)
+- *(Optional)* A Google AI Studio key to exercise the two Gemini-backed features — Product D's
+  "Generate with AI" and Product B's Messages inbox "Draft a reply". Without it, marketing
+  generation silently falls back to templating and the draft-reply button returns a 400.
+  ```bash
+  GEMINI_API_KEY="your-google-ai-studio-key"
+  GEMINI_MODEL="gemini-3.6-flash"   # optional, this is the default
+  ```
 
 ### 1. Environment Configuration
 Create a `.env` file in the project root:
@@ -222,7 +231,7 @@ cd apps/staff-dashboard
 npm install
 npm run dev
 ```
-Runs at `http://localhost:5174` (Sign in with PIN `1234` or `5678`).
+Runs at `http://localhost:5174` (see [Demo Logins](#demo-logins) below to sign in).
 
 ---
 
@@ -276,10 +285,25 @@ npm run build      # Runs tsc typecheck & Vite build
 
 ---
 
-## Staff Demo Credentials
+## Demo Logins
 
-| Role | PIN | Access Permissions |
+Staff and customer sign-in are both email/password (see `scripts/seed.py`, the
+source of truth for these). Re-run `uv run python -m scripts.seed --db` if a
+login stops working — it never changes these credentials, only timestamps.
+
+### Staff (`/staff`)
+
+| Role | Email | Password | Access Permissions |
+| --- | --- | --- | --- |
+| **Manager** | `jordan@riversidebooks.example` | `manager1234` | Full access to Inventory, Pre-orders, Messages, and Marketing |
+| **Bookseller** | `priya@riversidebooks.example` | `bookseller1234` | Standard operational staff access |
+
+### Customer (`/shop`)
+
+Every seeded customer shares one demo password: `readerclub1`. For example:
+
+| Name | Email | Password |
 | --- | --- | --- |
-| **Manager** | `1234` | Full access to Inventory, Pre-orders, Messages, and Marketing |
-| **Bookseller** | `5678` | Standard operational staff access |
+| Elena Rostova | `elena.rostova@example.com` | `readerclub1` |
 
+Or use "Create an account" in the sign-in dialog to register a new one.

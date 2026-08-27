@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>body{margin:0;background:#fbf7f0;font-family:Inter,system-ui,sans-serif;color:#4a4038;-webkit-font-smoothing:antialiased}a{color:#a63d2f}a:hover{color:#8a3226}input,button,select,textarea{font-family:inherit}@keyframes stampIn{0%{transform:scale(.4) rotate(-14deg);opacity:0}60%{transform:scale(1.12) rotate(3deg);opacity:1}100%{transform:scale(1) rotate(-4deg);opacity:1}}@keyframes riseIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(166,61,47,.22)}50%{box-shadow:0 0 0 10px rgba(166,61,47,0)}}</style></helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;font-size:16px">
+  <header style="border-bottom:1px solid #e6ddd0;background:rgba(251,247,240,.92);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20">
+    <div style="max-width:1080px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+      <button onClick="{{ goBrowse }}" style="background:none;border:none;padding:0;cursor:pointer;text-align:left">
+        <div style="font-family:Fraunces,Georgia,serif;font-size:23px;font-weight:500;color:#241d16;letter-spacing:-.3px;line-height:1.1">Riverside Books</div>
+        <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#8a7e6f;margin-top:2px">Beacon, New York</div>
+      </button>
+      <nav style="display:flex;gap:4px;margin-left:auto;flex-wrap:wrap">
+        <button onClick="{{ goBrowse }}" style="{{ navBrowse }}">Browse</button>
+        <button onClick="{{ goOrders }}" style="{{ navOrders }}">My holds</button>
+        <button onClick="{{ goLoyalty }}" style="{{ navLoyalty }}">Stamp card</button>
+      </nav>
+    </div>
+  </header>
+
+  <main style="flex:1;width:100%;max-width:1080px;margin:0 auto;padding:0 24px 96px;box-sizing:border-box">
+
+    <sc-if value="{{ isBrowse }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <section style="padding:46px 0 30px;border-bottom:1px solid #e6ddd0">
+          <h1 style="font-family:Fraunces,Georgia,serif;font-size:46px;font-weight:500;color:#241d16;margin:0;letter-spacing:-1px;line-height:1.06;max-width:620px;text-wrap:pretty">See what's on the shelf before you walk over.</h1>
+          <p style="margin:14px 0 0;font-size:17px;line-height:1.5;color:#6c6155;max-width:520px">Stock counts come straight off the counter. Reserve a copy and we'll keep it by the register for 48 hours.</p>
+          <div style="display:flex;gap:9px;margin-top:24px;max-width:560px;flex-wrap:wrap">
+            <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="Title, author, or ISBN" style="flex:1;min-width:220px;padding:13px 16px;border:1px solid #e6ddd0;border-radius:9px;background:#fff;font-size:15px;color:#4a4038" style-focus="outline:2px solid rgba(166,61,47,.35);outline-offset:1px;border-color:#a63d2f">
+            <button onClick="{{ clearQuery }}" style="padding:13px 20px;border:1px solid #a63d2f;background:#a63d2f;color:#fff;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#8a3226">{{ searchLabel }}</button>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:12.5px;color:#8a7e6f">Filter</span>
+            <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.onPick }}" style="{{ c.style }}">{{ c.label }}</button>
+            </sc-for>
+          </div>
+        </section>
+
+        <div style="display:flex;align-items:baseline;justify-content:space-between;padding:26px 0 16px;gap:16px;flex-wrap:wrap">
+          <h2 style="font-family:Fraunces,Georgia,serif;font-size:24px;font-weight:500;color:#241d16;margin:0">{{ resultHeading }}</h2>
+          <span style="font-size:13px;color:#8a7e6f">{{ resultCount }}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(222px,1fr));gap:26px 22px">
+          <sc-for list="{{ books }}" as="b" hint-placeholder-count="8">
+            <button onClick="{{ b.onOpen }}" style="background:none;border:none;padding:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:11px" style-hover="opacity:.88">
+              <div style="{{ b.coverStyle }}">
+                <span style="font-family:Fraunces,Georgia,serif;font-size:44px;color:rgba(36,29,22,.16);font-weight:600">{{ b.initial }}</span>
+                <span style="position:absolute;bottom:9px;left:10px;right:10px;font-family:ui-monospace,Consolas,monospace;font-size:9.5px;letter-spacing:.04em;color:rgba(36,29,22,.34);text-transform:uppercase">cover · {{ b.isbn }}</span>
+              </div>
+              <div>
+                <div style="font-family:Fraunces,Georgia,serif;font-size:17px;line-height:1.25;color:#241d16;font-weight:500">{{ b.title }}</div>
+                <div style="font-size:13px;color:#8a7e6f;margin-top:3px">{{ b.author }}</div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto">
+                <span style="{{ b.badge }}">{{ b.statusLabel }}</span>
+                <span style="font-size:14px;font-weight:600;color:#241d16;font-variant-numeric:tabular-nums">{{ b.price }}</span>
+              </div>
+            </button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ noBooks }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:56px 24px;text-align:center;background:#fff;border:1px solid #e6ddd0;border-radius:12px">
+            <div style="font-family:Fraunces,Georgia,serif;font-size:23px;color:#241d16">We don't have that one on the shelf</div>
+            <p style="font-size:15px;color:#6c6155;margin:8px auto 20px;max-width:400px;line-height:1.5">Almost any in-print book can be special ordered at no extra charge — usually here in three to five days.</p>
+            <button onClick="{{ openChat }}" style="padding:12px 20px;border:1px solid #a63d2f;background:#a63d2f;color:#fff;border-radius:9px;font-size:14.5px;font-weight:600;cursor:pointer">Ask a bookseller</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:26px 0 0">
+        <button onClick="{{ goBrowse }}" style="background:none;border:none;padding:0;font-size:13.5px;color:#a63d2f;cursor:pointer;margin-bottom:22px">← Back to browsing</button>
+        <div style="display:grid;grid-template-columns:minmax(200px,270px) minmax(280px,1fr);gap:40px;align-items:start">
+          <div style="{{ detailCoverStyle }}">
+            <span style="font-family:Fraunces,Georgia,serif;font-size:78px;color:rgba(36,29,22,.16);font-weight:600">{{ detail.initial }}</span>
+            <span style="position:absolute;bottom:14px;left:14px;right:14px;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:rgba(36,29,22,.34);text-transform:uppercase">cover art · {{ detail.isbn }}</span>
+          </div>
+          <div>
+            <h1 style="font-family:Fraunces,Georgia,serif;font-size:35px;font-weight:500;color:#241d16;margin:0;line-height:1.12;letter-spacing:-.6px;text-wrap:pretty">{{ detail.title }}</h1>
+            <div style="font-size:17px;color:#6c6155;margin-top:7px">{{ detail.author }}</div>
+            <div style="display:flex;align-items:center;gap:14px;margin-top:18px;flex-wrap:wrap">
+              <span style="{{ detail.badge }}">{{ detail.statusLabel }}</span>
+              <span style="font-family:Fraunces,Georgia,serif;font-size:25px;color:#241d16">{{ detail.price }}</span>
+            </div>
+            <p style="font-size:16.5px;line-height:1.6;color:#4a4038;margin:20px 0 0;max-width:520px;text-wrap:pretty">{{ detail.blurb }}</p>
+            <dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin:24px 0 0;padding:16px 0;border-top:1px solid #e6ddd0;border-bottom:1px solid #e6ddd0">
+              <div><dt style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a7e6f">Format</dt><dd style="margin:3px 0 0;font-size:14.5px">{{ detail.format }}</dd></div>
+              <div><dt style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a7e6f">Genre</dt><dd style="margin:3px 0 0;font-size:14.5px">{{ detail.genre }}</dd></div>
+              <div><dt style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a7e6f">ISBN</dt><dd style="margin:3px 0 0;font-size:14px;font-family:ui-monospace,Consolas,monospace">{{ detail.isbn }}</dd></div>
+              <div><dt style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a7e6f">On the shelf</dt><dd style="{{ detail.countStyle }}">{{ detail.countText }}</dd></div>
+            </dl>
+
+            <div style="margin-top:26px;background:#fff;border:1px solid #e6ddd0;border-radius:12px;padding:22px;max-width:460px;box-shadow:rgba(36,29,22,.06) 0 8px 16px -8px">
+              <sc-if value="{{ holdPlaced }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:riseIn .3s ease">
+                  <div style="font-family:Fraunces,Georgia,serif;font-size:21px;color:#241d16">It's behind the counter for you.</div>
+                  <p style="font-size:14.5px;color:#4a4038;line-height:1.55;margin:9px 0 0">Ask for <strong style="font-family:ui-monospace,Consolas,monospace;color:#a63d2f">{{ newOrderId }}</strong> — we'll hold it until <strong>{{ holdUntil }}</strong>.</p>
+                  <button onClick="{{ goOrders }}" style="margin-top:16px;padding:11px 17px;border:1px solid #a63d2f;background:rgba(166,61,47,.08);color:#a63d2f;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">See my holds</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ canHold }}" hint-placeholder-val="{{ true }}">
+                <div>
+                  <div style="font-family:Fraunces,Georgia,serif;font-size:20px;color:#241d16">Hold a copy for 48 hours</div>
+                  <p style="font-size:13.5px;color:#7d7264;margin:6px 0 14px;line-height:1.5">Free, no card needed. Your phone number is the whole account.</p>
+                  <input value="{{ phone }}" onInput="{{ onPhone }}" placeholder="Phone number" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #e6ddd0;border-radius:8px;background:#f4efe6;font-size:15px;font-family:ui-monospace,Consolas,monospace;color:#241d16" style-focus="outline:2px solid rgba(166,61,47,.35);outline-offset:1px;border-color:#a63d2f">
+                  <sc-if value="{{ needsName }}" hint-placeholder-val="{{ false }}">
+                    <input value="{{ name }}" onInput="{{ onName }}" placeholder="Your name (first time here)" style="width:100%;box-sizing:border-box;margin-top:9px;padding:12px 14px;border:1px solid #e6ddd0;border-radius:8px;background:#f4efe6;font-size:15px;color:#241d16">
+                  </sc-if>
+                  <sc-if value="{{ hasHoldError }}" hint-placeholder-val="{{ false }}">
+                    <p style="margin:10px 0 0;font-size:13.5px;color:#b3392c;line-height:1.45">{{ holdError }}</p>
+                  </sc-if>
+                  <button onClick="{{ placeHold }}" style="{{ holdButtonStyle }}" style-hover="background:#8a3226">{{ holdButtonLabel }}</button>
+                  <p style="margin:11px 0 0;font-size:12px;color:#9a8d7c">Recognised numbers: 555 100 0004 · 555 100 0005</p>
+                </div>
+              </sc-if>
+              <sc-if value="{{ soldOut }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <div style="font-family:Fraunces,Georgia,serif;font-size:20px;color:#241d16">Not on the shelf right now</div>
+                  <p style="font-size:14px;color:#4a4038;margin:8px 0 14px;line-height:1.55">We can special order it at no extra charge — usually three to five days. Leave a number and we'll call when it lands.</p>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button onClick="{{ openChat }}" style="padding:11px 17px;border:1px solid #a63d2f;background:#a63d2f;color:#fff;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Request a special order</button>
+                    <button onClick="{{ goBrowse }}" style="padding:11px 17px;border:1px solid #e6ddd0;background:#f4efe6;color:#4a4038;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer">See what's in stock</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isOrders }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:34px 0 0;max-width:660px">
+        <h1 style="font-family:Fraunces,Georgia,serif;font-size:35px;font-weight:500;color:#241d16;margin:0;letter-spacing:-.6px">My holds</h1>
+        <p style="margin:8px 0 22px;font-size:15.5px;color:#6c6155;line-height:1.5">Look them up with the phone number you used.</p>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:26px">
+          <input value="{{ lookupPhone }}" onInput="{{ onLookupPhone }}" placeholder="555 100 0005" style="flex:1;min-width:200px;padding:12px 15px;border:1px solid #e6ddd0;border-radius:9px;background:#fff;font-size:15px;font-family:ui-monospace,Consolas,monospace;color:#241d16" style-focus="outline:2px solid rgba(166,61,47,.35);outline-offset:1px;border-color:#a63d2f">
+          <button onClick="{{ doLookup }}" style="padding:12px 19px;border:1px solid #241d16;background:#241d16;color:#fbf7f0;border-radius:9px;font-size:14.5px;font-weight:600;cursor:pointer" style-hover="background:#3a2f24">Find holds</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:13px">
+          <sc-for list="{{ myOrders }}" as="o" hint-placeholder-count="2">
+            <div style="{{ o.cardStyle }}">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
+                <div style="min-width:0">
+                  <div style="font-family:Fraunces,Georgia,serif;font-size:18.5px;color:#241d16;line-height:1.3">{{ o.itemLine }}</div>
+                  <div style="font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#8a7e6f;margin-top:4px">{{ o.order_id }} · {{ o.total }}</div>
+                </div>
+                <span style="{{ o.pillStyle }}">{{ o.statusLabel }}</span>
+              </div>
+              <div style="margin-top:13px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <span style="{{ o.deadlineStyle }}">{{ o.deadline }}</span>
+                <sc-if value="{{ o.cancellable }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ o.onCancel }}" style="padding:8px 14px;border:1px solid #e6ddd0;background:#f4efe6;color:#4a4038;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer" style-hover="border-color:#b3392c;color:#b3392c">Release this hold</button>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noOrders }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:48px 24px;text-align:center;background:#fff;border:1px solid #e6ddd0;border-radius:12px">
+              <div style="font-family:Fraunces,Georgia,serif;font-size:21px;color:#241d16">{{ ordersEmptyTitle }}</div>
+              <p style="font-size:14.5px;color:#6c6155;margin:8px 0 18px">{{ ordersEmptyBody }}</p>
+              <button onClick="{{ goBrowse }}" style="padding:11px 18px;border:1px solid #a63d2f;background:#a63d2f;color:#fff;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Browse the shelves</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isLoyalty }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:34px 0 0;max-width:560px">
+        <h1 style="font-family:Fraunces,Georgia,serif;font-size:35px;font-weight:500;color:#241d16;margin:0;letter-spacing:-.6px">Stamp card</h1>
+        <p style="margin:8px 0 22px;font-size:15.5px;color:#6c6155;line-height:1.5">Ten books, one free. Stamps land when you collect at the counter.</p>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:28px">
+          <input value="{{ loyaltyPhone }}" onInput="{{ onLoyaltyPhone }}" placeholder="555 100 0005" style="flex:1;min-width:200px;padding:12px 15px;border:1px solid #e6ddd0;border-radius:9px;background:#fff;font-size:15px;font-family:ui-monospace,Consolas,monospace;color:#241d16" style-focus="outline:2px solid rgba(166,61,47,.35);outline-offset:1px;border-color:#a63d2f">
+          <button onClick="{{ doLoyalty }}" style="padding:12px 19px;border:1px solid #241d16;background:#241d16;color:#fbf7f0;border-radius:9px;font-size:14.5px;font-weight:600;cursor:pointer" style-hover="background:#3a2f24">Show my card</button>
+        </div>
+
+        <sc-if value="{{ hasCard }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#fff;border:1px solid #e6ddd0;border-radius:14px;padding:28px 26px;box-shadow:rgba(36,29,22,.08) 0 14px 22px -12px;position:relative;overflow:hidden">
+            <div style="position:absolute;inset:9px;border:1px dashed #e6ddd0;border-radius:9px;pointer-events:none"></div>
+            <div style="position:relative">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+                <div>
+                  <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#8a7e6f">Riverside Books · reader card</div>
+                  <div style="font-family:Fraunces,Georgia,serif;font-size:25px;color:#241d16;margin-top:4px">{{ card.name }}</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-family:Fraunces,Georgia,serif;font-size:29px;color:#a63d2f;line-height:1">{{ card.stamps }}<span style="font-size:17px;color:#8a7e6f">/10</span></div>
+                  <div style="font-size:11.5px;color:#8a7e6f">{{ card.toGo }}</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin:24px 0 4px">
+                <sc-for list="{{ card.slots }}" as="s" hint-placeholder-count="10">
+                  <div style="{{ s.style }}"><span style="{{ s.markStyle }}">{{ s.mark }}</span></div>
+                </sc-for>
+              </div>
+              <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0e8dc;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <span style="font-size:13px;color:#7d7264">Member since {{ card.joined }}</span>
+                <button onClick="{{ addStamp }}" style="padding:8px 14px;border:1px dashed #ddd2c2;background:none;color:#8a7e6f;border-radius:7px;font-size:12.5px;cursor:pointer" style-hover="border-color:#a63d2f;color:#a63d2f">Simulate a purchase</button>
+              </div>
+            </div>
+          </div>
+          <sc-if value="{{ card.hasReward }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:16px;background:#a63d2f;color:#fff;border-radius:12px;padding:20px 22px;animation:riseIn .35s ease">
+              <div style="font-family:Fraunces,Georgia,serif;font-size:22px">{{ card.rewardTitle }}</div>
+              <p style="margin:6px 0 0;font-size:14.5px;line-height:1.5;color:rgba(255,255,255,.86)">Pick anything off the shelf next visit and tell the bookseller your number. Nothing to print.</p>
+            </div>
+          </sc-if>
+        </sc-if>
+        <sc-if value="{{ noCard }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:44px 24px;text-align:center;background:#fff;border:1px solid #e6ddd0;border-radius:12px">
+            <div style="font-family:Fraunces,Georgia,serif;font-size:21px;color:#241d16">No card on that number yet</div>
+            <p style="font-size:14.5px;color:#6c6155;margin:8px 0 0;line-height:1.5">Place your first hold and the card starts itself. Try 555 100 0005.</p>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ chatOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:22px;right:22px;width:352px;max-width:calc(100vw - 32px);height:512px;max-height:calc(100vh - 48px);background:#fff;border:1px solid #e6ddd0;border-radius:14px;box-shadow:rgba(36,29,22,.18) 0 18px 40px -12px;display:flex;flex-direction:column;overflow:hidden;z-index:40;animation:riseIn .22s ease">
+      <div style="padding:14px 16px;border-bottom:1px solid #f0e8dc;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fbf7f0">
+        <div>
+          <div style="font-family:Fraunces,Georgia,serif;font-size:16.5px;color:#241d16">Ask the shop</div>
+          <div style="font-size:11.5px;color:#8a7e6f">Reads today's shelf counts</div>
+        </div>
+        <button onClick="{{ closeChat }}" style="width:28px;height:28px;border:none;background:#f4efe6;color:#7d7264;border-radius:7px;cursor:pointer;font-size:14px">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ chatLog }}" as="m" hint-placeholder-count="2">
+          <div style="{{ m.style }}">{{ m.text }}</div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ chatAsksInput }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:12px;border-top:1px solid #f0e8dc;display:flex;gap:7px">
+          <input value="{{ chatInput }}" onInput="{{ onChatInput }}" placeholder="Type a title…" style="flex:1;padding:10px 12px;border:1px solid #e6ddd0;border-radius:8px;background:#f4efe6;font-size:13.5px;color:#241d16">
+          <button onClick="{{ sendChat }}" style="padding:10px 14px;border:none;background:#a63d2f;color:#fff;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer">Ask</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ chatHasOptions }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:12px;border-top:1px solid #f0e8dc;display:flex;flex-direction:column;gap:6px;background:#fbf7f0">
+          <sc-for list="{{ chatOptions }}" as="o" hint-placeholder-count="4">
+            <button onClick="{{ o.onPick }}" style="text-align:left;padding:10px 12px;border:1px solid #e6ddd0;background:#fff;color:#4a4038;border-radius:8px;font-size:13.5px;cursor:pointer" style-hover="border-color:#a63d2f;color:#a63d2f">{{ o.label }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ chatClosed }}" hint-placeholder-val="{{ true }}">
+    <button onClick="{{ openChat }}" style="position:fixed;bottom:22px;right:22px;z-index:40;display:flex;align-items:center;gap:9px;padding:13px 18px;border:1px solid #e6ddd0;background:#fff;color:#241d16;border-radius:99px;font-size:14px;font-weight:500;cursor:pointer;box-shadow:rgba(36,29,22,.12) 0 8px 20px -8px;animation:glow 3.6s ease-in-out infinite" style-hover="border-color:#a63d2f;color:#a63d2f">
+      <span style="width:7px;height:7px;border-radius:50%;background:#3a7455;display:block"></span>Ask about stock, hours, events
+    </button>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const BOOKS=[["9780143039433","The Grapes of Wrath","John Steinbeck",1799,0,0,2,"Classic Literature","paperback","A portrait of the conflict between the powerful and the powerless during the Great Depression."],["9780374605928","Tomorrow, and Tomorrow, and Tomorrow","Gabrielle Zevin",2800,2,2,2,"Contemporary Fiction","hardcover","Two friends—often in love, but never lovers—come together as creative partners in the world of video game design."],["9780525559474","The Midnight Library","Matt Haig",2600,10,0,2,"Fantasy","hardcover","Between life and death there is a library where every book offers a chance to try another life you could have lived."],["9780062315007","The Alchemist","Paulo Coelho",1699,2,1,2,"Philosophical Fiction","paperback","A magical story of Santiago, an Andalusian shepherd boy who yearns to travel in search of a worldly treasure."],["9780735211292","Atomic Habits","James Clear",2700,2,0,2,"Self-Help","hardcover","An easy and proven way to build good habits and break bad ones."],["9780385547345","Lessons in Chemistry","Bonnie Garmus",2900,7,1,2,"Historical Fiction","hardcover","Chemist Elizabeth Zott is not your average woman, but life has a way of throwing her off course."],["9780441172719","Dune","Frank Herbert",1800,5,0,2,"Sci-Fi","paperback","Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides."],["9780399590504","Educated","Tara Westover",2800,4,0,2,"Memoir","hardcover","An unforgettable memoir about a young girl who leaves her survivalist family to earn a PhD from Cambridge."],["9780593318171","Klara and the Sun","Kazuo Ishiguro",1695,3,0,2,"Sci-Fi","paperback","A thrilling book that offers a look at our changing world through the eyes of an unforgettable narrator."],["9780316450867","The Overstory","Richard Powers",1895,4,0,2,"Literary Fiction","paperback","An impassioned work of activism and resistance that is also a stunning evocation of the natural world."],["9781250178602","Braiding Sweetgrass","Robin Wall Kimmerer",2000,8,0,2,"Nature & Environment","paperback","Indigenous wisdom, scientific knowledge, and the teachings of plants."],["9780525657743","Crying in H Mart","Michelle Zauner",2695,5,1,2,"Memoir","hardcover","An unflinching, powerful memoir about growing up Korean American, losing her mother, and forging her own identity."],["9780812988406","Between the World and Me","Ta-Nehisi Coates",2600,4,0,2,"Essays & Social Science","hardcover","A profound work that pivots from the biggest questions about American history and ideals to the most intimate concerns."],["9780547928227","The Hobbit","J.R.R. Tolkien",1599,6,0,2,"Fantasy","paperback","Bilbo Baggins is a hobbit who enjoys a comfortable, unambitious life until Gandalf and a company of dwarves arrive."],["9780307277671","The Road","Cormac McCarthy",1600,3,0,2,"Post-Apocalyptic","paperback","A father and his son walk alone through burned America, heading slowly toward the coast."],["9780060935467","To Kill a Mockingbird","Harper Lee",1599,9,0,2,"Classic Literature","paperback","The unforgettable novel of a childhood in a sleepy Southern town and the crisis of conscience that rocked it."],["9781501110368","It Ends with Us","Colleen Hoover",1699,8,0,2,"Romance","paperback","A brave and heartbreaking story that digs its claws into you and doesn't let go."],["9780385545969","The Lincoln Highway","Amor Towles",3000,4,0,2,"Historical Fiction","hardcover","In June, 1954, eighteen-year-old Emmett Watson is driven home to Nebraska by the warden of the work farm."],["9781984801258","Daisy Jones & The Six","Taylor Jenkins Reid",1700,5,0,2,"Contemporary Fiction","paperback","A gripping novel about the whirlwind rise of an iconic 1970s rock group and their beautiful lead singer."],["9780525559498","Sea of Tranquility","Emily St. John Mandel",2500,3,0,2,"Sci-Fi","hardcover","A novel of art, time travel, love, and plague that takes the reader from Vancouver Island to a dark colony on the moon."],["9780807083109","Kindred","Octavia E. Butler",1695,4,0,2,"Sci-Fi","paperback","Dana, a modern black woman, is celebrating her twenty-sixth birthday when she is abruptly snatched from her home."],["9780143127741","The Argonauts","Maggie Nelson",1600,2,0,3,"Memoir & Essays","paperback","A genre-bending memoir, a work of autotheory offering fresh, fierce reflections on desire and identity."],["9780307743657","The Shining","Stephen King",1800,6,0,2,"Horror","paperback","Jack Torrance's new job at the Overlook Hotel is the perfect chance for a fresh start."],["9780316017930","The God of Small Things","Arundhati Roy",1700,3,0,2,"Literary Fiction","paperback","The story of two twins, Esthappen and Rahel, in Kerala, India, navigating family, tragedy, and love."],["9781594634024","The Sympathizer","Viet Thanh Nguyen",1700,4,0,2,"Historical Fiction","paperback","A story of a South Vietnamese army captain who arrives in America after the fall of Saigon, spying for the communists."],["9780345391803","The Hitchhiker's Guide to the Galaxy","Douglas Adams",1599,7,0,2,"Sci-Fi","paperback","Seconds before the Earth is demolished to make way for a galactic freeway, Arthur Dent is plucked into space."],["9780812993547","Lincoln in the Bardo","George Saunders",2800,3,0,2,"Historical Fiction","hardcover","An unforgettable story of familial love and loss that breaks out of its realistic, historical framework."],["9780143128540","Pachinko","Min Jin Lee",1800,5,0,2,"Historical Fiction","paperback","An epic saga chronicling four generations of an ethnic Korean family in Japan."],["9780393609394","Astrophysics for People in a Hurry","Neil deGrasse Tyson",1895,4,0,2,"Science","hardcover","What is the nature of space and time? How do we fit within the universe? Neil deGrasse Tyson brings the universe down to Earth."],["9780140449136","Crime and Punishment","Fyodor Dostoevsky",1500,5,0,2,"Classic Literature","paperback","Raskolnikov, an impoverished student living in St. Petersburg, decides to commit a crime to test his theory."],["9780593448885","Demon Copperhead","Barbara Kingsolver",3250,6,1,2,"Contemporary Fiction","hardcover","A reimagining of David Copperfield set in the mountains of southern Appalachia."],["9781611808605","Devotions: The Selected Poems of Mary Oliver","Mary Oliver",2200,4,0,2,"Poetry","paperback",""]].map(b=>({isbn:b[0],title:b[1],author:b[2],price_cents:b[3],stock_count:b[4],reserved_count:b[5],low_stock_threshold:b[6],genre:b[7],format:b[8],blurb:b[9]}));
+
+const CUSTOMERS={"5551000004":{name:"David Kim",stamps:7,rewards:0,joined:"March 2026"},"5551000005":{name:"Elena Rostova",stamps:9,rewards:0,joined:"February 2026"},"5551000007":{name:"Grace Hopper",stamps:0,rewards:2,joined:"November 2025"},"5551000002":{name:"Ben Martinez",stamps:3,rewards:0,joined:"June 2026"}};
+
+const ORDERS=[{order_id:"order_005",phone:"5551000005",isbn:"9780525657743",qty:1,status:"pending",hold_expires_at:"2026-08-26T19:00:00Z",total_cents:2695},{order_id:"order_012",phone:"5551000005",isbn:"9781501110368",qty:2,status:"completed",hold_expires_at:"2026-08-25T09:15:00Z",total_cents:3398},{order_id:"order_004",phone:"5551000004",isbn:"9780385547345",qty:1,status:"ready_for_pickup",hold_expires_at:"2026-08-26T12:00:00Z",total_cents:2900},{order_id:"order_007",phone:"5551000007",isbn:"9780143039433",qty:1,status:"expired",hold_expires_at:"2026-08-23T09:00:00Z",total_cents:1799}];
+
+const POLICIES={returns:"Books in original, unread condition may be returned within 14 days of purchase with a receipt for a full refund. Store credit or exchange is offered within 30 days.",holds:"Pre-orders and reserve requests are held free of charge at the front counter for 48 hours. After 48 hours, unclaimed holds are automatically released back to inventory.",special:"If a title is not in stock, our booksellers can special order almost any in-print book for you at no extra charge. Special orders typically arrive within 3 to 5 business days.",gifts:"We carry a curated selection of greeting cards, artisanal notebooks, bookmarks, tote bags, and literary gift items in-store. While cards and gifts cannot be reserved online, we are happy to hold items over the phone."};
+const HOURS="We're at 128 Main Street, Beacon. Tue–Thu 10–18, Fri 10–20, Sat 10–19, Sun 11–17. Closed Mondays.";
+const EVENTS_TEXT="An Evening with Zadie Smith — Sep 12, 19:00 (sold out, waitlist open)\nPoetry Workshop & Open Mic with Ada Limón — Sep 18, 18:30\nThe Hudson River Valley in Print — Sep 25, 17:00";
+
+const C={in:"#3a7455",low:"#8e5e22",out:"#b3392c"};
+const NOW=new Date("2026-08-25T17:00:00Z");
+const digits=s=>s.replace(/\D/g,"");
+
+class Component extends DCLogic {
+  state={view:"browse",query:"",chip:"All",isbn:null,
+    phone:"",name:"",needsName:false,holdError:"",newOrderId:null,holdUntil:"",
+    books:BOOKS.map(b=>({...b})),orders:ORDERS.map(o=>({...o})),
+    lookupPhone:"",lookedUp:null,loyaltyPhone:"",cardPhone:null,extraStamps:0,
+    chatOpen:false,chatNode:"root",chatLog:[{s:"bot",t:"Welcome to Riverside Books. What can I help you with?"}],chatInput:""};
+
+  status(b){const a=Math.max(0,b.stock_count-b.reserved_count);return a===0?"out":a<=b.low_stock_threshold?"low":"in";}
+  avail(b){return Math.max(0,b.stock_count-b.reserved_count);}
+  money(c){return "$"+(c/100).toFixed(2);}
+  label(b){const a=this.avail(b),st=this.status(b);return st==="out"?"Out of stock":st==="low"?(a===1?"Only 1 left":"Only "+a+" left"):"In stock · "+a;}
+  badge(st){const c=C[st];return `display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;color:${c};background:${c}1a;white-space:nowrap`;}
+  cover(h){return `position:relative;aspect-ratio:2/3;border-radius:6px;display:flex;align-items:center;justify-content:center;border:1px solid #e6ddd0;background:repeating-linear-gradient(135deg,#f4efe6 0 7px,#efe8dc 7px 14px)${h?";height:"+h:""}`;}
+  nav(v){const on=this.state.view===v||(v==="browse"&&this.state.view==="detail");return `padding:8px 14px;border-radius:99px;border:1px solid ${on?"#e6ddd0":"transparent"};background:${on?"#fff":"none"};color:${on?"#241d16":"#7d7264"};font-size:14px;font-weight:${on?600:500};cursor:pointer`;}
+
+  chatSay(node){
+    const texts={root:"Welcome to Riverside Books. What can I help you with?",check_stock:"Happy to check the shelf. Which title, author, or ISBN?",hours_location:HOURS,policies:"Which policy did you want?",events:"Coming up at the shop:\n\n"+EVENTS_TEXT,policy_returns:POLICIES.returns,policy_holds:POLICIES.holds,policy_special:POLICIES.special,policy_gifts:POLICIES.gifts,escalate:"Leave your name, number and question and a bookseller will get back to you."};
+    this.setState(s=>({chatNode:node,chatLog:[...s.chatLog,{s:"bot",t:texts[node]}]}));
+  }
+
+  pickOption(id,label){
+    this.setState(s=>({chatLog:[...s.chatLog,{s:"user",t:label}]}));
+    setTimeout(()=>this.chatSay(id),180);
+  }
+
+  askStock(){
+    const q=this.state.chatInput.trim();if(!q)return;
+    const hit=this.state.books.find(b=>b.title.toLowerCase().includes(q.toLowerCase())||b.author.toLowerCase().includes(q.toLowerCase())||b.isbn===digits(q));
+    const reply=hit?`${hit.title} — ${this.label(hit)}, ${this.money(hit.price_cents)}. I can hold a copy for 48 hours if you want it.`:`I can't find that on our shelves. We can special order almost any in-print book — usually 3 to 5 days.`;
+    this.setState(s=>({chatInput:"",chatLog:[...s.chatLog,{s:"user",t:q},{s:"bot",t:reply}]}));
+  }
+
+  renderVals(){
+    const s=this.state,books=s.books;
+    const byIsbn={};books.forEach(b=>byIsbn[b.isbn]=b);
+
+    let list=books;
+    if(s.query){const q=s.query.toLowerCase();list=list.filter(b=>b.title.toLowerCase().includes(q)||b.author.toLowerCase().includes(q)||b.isbn.includes(digits(q)));}
+    if(s.chip==="In stock now")list=list.filter(b=>this.status(b)==="in");
+    else if(s.chip==="Last copies")list=list.filter(b=>this.status(b)==="low");
+    else if(s.chip!=="All")list=list.filter(b=>b.genre===s.chip);
+
+    const chips=["All","In stock now","Last copies","Fantasy","Sci-Fi","Memoir","Poetry"].map(label=>({label,
+      onPick:()=>this.setState({chip:label}),
+      style:`padding:6px 13px;border-radius:99px;cursor:pointer;font-size:12.5px;font-weight:500;background:${s.chip===label?"#241d16":"#fff"};color:${s.chip===label?"#fbf7f0":"#4a4038"};border:1px solid ${s.chip===label?"#241d16":"#e6ddd0"}`}));
+
+    const cards=list.map(b=>({isbn:b.isbn,title:b.title,author:b.author,price:this.money(b.price_cents),initial:b.title[0],
+      statusLabel:this.label(b),badge:this.badge(this.status(b)),coverStyle:this.cover(),
+      onOpen:()=>this.setState({view:"detail",isbn:b.isbn,newOrderId:null,holdError:"",needsName:false})}));
+
+    const d=byIsbn[s.isbn]||books[0];
+    const dst=this.status(d),dav=this.avail(d);
+    const detail={title:d.title,author:d.author,initial:d.title[0],isbn:d.isbn,price:this.money(d.price_cents),
+      blurb:d.blurb||"A shelf favourite our booksellers keep pressing into people's hands.",
+      format:d.format[0].toUpperCase()+d.format.slice(1),genre:d.genre,statusLabel:this.label(d),badge:this.badge(dst),
+      countText:dav===0?"None right now":dav+(dav===1?" copy":" copies")+(d.reserved_count?" · "+d.reserved_count+" held":""),
+      countStyle:`margin:3px 0 0;font-size:14.5px;font-weight:600;color:${C[dst]}`};
+
+    const placeHold=()=>{
+      const p=digits(this.state.phone);
+      if(p.length<10){this.setState({holdError:"That doesn't look like a full phone number."});return;}
+      if(!CUSTOMERS[p]&&!this.state.needsName){this.setState({needsName:true,holdError:"New here? Add your name and we'll start a card."});return;}
+      if(this.state.needsName&&!this.state.name.trim()){this.setState({holdError:"We just need a name for the hold slip."});return;}
+      if(this.avail(d)===0){this.setState({holdError:"Someone just took the last copy. We can special order it."});return;}
+      const id="order_"+String(101+this.state.orders.length).padStart(3,"0");
+      const until=new Date(NOW.getTime()+48*3600*1000);
+      this.setState({books:this.state.books.map(x=>x.isbn===d.isbn?{...x,reserved_count:x.reserved_count+1}:x),
+        orders:[{order_id:id,phone:p,isbn:d.isbn,qty:1,status:"pending",hold_expires_at:until.toISOString(),total_cents:d.price_cents},...this.state.orders],
+        newOrderId:id,holdUntil:until.toLocaleDateString("en-US",{weekday:"long"})+" at "+until.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}),holdError:""});
+    };
+
+    const statusText={pending:"Waiting for you",ready_for_pickup:"Ready at the counter",completed:"Picked up",expired:"Hold expired",cancelled:"Released"};
+    const myOrders=(s.lookedUp?s.orders.filter(o=>o.phone===s.lookedUp):[]).map(o=>{
+      const b=byIsbn[o.isbn],past=o.status==="expired",live=o.status==="pending"||o.status==="ready_for_pickup";
+      const dt=new Date(o.hold_expires_at);
+      return {order_id:o.order_id,itemLine:o.qty+" × "+(b?b.title:o.isbn),total:this.money(o.total_cents),
+        statusLabel:statusText[o.status],
+        pillStyle:`font-size:12px;font-weight:600;padding:4px 11px;border-radius:99px;white-space:nowrap;border:1px solid ${past?"rgba(179,57,44,.35)":"#e6ddd0"};background:${past?"rgba(179,57,44,.08)":"#f4efe6"};color:${past?C.out:"#4a4038"}`,
+        deadline:past?"Released back to the shelf "+dt.toLocaleDateString("en-US",{month:"long",day:"numeric"}):live?"Pick up by "+dt.toLocaleDateString("en-US",{weekday:"long"})+", "+dt.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}):"Collected "+dt.toLocaleDateString("en-US",{month:"long",day:"numeric"}),
+        deadlineStyle:`font-size:13px;color:${live?"#4a4038":"#8a7e6f"};font-weight:${live?500:400}`,
+        cardStyle:`background:#fff;border:1px solid ${past?"rgba(179,57,44,.28)":"#e6ddd0"};border-radius:11px;padding:18px 20px;box-shadow:rgba(36,29,22,.04) 0 2px 6px`,
+        cancellable:live,onCancel:()=>this.setState({orders:this.state.orders.filter(x=>x.order_id!==o.order_id),
+          books:this.state.books.map(x=>x.isbn===o.isbn?{...x,reserved_count:Math.max(0,x.reserved_count-1)}:x)})};});
+
+    const cust=s.cardPhone?CUSTOMERS[s.cardPhone]:null;
+    const totalStamps=cust?cust.stamps+s.extraStamps:0;
+    const filled=totalStamps%10,rewards=cust?cust.rewards+Math.floor(totalStamps/10):0;
+    const card=cust?{name:cust.name,stamps:filled,joined:cust.joined,
+      toGo:filled===0&&rewards>0?"reward ready":(10-filled)+" to go",
+      slots:Array.from({length:10},(_,i)=>({style:`aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;border:${i<filled?"1px solid rgba(166,61,47,.35)":"1px dashed #ddd2c2"};background:${i<filled?"#a63d2f":"transparent"}`,
+        mark:i<filled?"✦":"",markStyle:i<filled?`color:#fbf7f0;font-size:17px;animation:stampIn .34s cubic-bezier(.34,1.56,.64,1) ${i*0.03}s both;display:block`:"display:none"})),
+      hasReward:rewards>0,rewardTitle:rewards===1?"One free book, waiting":rewards+" free books, waiting"}:{slots:[]};
+
+    const chatOptions=({root:[["check_stock","Is a book in stock?"],["hours_location","Hours & finding us"],["policies","Returns & policies"],["events","Upcoming events"],["escalate","Leave a message"]],
+      policies:[["policy_returns","Returns"],["policy_holds","Pre-orders & holds"],["policy_special","Special orders"],["policy_gifts","Cards & gifts"],["root","Back"]],
+      check_stock:[["root","Back to the menu"]]}[s.chatNode]||[["root","Back to the menu"]])
+      .map(([id,label])=>({id,label,onPick:()=>this.pickOption(id,label)}));
+
+    return {
+      isBrowse:s.view==="browse",isDetail:s.view==="detail",isOrders:s.view==="orders",isLoyalty:s.view==="loyalty",
+      goBrowse:()=>this.setState({view:"browse"}),goOrders:()=>this.setState({view:"orders"}),goLoyalty:()=>this.setState({view:"loyalty"}),
+      navBrowse:this.nav("browse"),navOrders:this.nav("orders"),navLoyalty:this.nav("loyalty"),
+      query:s.query,onQuery:e=>this.setState({query:e.target.value}),clearQuery:()=>this.setState({query:s.query?"":s.query}),
+      searchLabel:s.query?"Clear":"Search",chips,
+      books:cards,noBooks:cards.length===0,
+      resultHeading:s.query?"Matches for “"+s.query+"”":s.chip==="All"?"On the shelves":s.chip,
+      resultCount:cards.length+(cards.length===1?" title":" titles"),
+      detail,detailCoverStyle:this.cover(),
+      holdPlaced:!!s.newOrderId,newOrderId:s.newOrderId,holdUntil:s.holdUntil,
+      canHold:!s.newOrderId&&dav>0,soldOut:!s.newOrderId&&dav===0,
+      phone:s.phone,onPhone:e=>this.setState({phone:e.target.value}),
+      name:s.name,onName:e=>this.setState({name:e.target.value}),needsName:s.needsName,
+      hasHoldError:!!s.holdError,holdError:s.holdError,placeHold,
+      holdButtonLabel:s.needsName?"Start a card & hold it":"Hold this copy",
+      holdButtonStyle:"margin-top:14px;width:100%;padding:13px;border:1px solid #a63d2f;background:#a63d2f;color:#fff;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer",
+      lookupPhone:s.lookupPhone,onLookupPhone:e=>this.setState({lookupPhone:e.target.value}),
+      doLookup:()=>this.setState({lookedUp:digits(this.state.lookupPhone)}),
+      myOrders,noOrders:myOrders.length===0,
+      ordersEmptyTitle:s.lookedUp?"Nothing under that number":"Enter your number above",
+      ordersEmptyBody:s.lookedUp?"Holds only last 48 hours, so older ones drop off.":"Try 555 100 0005 or 555 100 0004.",
+      loyaltyPhone:s.loyaltyPhone,onLoyaltyPhone:e=>this.setState({loyaltyPhone:e.target.value}),
+      doLoyalty:()=>this.setState({cardPhone:digits(this.state.loyaltyPhone),extraStamps:0}),
+      hasCard:!!cust,noCard:!cust&&!!s.cardPhone,card,
+      addStamp:()=>this.setState(st=>({extraStamps:st.extraStamps+1})),
+      chatOpen:s.chatOpen,chatClosed:!s.chatOpen,
+      openChat:()=>this.setState({chatOpen:true}),closeChat:()=>this.setState({chatOpen:false}),
+      chatLog:s.chatLog.map(m=>({text:m.t,style:`max-width:86%;padding:10px 13px;border-radius:12px;font-size:13.5px;line-height:1.5;white-space:pre-wrap;align-self:${m.s==="user"?"flex-end":"flex-start"};background:${m.s==="user"?"#241d16":"#f4efe6"};color:${m.s==="user"?"#fbf7f0":"#4a4038"};font-family:${m.s==="user"?"Inter,sans-serif":"Fraunces,Georgia,serif"}`})),
+      chatAsksInput:s.chatNode==="check_stock",chatHasOptions:s.chatNode!=="check_stock",chatOptions,
+      chatInput:s.chatInput,onChatInput:e=>this.setState({chatInput:e.target.value}),sendChat:()=>this.askStock()};
+  }
+}
+</script>
+</body>
+</html>

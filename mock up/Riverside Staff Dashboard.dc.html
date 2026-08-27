@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>body{margin:0;background:#fbf7f0;font-family:Inter,system-ui,sans-serif;color:#4a4038;-webkit-font-smoothing:antialiased}a{color:#a63d2f}a:hover{color:#8a3226}input,select,button{font-family:inherit}@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.35}}</style></helmet>
+<sc-if value="{{ isSignedIn }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;min-height:100vh;font-size:14px">
+  <nav style="width:228px;flex:none;background:#2f1739;color:#d8cbe2;display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
+    <a href="Riverside Gateway.dc.html" style="display:block;padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.09);text-decoration:none" style-hover="opacity:.85">
+      <div style="font-family:Fraunces,Georgia,serif;font-size:19px;font-weight:500;color:#fbf7f0;letter-spacing:-.2px">Riverside Books</div>
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#a294ad;margin-top:5px">Staff &amp; Ops</div>
+    </a>
+    <div style="display:flex;flex-direction:column;padding:12px 8px;gap:2px">
+      <button onClick="{{ goInventory }}" style="{{ navInventory }}" style-hover="background:rgba(255,255,255,.07)">Inventory<span style="{{ navBadgeInv }}">{{ alertTotal }}</span></button>
+      <button onClick="{{ goPreorders }}" style="{{ navPreorders }}" style-hover="background:rgba(255,255,255,.07)">Pre-orders<span style="{{ navBadgePre }}">{{ preorderDue }}</span></button>
+      <button onClick="{{ goMessages }}" style="{{ navMessages }}" style-hover="background:rgba(255,255,255,.07)">Messages<span style="{{ navBadgeMsg }}">{{ newMessageCount }}</span></button>
+      <button onClick="{{ goMarketing }}" style="{{ navMarketing }}" style-hover="background:rgba(255,255,255,.07)">Marketing</button>
+    </div>
+    <div style="margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.09);font-size:11.5px;line-height:1.5;color:#9b8ea6">
+      <div style="color:#cfc2da">{{ staffName }}</div>
+      <div>128 Main Street, Beacon</div>
+      <button onClick="{{ signOut }}" style="margin-top:10px;background:none;border:none;padding:0;color:#e2a355;font-size:11.5px;cursor:pointer;font-family:inherit" style-hover="color:#f0bd77">Sign out</button>
+    </div>
+  </nav>
+
+  <main style="flex:1;min-width:0;padding:26px 30px 60px">
+
+    <sc-if value="{{ isInventory }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:20px">
+          <div>
+            <h1 style="font-family:Fraunces,Georgia,serif;font-size:30px;font-weight:500;color:#2f1739;margin:0;letter-spacing:-.4px">Inventory</h1>
+            <p style="margin:5px 0 0;font-size:13px;color:#7d7264">{{ bookCount }} titles on file · counted live against holds</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input value="{{ isbnEntry }}" onInput="{{ onIsbnEntry }}" placeholder="Scan ISBN to add…" style="width:190px;padding:9px 11px;border:1px solid #e6ddd0;border-radius:7px;background:#fff;font-size:13px;color:#4a4038;font-family:ui-monospace,Consolas,monospace" style-focus="outline:2px solid rgba(166,61,47,.35);outline-offset:1px;border-color:#a63d2f">
+            <button onClick="{{ onScanAdd }}" style="padding:9px 14px;border:1px solid #2f1739;background:#2f1739;color:#fbf7f0;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#45225a">Look up</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px;margin-bottom:18px">
+          <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.onClick }}" style="{{ t.style }}" style-hover="transform:translateY(-1px)">
+              <div style="display:flex;align-items:baseline;gap:9px">
+                <span style="{{ t.numStyle }}">{{ t.count }}</span>
+                <span style="{{ t.dotStyle }}"></span>
+              </div>
+              <div style="font-size:12.5px;font-weight:600;letter-spacing:.02em;margin-top:2px">{{ t.label }}</div>
+              <div style="font-size:11.5px;color:#8a7e6f;margin-top:3px">{{ t.hint }}</div>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid #e6ddd0;border-radius:9px;padding:11px 13px;margin-bottom:14px">
+          <input value="{{ search }}" onInput="{{ onSearch }}" placeholder="Search title or author…" style="flex:1;min-width:180px;padding:8px 11px;border:1px solid #e6ddd0;border-radius:7px;background:#f4efe6;font-size:13px;color:#4a4038" style-focus="outline:2px solid rgba(166,61,47,.35);outline-offset:1px;border-color:#a63d2f">
+          <select value="{{ genre }}" onChange="{{ onGenre }}" style="padding:8px 10px;border:1px solid #e6ddd0;border-radius:7px;background:#fff;font-size:13px;color:#4a4038">
+            <sc-for list="{{ genres }}" as="g" hint-placeholder-count="4"><option value="{{ g }}">{{ g }}</option></sc-for>
+          </select>
+          <sc-if value="{{ filterActive }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ clearFilters }}" style="padding:7px 11px;border:1px solid rgba(166,61,47,.35);background:rgba(166,61,47,.08);color:#a63d2f;border-radius:99px;font-size:12px;font-weight:500;cursor:pointer">{{ filterLabel }} ✕</button>
+          </sc-if>
+          <span style="font-size:12px;color:#8a7e6f;margin-left:auto">{{ shownCount }} shown</span>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e6ddd0;border-radius:9px;overflow-x:auto;box-shadow:rgba(47,23,57,.04) 0 2px 4px">
+          <div style="display:grid;min-width:900px;grid-template-columns:4px minmax(200px,2.2fr) 116px 1fr 62px 68px 72px 128px 74px 46px;gap:0;align-items:center;background:#f4efe6;border-bottom:1px solid #e6ddd0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#7d7264;font-weight:600">
+            <span></span>
+            <button onClick="{{ sortTitle }}" style="text-align:left;background:none;border:none;padding:10px 12px;font:inherit;color:inherit;cursor:pointer">Title {{ arrowTitle }}</button>
+            <span style="padding:10px 8px">ISBN</span>
+            <span style="padding:10px 8px">Genre</span>
+            <button onClick="{{ sortStock }}" style="text-align:right;background:none;border:none;padding:10px 8px;font:inherit;color:inherit;cursor:pointer">On hand {{ arrowStock }}</button>
+            <button onClick="{{ sortAvail }}" style="text-align:right;background:none;border:none;padding:10px 8px;font:inherit;color:inherit;cursor:pointer">Avail {{ arrowAvail }}</button>
+            <span style="padding:10px 8px;text-align:right">Held</span>
+            <span style="padding:10px 12px">Status</span>
+            <span style="padding:10px 8px;text-align:right">Price</span>
+            <span></span>
+          </div>
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+            <div style="{{ r.rowStyle }}" style-hover="background:#faf6ef">
+              <span style="{{ r.stripe }}"></span>
+              <div style="padding:9px 12px;min-width:0">
+                <div style="font-weight:600;color:#2f1739;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.title }}</div>
+                <div style="font-size:12px;color:#8a7e6f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.author }}</div>
+              </div>
+              <span style="padding:9px 8px;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#8a7e6f">{{ r.isbn }}</span>
+              <span style="padding:9px 8px;font-size:12.5px;color:#7d7264;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.genre }}</span>
+              <div style="padding:9px 8px;text-align:right">
+                <sc-if value="{{ r.editing }}" hint-placeholder-val="{{ false }}">
+                  <input value="{{ editValue }}" onInput="{{ onEditValue }}" style="width:46px;padding:4px 6px;border:1px solid #a63d2f;border-radius:5px;text-align:right;font-size:13px;background:#fff;color:#2f1739">
+                </sc-if>
+                <sc-if value="{{ r.notEditing }}" hint-placeholder-val="{{ true }}">
+                  <span style="font-variant-numeric:tabular-nums;font-size:13.5px;color:#2f1739;font-weight:500">{{ r.stock }}</span>
+                </sc-if>
+              </div>
+              <span style="{{ r.availStyle }}">{{ r.available }}</span>
+              <span style="padding:9px 8px;text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:#8a7e6f">{{ r.reserved }}</span>
+              <div style="padding:9px 12px"><span style="{{ r.badge }}">{{ r.statusLabel }}</span></div>
+              <span style="padding:9px 8px;text-align:right;font-variant-numeric:tabular-nums;font-size:13px">{{ r.price }}</span>
+              <div style="padding:9px 6px;display:flex;gap:2px;justify-content:flex-end">
+                <sc-if value="{{ r.editing }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ r.onSave }}" title="Save" style="width:26px;height:26px;border:none;background:rgba(58,116,85,.12);color:#2f7f6d;border-radius:6px;cursor:pointer;font-size:13px">✓</button>
+                </sc-if>
+                <sc-if value="{{ r.notEditing }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ r.onEdit }}" title="Adjust count" style="width:26px;height:26px;border:none;background:none;color:#a3968420;border-radius:6px;cursor:pointer;font-size:13px;color:#8a7e6f" style-hover="background:#f4efe6;color:#2f1739">✎</button>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:44px 20px;text-align:center">
+              <div style="font-family:Fraunces,Georgia,serif;font-size:19px;color:#2f1739;margin-bottom:6px">Nothing on that shelf</div>
+              <div style="font-size:13px;color:#8a7e6f;margin-bottom:14px">No titles match what you typed. Try the author's surname.</div>
+              <button onClick="{{ clearFilters }}" style="padding:9px 15px;border:1px solid #a63d2f;background:#a63d2f;color:#fff;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer">Clear filters</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isPreorders }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:18px">
+          <div>
+            <h1 style="font-family:Fraunces,Georgia,serif;font-size:30px;font-weight:500;color:#2f1739;margin:0;letter-spacing:-.4px">Pre-orders</h1>
+            <p style="margin:5px 0 0;font-size:13px;color:#7d7264">Holds sit at the counter for 48 hours, then release back to the shelf.</p>
+          </div>
+          <button onClick="{{ releaseExpired }}" style="{{ releaseStyle }}" style-hover="background:#8a3226">{{ releaseLabel }}</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:14px;align-items:start">
+          <sc-for list="{{ columns }}" as="col" hint-placeholder-count="3">
+            <div style="background:#f4efe6;border:1px solid #e6ddd0;border-radius:10px;padding:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px">
+                <span style="font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#7d7264">{{ col.label }}</span>
+                <span style="font-size:12px;color:#8a7e6f;font-variant-numeric:tabular-nums">{{ col.count }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{ col.cards }}" as="c" hint-placeholder-count="2">
+                  <div style="{{ c.cardStyle }}">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                      <div style="min-width:0;flex:1">
+                        <div style="font-weight:600;color:#2f1739;font-size:13.5px">{{ c.name }}</div>
+                        <div style="font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#8a7e6f;margin-top:1px">{{ c.phone }}</div>
+                      </div>
+                      <span style="{{ c.flagStyle }}">{{ c.flag }}</span>
+                    </div>
+                    <div style="margin:9px 0;padding:8px 10px;background:#f4efe6;border-radius:6px">
+                      <sc-for list="{{ c.items }}" as="it" hint-placeholder-count="1">
+                        <div style="font-family:Fraunces,Georgia,serif;font-size:13.5px;color:#2f1739;line-height:1.35">{{ it }}</div>
+                      </sc-for>
+                    </div>
+                    <sc-if value="{{ c.hasNote }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:12px;color:#7d7264;font-style:italic;margin-bottom:9px">“{{ c.note }}”</div>
+                    </sc-if>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                      <span style="{{ c.deadlineStyle }}">{{ c.deadline }}</span>
+                      <sc-if value="{{ c.hasAction }}" hint-placeholder-val="{{ true }}">
+                        <button onClick="{{ c.onAdvance }}" style="padding:6px 12px;border:1px solid #2f1739;background:#2f1739;color:#fbf7f0;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap" style-hover="background:#45225a">{{ c.actionLabel }}</button>
+                      </sc-if>
+                    </div>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ col.empty }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:22px 12px;text-align:center;font-size:12.5px;color:#a294ad;border:1px dashed #ddd2c2;border-radius:8px">{{ col.emptyText }}</div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isMessages }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:760px">
+        <h1 style="font-family:Fraunces,Georgia,serif;font-size:30px;font-weight:500;color:#2f1739;margin:0;letter-spacing:-.4px">Messages</h1>
+        <p style="margin:5px 0 20px;font-size:13px;color:#7d7264">Anything the chatbot could not answer lands here.</p>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ messages }}" as="m" hint-placeholder-count="2">
+            <div style="background:#fff;border:1px solid #e6ddd0;border-radius:9px;padding:16px 18px;box-shadow:rgba(47,23,57,.04) 0 2px 4px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+                <div style="font-weight:600;color:#2f1739;font-size:14px">{{ m.name }} <span style="font-family:ui-monospace,Consolas,monospace;font-weight:400;font-size:12px;color:#8a7e6f">{{ m.contact }}</span></div>
+                <span style="font-size:12px;color:#a294ad">{{ m.when }}</span>
+              </div>
+              <p style="margin:9px 0 13px;font-size:14px;line-height:1.55;color:#4a4038;text-wrap:pretty">{{ m.body }}</p>
+              <button onClick="{{ m.onRead }}" style="padding:7px 13px;border:1px solid #e6ddd0;background:#f4efe6;color:#4a4038;border-radius:7px;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="border-color:#a63d2f;color:#a63d2f">Mark handled</button>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noMessages }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:52px 20px;text-align:center;background:#fff;border:1px solid #e6ddd0;border-radius:9px">
+              <div style="font-family:Fraunces,Georgia,serif;font-size:20px;color:#2f1739">Inbox clear</div>
+              <div style="font-size:13px;color:#8a7e6f;margin-top:6px">The bot handled everything today.</div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isMarketing }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h1 style="font-family:Fraunces,Georgia,serif;font-size:30px;font-weight:500;color:#2f1739;margin:0;letter-spacing:-.4px">Marketing</h1>
+        <p style="margin:5px 0 20px;font-size:13px;color:#7d7264">Captions are assembled from store facts. Nothing is invented and nothing posts itself.</p>
+        <div style="display:grid;grid-template-columns:minmax(280px,.85fr) minmax(320px,1.15fr);gap:22px;align-items:start">
+          <div style="background:#fff;border:1px solid #e6ddd0;border-radius:10px;padding:18px">
+            <div style="font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7d7264;margin-bottom:9px">1 · Subject</div>
+            <div style="display:flex;flex-direction:column;gap:6px;max-height:236px;overflow:auto;padding-right:4px">
+              <sc-for list="{{ subjects }}" as="s" hint-placeholder-count="5">
+                <button onClick="{{ s.onPick }}" style="{{ s.style }}">
+                  <div style="font-family:Fraunces,Georgia,serif;font-size:14px;color:#2f1739;line-height:1.3">{{ s.title }}</div>
+                  <div style="font-size:11.5px;color:#8a7e6f;margin-top:2px">{{ s.meta }}</div>
+                </button>
+              </sc-for>
+            </div>
+            <div style="font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7d7264;margin:18px 0 9px">2 · Tone</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <sc-for list="{{ tones }}" as="t" hint-placeholder-count="3">
+                <button onClick="{{ t.onPick }}" style="{{ t.style }}">{{ t.label }}</button>
+              </sc-for>
+            </div>
+            <button onClick="{{ regenerate }}" style="margin-top:18px;width:100%;padding:11px;border:1px solid #2f1739;background:#2f1739;color:#fbf7f0;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="background:#45225a">Next variation</button>
+          </div>
+          <div>
+            <div style="font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7d7264;margin-bottom:9px">3 · Preview</div>
+            <div style="background:#fff;border:1px solid #e6ddd0;border-radius:10px;padding:22px 24px;box-shadow:rgba(47,23,57,.06) 0 8px 16px -6px">
+              <p style="font-family:Fraunces,Georgia,serif;font-size:19px;line-height:1.5;color:#2f1739;margin:0;text-wrap:pretty">{{ caption }}</p>
+              <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0e8dc">
+                <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8a7e6f">Shot idea</div>
+                <div style="font-size:13px;color:#4a4038;margin-top:4px">{{ postIdea }}</div>
+              </div>
+              <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+                <span style="font-size:12px;color:#a63d2f;background:rgba(166,61,47,.08);border-radius:99px;padding:4px 10px;font-family:ui-monospace,Consolas,monospace">{{ factLine }}</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button onClick="{{ copyCaption }}" style="padding:9px 15px;border:1px solid #a63d2f;background:rgba(166,61,47,.08);color:#a63d2f;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:rgba(166,61,47,.16)">{{ copyLabel }}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+  </main>
+</div>
+</sc-if>
+
+<sc-if value="{{ showSignIn }}" hint-placeholder-val="{{ true }}">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#2f1739;padding:24px;box-sizing:border-box">
+    <div style="width:100%;max-width:360px;background:#fbf7f0;border-radius:12px;padding:34px 32px;box-shadow:rgba(0,0,0,.3) 0 20px 40px -10px">
+      <div style="font-family:Fraunces,Georgia,serif;font-size:22px;font-weight:500;color:#2f1739;letter-spacing:-.2px">Riverside Books</div>
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a7e6f;margin-top:4px;margin-bottom:22px">Staff &amp; Ops sign in</div>
+      <label style="display:block;font-size:12.5px;font-weight:500;color:#4a4038;margin-bottom:6px">Staff PIN</label>
+      <input type="password" value="{{ pin }}" onInput="{{ onPin }}" placeholder="••••" autofocus style="width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #e6ddd0;border-radius:8px;background:#fff;font-size:15px;letter-spacing:.3em;color:#2f1739" style-focus="outline:2px solid rgba(166,61,47,.35);outline-offset:1px;border-color:#a63d2f">
+      <sc-if value="{{ pinError }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:12.5px;color:#b3392c;margin-top:8px">That PIN doesn't match anyone on staff.</div>
+      </sc-if>
+      <button onClick="{{ onSubmitPin }}" style="width:100%;margin-top:16px;padding:11px;border:1px solid #2f1739;background:#2f1739;color:#fbf7f0;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#45225a">Sign in</button>
+      <div style="margin-top:16px;font-size:11.5px;color:#8a7e6f">Demo PIN: 1234</div>
+      <a href="Riverside Gateway.dc.html" style="display:block;margin-top:14px;font-size:12.5px;color:#8a7e6f">← Back to the shop</a>
+    </div>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const BOOKS=[["9780143039433","The Grapes of Wrath","John Steinbeck",1799,0,0,2,"Classic Literature"],["9780374605928","Tomorrow, and Tomorrow, and Tomorrow","Gabrielle Zevin",2800,2,2,2,"Contemporary Fiction"],["9780525559474","The Midnight Library","Matt Haig",2600,10,0,2,"Fantasy"],["9780062315007","The Alchemist","Paulo Coelho",1699,2,1,2,"Philosophical Fiction"],["9780735211292","Atomic Habits","James Clear",2700,2,0,2,"Self-Help"],["9780385547345","Lessons in Chemistry","Bonnie Garmus",2900,7,1,2,"Historical Fiction"],["9780441172719","Dune","Frank Herbert",1800,5,0,2,"Sci-Fi"],["9780399590504","Educated","Tara Westover",2800,4,0,2,"Memoir"],["9780593318171","Klara and the Sun","Kazuo Ishiguro",1695,3,0,2,"Sci-Fi"],["9780316450867","The Overstory","Richard Powers",1895,4,0,2,"Literary Fiction"],["9781250178602","Braiding Sweetgrass","Robin Wall Kimmerer",2000,8,0,2,"Nature & Environment"],["9780525657743","Crying in H Mart","Michelle Zauner",2695,5,1,2,"Memoir"],["9780812988406","Between the World and Me","Ta-Nehisi Coates",2600,4,0,2,"Essays & Social Science"],["9780547928227","The Hobbit","J.R.R. Tolkien",1599,6,0,2,"Fantasy"],["9780307277671","The Road","Cormac McCarthy",1600,3,0,2,"Post-Apocalyptic"],["9780060935467","To Kill a Mockingbird","Harper Lee",1599,9,0,2,"Classic Literature"],["9781501110368","It Ends with Us","Colleen Hoover",1699,8,0,2,"Romance"],["9780385545969","The Lincoln Highway","Amor Towles",3000,4,0,2,"Historical Fiction"],["9781984801258","Daisy Jones & The Six","Taylor Jenkins Reid",1700,5,0,2,"Contemporary Fiction"],["9780525559498","Sea of Tranquility","Emily St. John Mandel",2500,3,0,2,"Sci-Fi"],["9780807083109","Kindred","Octavia E. Butler",1695,4,0,2,"Sci-Fi"],["9780143127741","The Argonauts","Maggie Nelson",1600,2,0,3,"Memoir & Essays"],["9780307743657","The Shining","Stephen King",1800,6,0,2,"Horror"],["9780316017930","The God of Small Things","Arundhati Roy",1700,3,0,2,"Literary Fiction"],["9781594634024","The Sympathizer","Viet Thanh Nguyen",1700,4,0,2,"Historical Fiction"],["9780345391803","The Hitchhiker's Guide to the Galaxy","Douglas Adams",1599,7,0,2,"Sci-Fi"],["9780812993547","Lincoln in the Bardo","George Saunders",2800,3,0,2,"Historical Fiction"],["9780143128540","Pachinko","Min Jin Lee",1800,5,0,2,"Historical Fiction"],["9780393609394","Astrophysics for People in a Hurry","Neil deGrasse Tyson",1895,4,0,2,"Science"],["9780140449136","Crime and Punishment","Fyodor Dostoevsky",1500,5,0,2,"Classic Literature"],["9780593448885","Demon Copperhead","Barbara Kingsolver",3250,6,1,2,"Contemporary Fiction"],["9781611808605","Devotions: The Selected Poems of Mary Oliver","Mary Oliver",2200,4,0,2,"Poetry"]].map(b=>({isbn:b[0],title:b[1],author:b[2],price_cents:b[3],stock_count:b[4],reserved_count:b[5],low_stock_threshold:b[6],genre:b[7]}));
+
+const CUSTOMERS={cust_001:["Alice Walker","555 100 0001"],cust_002:["Ben Martinez","555 100 0002"],cust_003:["Clara Oswald","555 100 0003"],cust_004:["David Kim","555 100 0004"],cust_005:["Elena Rostova","555 100 0005"],cust_006:["Franklin Wright","555 100 0006"],cust_007:["Grace Hopper","555 100 0007"],cust_008:["Henry Zhao","555 100 0008"],cust_009:["Ivy Chen","555 100 0009"],cust_010:["James Sterling","555 100 0010"]};
+
+const ORDERS=[["order_001","cust_001",[["9780374605928",1]],"pending","2026-08-26T18:00:00Z","Please hold at front desk"],["order_002","cust_002",[["9780374605928",1]],"ready_for_pickup","2026-08-26T14:30:00Z","Will pick up around 5pm"],["order_003","cust_003",[["9780062315007",1]],"pending","2026-08-22T16:15:00Z",""],["order_004","cust_004",[["9780385547345",1]],"ready_for_pickup","2026-08-26T12:00:00Z","Calling when in parking lot"],["order_005","cust_005",[["9780525657743",1]],"pending","2026-08-26T19:00:00Z","Gift for a friend"],["order_006","cust_006",[["9780593448885",1]],"ready_for_pickup","2026-08-26T11:20:00Z",""],["order_007","cust_007",[["9780143039433",1]],"expired","2026-08-23T09:00:00Z","Hold for weekend pickup"],["order_008","cust_008",[["9780441172719",1]],"completed","2026-08-22T10:00:00Z","Picked up Thursday"],["order_009","cust_009",[["9780399590504",1],["9780547928227",1]],"completed","2026-08-20T14:00:00Z",""],["order_012","cust_005",[["9781501110368",2]],"completed","2026-08-25T09:15:00Z","Collected at counter"]].map(o=>({order_id:o[0],customer_id:o[1],items:o[2].map(i=>({isbn:i[0],quantity:i[1]})),status:o[3],hold_expires_at:o[4],notes:o[5]}));
+
+const EVENTS=[{id:"event_001",title:"An Evening with Zadie Smith: Modern Fiction & Belonging",author_name:"Zadie Smith",description:"Join acclaimed novelist Zadie Smith for an intimate reading and discussion on contemporary fiction, identity, and the craft of storytelling.",sold:45,cap:45},{id:"event_002",title:"Poetry Workshop & Open Mic Night",author_name:"Ada Limón",description:"A guided generative poetry workshop led by U.S. Poet Laureate Ada Limón, followed by community open mic readings.",sold:18,cap:30}];
+
+const BLURBS={"9780374605928":"Two friends—often in love, but never lovers—come together as creative partners in the world of video game design.","9780525559474":"Between life and death there is a library where every book offers a chance to try another life you could have lived.","9780062315007":"A magical story of Santiago, an Andalusian shepherd boy who yearns to travel in search of a worldly treasure.","9780593448885":"A reimagining of David Copperfield set in the mountains of southern Appalachia.","9780525657743":"An unflinching, powerful memoir about growing up Korean American, losing her mother, and forging her own identity."};
+
+const TEMPLATES={cozy:[{t:"Settle in with a cup of tea and '{title}' by {author}. {blurb} Perfect for a quiet afternoon.",i:"Photo of the book on a cozy blanket with a mug of tea."},{t:"Looking for your next comfort read? We have {available} copies of '{title}' by {author} waiting for you! {blurb}",i:"Photo of the book tucked into a comfortable armchair."}],exciting:[{t:"Get ready for a thrill! '{title}' by {author} is here. {blurb} You won't be able to put it down!",i:"Action shot holding the book open."},{t:"Grab it while you can! We've got {available} copies of the amazing '{title}' by {author} on the shelf right now. {blurb}",i:"Dynamic photo of the book being pulled from the shelf."}],urgent:[{t:"Don't miss out on '{title}' by {author}! {blurb} Secure your copy today.",i:"Close up photo of the book cover."},{t:"Running low! Only {available} copies left of '{title}' by {author}. {blurb} Hurry in before they're gone!",i:"Photo of the last few copies on the shelf."}]};
+const EVENT_TEMPLATES={cozy:[{t:"Join our community for a wonderful time: {title} with {author}. We'd love to see you there! {blurb}",i:"Photo of the event space prepared with chairs in a circle."}],exciting:[{t:"Mark your calendars! You won't want to miss {title} featuring {author}! {blurb}",i:"Bright graphic with the date and time."}],urgent:[{t:"Seats are filling up fast for {title} with {author}! {blurb} Get yours before it's too late.",i:"Photo of the event poster with 'selling fast' sticker."}]};
+
+const C={in:"#2f7f6d",low:"#8e5e22",out:"#b3392c"};
+const NOW=new Date("2026-08-25T17:00:00Z");
+
+const STAFF_PINS={"1234":"Jordan (Manager)","5678":"Priya (Bookseller)"};
+class Component extends DCLogic {
+  state={authed:sessionStorage.getItem("riverside_staff")||null,pin:"",pinError:false,
+    tab:"inventory",search:"",genre:"All",statusFilter:null,sortField:"title",sortDir:"asc",
+    books:BOOKS.map(b=>({...b})),orders:ORDERS.map(o=>({...o})),
+    messages:[{message_id:"msg_001",name:"Sarah Jenkins",contact:"sarah.jenkins@example.com",body:"Hi, I was looking for a signed copy of the new Zadie Smith book. Will signed editions be available at the event or for purchase beforehand?",when:"Yesterday, 15:10"},{message_id:"msg_002",name:"Marcus Vance",contact:"555 123 4567",body:"Hello! Can I order a bulk set of 15 copies of 'The Alchemist' for our community youth reading group next month?",when:"Yesterday, 11:45"}],
+    editing:null,editValue:"",isbnEntry:"",released:false,
+    subject:{type:"book",id:"9780062315007"},tone:"urgent",variant:1,copied:false};
+
+  status(b){const a=Math.max(0,b.stock_count-b.reserved_count);if(a===0)return"out";if(a<=b.low_stock_threshold)return"low";return"in";}
+  avail(b){return Math.max(0,b.stock_count-b.reserved_count);}
+  money(c){return "$"+(c/100).toFixed(2);}
+
+  navStyle(name){const on=this.state.tab===name;return `display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:9px 12px;border:none;border-radius:7px;background:${on?"rgba(251,247,240,.12)":"none"};color:${on?"#fbf7f0":"#cfc2da"};font-size:13.5px;font-weight:${on?600:500};cursor:pointer;font-family:inherit`;}
+  badgeStyle(n,color){return n?`min-width:20px;text-align:center;font-size:11px;font-weight:600;padding:2px 6px;border-radius:99px;background:${color};color:#fff`:"display:none";}
+
+  setTab=t=>()=>this.setState({tab:t});
+
+  renderVals(){
+    const s=this.state;
+    const books=s.books;
+    const outCount=books.filter(b=>this.status(b)==="out").length;
+    const lowCount=books.filter(b=>this.status(b)==="low").length;
+    const heldCount=books.reduce((n,b)=>n+b.reserved_count,0);
+    const expired=s.orders.filter(o=>o.status==="expired"||(o.status==="pending"&&new Date(o.hold_expires_at)<NOW)).length;
+
+    const tile=(id,count,label,hint,color)=>({id,count,label,hint,
+      onClick:()=>this.setState({statusFilter:s.statusFilter===id?null:id,tab:id==="expired"?"preorders":"inventory"}),
+      style:`text-align:left;padding:13px 15px;border-radius:10px;cursor:pointer;font-family:inherit;transition:transform .12s;background:${s.statusFilter===id?color+"14":"#fff"};border:1px solid ${s.statusFilter===id?color:"#e6ddd0"};color:#4a4038;box-shadow:rgba(47,23,57,.04) 0 2px 4px`,
+      numStyle:`font-size:34px;line-height:1;font-weight:600;font-variant-numeric:tabular-nums;color:${color}`,
+      dotStyle:count?`width:7px;height:7px;border-radius:50%;background:${color};animation:pulseDot 2.4s ease-in-out infinite`:"display:none"});
+
+    const tiles=[tile("out",outCount,"Out of stock","Reorder or offer a special order",C.out),
+      tile("low",lowCount,"Only 1–2 left","Sell-through risk this week",C.low),
+      tile("held",heldCount,"Copies on hold","Reserved, not on the shelf","#7d7264"),
+      tile("expired",expired,"Holds past 48h","Release them back to stock",C.out)];
+
+    let rows=books;
+    if(s.search){const q=s.search.toLowerCase();rows=rows.filter(b=>b.title.toLowerCase().includes(q)||b.author.toLowerCase().includes(q));}
+    if(s.genre!=="All")rows=rows.filter(b=>b.genre===s.genre);
+    if(s.statusFilter==="out"||s.statusFilter==="low")rows=rows.filter(b=>this.status(b)===s.statusFilter);
+    if(s.statusFilter==="held")rows=rows.filter(b=>b.reserved_count>0);
+    rows=[...rows].sort((a,b)=>{const f=s.sortField;let av=f==="available"?this.avail(a):a[f],bv=f==="available"?this.avail(b):b[f];
+      const r=typeof av==="string"?av.localeCompare(bv):av-bv;return s.sortDir==="asc"?r:-r;});
+
+    const statusLabel={in:"In stock",low:"Low",out:"Out of stock"};
+    const rowVals=rows.map(b=>{const st=this.status(b),color=C[st],a=this.avail(b),editing=s.editing===b.isbn;
+      return {isbn:b.isbn,title:b.title,author:b.author,genre:b.genre,stock:b.stock_count,available:a,reserved:b.reserved_count,price:this.money(b.price_cents),
+        statusLabel:st==="low"?(a===1?"Only 1 left":"Only "+a+" left"):statusLabel[st],editing,notEditing:!editing,
+        rowStyle:`display:grid;min-width:900px;grid-template-columns:4px minmax(200px,2.2fr) 116px 1fr 62px 68px 72px 128px 74px 46px;align-items:center;border-bottom:1px solid #f2ebe0;background:${st==="out"?"rgba(179,57,44,.035)":st==="low"?"rgba(142,94,34,.03)":"#fff"}`,
+        stripe:`display:block;width:4px;height:100%;min-height:44px;background:${st==="in"?"transparent":color}`,
+        badge:`display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;color:${color};background:${color}1a;white-space:nowrap`,
+        availStyle:`padding:9px 8px;text-align:right;font-variant-numeric:tabular-nums;font-size:13.5px;font-weight:600;color:${st==="in"?"#2f1739":color}`,
+        onEdit:()=>this.setState({editing:b.isbn,editValue:String(b.stock_count)}),
+        onSave:()=>{const n=parseInt(this.state.editValue,10);
+          if(isNaN(n)||n<b.reserved_count){this.setState({editing:null});return;}
+          this.setState({books:this.state.books.map(x=>x.isbn===b.isbn?{...x,stock_count:n}:x),editing:null});}};});
+
+    const bookById={};books.forEach(b=>bookById[b.isbn]=b);
+    const mkCard=(o,col)=>{const cust=CUSTOMERS[o.customer_id]||[o.customer_id,""];
+      const past=new Date(o.hold_expires_at)<NOW&&(o.status==="pending"||o.status==="expired");
+      const d=new Date(o.hold_expires_at);
+      const label=past?"Expired "+d.toLocaleDateString("en-US",{month:"short",day:"numeric"}):"Hold until "+d.toLocaleDateString("en-US",{month:"short",day:"numeric"})+", "+d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+      return {id:o.order_id,name:cust[0],phone:cust[1],
+        items:o.items.map(i=>i.quantity+" × "+(bookById[i.isbn]?bookById[i.isbn].title:i.isbn)),
+        hasNote:!!o.notes,note:o.notes,deadline:label,
+        deadlineStyle:`font-size:11.5px;font-variant-numeric:tabular-nums;color:${past?C.out:"#8a7e6f"};font-weight:${past?600:400}`,
+        flag:past?"Past 48h":"",flagStyle:past?`font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${C.out};background:${C.out}1a;padding:3px 7px;border-radius:99px;white-space:nowrap`:"display:none",
+        cardStyle:`background:#fff;border:1px solid ${past?C.out+"59":"#e6ddd0"};border-left:3px solid ${past?C.out:"#e6ddd0"};border-radius:8px;padding:13px;box-shadow:rgba(47,23,57,.04) 0 2px 4px`,
+        hasAction:col!=="completed",actionLabel:col==="pending"?"Mark ready":"Complete",
+        onAdvance:()=>this.setState({orders:this.state.orders.map(x=>x.order_id===o.order_id?{...x,status:col==="pending"?"ready_for_pickup":"completed"}:x)})};};
+
+    const colDefs=[["pending","To prepare","Nothing waiting to be pulled."],["ready_for_pickup","Ready at counter","No bags on the shelf."],["completed","Picked up","Nobody collected yet today."]];
+    const columns=colDefs.map(([k,label,emptyText])=>{const cards=s.orders.filter(o=>o.status===k).map(o=>mkCard(o,k));
+      return {key:k,label,count:cards.length,cards,empty:cards.length===0,emptyText};});
+
+    const subjects=[...["9780062315007","9780374605928","9780593448885","9780525657743","9780525559474"].map(id=>{const b=bookById[id];
+      return {id,title:b.title,meta:b.author+" · "+this.avail(b)+" available",
+        style:`text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer;font-family:inherit;background:${s.subject.id===id?"rgba(166,61,47,.08)":"#f4efe6"};border:1px solid ${s.subject.id===id?"rgba(166,61,47,.35)":"transparent"}`,
+        onPick:()=>this.setState({subject:{type:"book",id},copied:false})};}),
+      ...EVENTS.map(e=>({id:e.id,title:e.title,meta:"Event · "+e.sold+"/"+e.cap+" tickets",
+        style:`text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer;font-family:inherit;background:${s.subject.id===e.id?"rgba(166,61,47,.08)":"#f4efe6"};border:1px solid ${s.subject.id===e.id?"rgba(166,61,47,.35)":"transparent"}`,
+        onPick:()=>this.setState({subject:{type:"event",id:e.id},copied:false})}))];
+
+    const tones=["cozy","exciting","urgent"].map(t=>({id:t,label:t[0].toUpperCase()+t.slice(1),
+      style:`padding:7px 13px;border-radius:99px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:500;background:${s.tone===t?"#2f1739":"#f4efe6"};color:${s.tone===t?"#fbf7f0":"#4a4038"};border:1px solid ${s.tone===t?"#2f1739":"#e6ddd0"}`,
+      onPick:()=>this.setState({tone:t,variant:0,copied:false})}));
+
+    let caption,postIdea,factLine;
+    if(s.subject.type==="book"){const b=bookById[s.subject.id]||books[0];const set=TEMPLATES[s.tone];const tpl=set[s.variant%set.length];
+      const fill=x=>x.replace("{title}",b.title).replace("{author}",b.author).replace("{blurb}",BLURBS[b.isbn]||"").replace("{available}",this.avail(b));
+      caption=fill(tpl.t);postIdea=tpl.i;factLine=this.avail(b)+" available · "+this.money(b.price_cents)+" · "+b.isbn;}
+    else{const e=EVENTS.find(x=>x.id===s.subject.id);const set=EVENT_TEMPLATES[s.tone];const tpl=set[s.variant%set.length];
+      caption=tpl.t.replace("{title}",e.title).replace("{author}",e.author_name).replace("{blurb}",e.description);postIdea=tpl.i;
+      factLine=e.sold+"/"+e.cap+" tickets sold";}
+
+    return {
+      isSignedIn:!!s.authed,showSignIn:!s.authed,
+      staffName:s.authed,pin:s.pin,pinError:s.pinError,
+      onPin:e=>this.setState({pin:e.target.value,pinError:false}),
+      onSubmitPin:()=>{const name=STAFF_PINS[s.pin];
+        if(!name){this.setState({pinError:true});return;}
+        sessionStorage.setItem("riverside_staff",name);
+        this.setState({authed:name,pin:"",pinError:false});},
+      signOut:()=>{sessionStorage.removeItem("riverside_staff");this.setState({authed:null});},
+      isInventory:s.tab==="inventory",isPreorders:s.tab==="preorders",isMessages:s.tab==="messages",isMarketing:s.tab==="marketing",
+      goInventory:this.setTab("inventory"),goPreorders:this.setTab("preorders"),goMessages:this.setTab("messages"),goMarketing:this.setTab("marketing"),
+      navInventory:this.navStyle("inventory"),navPreorders:this.navStyle("preorders"),navMessages:this.navStyle("messages"),navMarketing:this.navStyle("marketing"),
+      alertTotal:outCount+lowCount,preorderDue:columns[0].count,newMessageCount:s.messages.length,
+      navBadgeInv:this.badgeStyle(outCount+lowCount,C.out),navBadgePre:this.badgeStyle(columns[0].count,"#7d7264"),navBadgeMsg:this.badgeStyle(s.messages.length,"#7d7264"),
+      bookCount:books.length,tiles,rows:rowVals,noRows:rowVals.length===0,shownCount:rowVals.length,
+      search:s.search,onSearch:e=>this.setState({search:e.target.value}),
+      genre:s.genre,onGenre:e=>this.setState({genre:e.target.value}),
+      genres:["All",...Array.from(new Set(books.map(b=>b.genre))).sort()],
+      filterActive:!!s.statusFilter,filterLabel:s.statusFilter==="out"?"Out of stock":s.statusFilter==="low"?"Low stock":s.statusFilter==="held"?"On hold":"Filtered",
+      clearFilters:()=>this.setState({search:"",genre:"All",statusFilter:null}),
+      sortTitle:()=>this.sort("title"),sortStock:()=>this.sort("stock_count"),sortAvail:()=>this.sort("available"),
+      arrowTitle:s.sortField==="title"?(s.sortDir==="asc"?"↑":"↓"):"",arrowStock:s.sortField==="stock_count"?(s.sortDir==="asc"?"↑":"↓"):"",arrowAvail:s.sortField==="available"?(s.sortDir==="asc"?"↑":"↓"):"",
+      editValue:s.editValue,onEditValue:e=>this.setState({editValue:e.target.value}),
+      isbnEntry:s.isbnEntry,onIsbnEntry:e=>this.setState({isbnEntry:e.target.value}),onScanAdd:()=>this.setState({isbnEntry:""}),
+      columns,releaseExpired:()=>this.setState({released:true,orders:this.state.orders.filter(o=>o.status!=="expired")}),
+      releaseLabel:s.released?"Holds released":"Release "+expired+" expired holds",
+      releaseStyle:`padding:10px 15px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid ${s.released||!expired?"#e6ddd0":C.out};background:${s.released||!expired?"#f4efe6":C.out};color:${s.released||!expired?"#8a7e6f":"#fff"}`,
+      messages:s.messages.map(m=>({...m,onRead:()=>this.setState({messages:this.state.messages.filter(x=>x.message_id!==m.message_id)})})),
+      noMessages:s.messages.length===0,
+      subjects,tones,caption,postIdea,factLine,
+      regenerate:()=>this.setState({variant:s.variant+1,copied:false}),
+      copyCaption:()=>{try{navigator.clipboard.writeText(caption);}catch(e){}this.setState({copied:true});},
+      copyLabel:s.copied?"Copied":"Copy caption"};
+  }
+
+  sort(f){this.setState(s=>({sortField:f,sortDir:s.sortField===f&&s.sortDir==="asc"?"desc":"asc"}));}
+}
+</script>
+</body>
+</html>

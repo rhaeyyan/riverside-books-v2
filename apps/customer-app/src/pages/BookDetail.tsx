@@ -256,7 +256,6 @@ export default function BookDetail() {
 
       <section className="book-detail-promo">
         <div className="book-detail-promo-inner">
-          <p className="book-detail-promo-eyebrow">The reader card</p>
           <h2 className="book-detail-promo-title">Ten stamps, and the eleventh book is on us.</h2>
           <p className="book-detail-promo-desc">
             Earn 1 stamp for every book purchased. Collect 10 stamps to earn a free paperback of your choice.

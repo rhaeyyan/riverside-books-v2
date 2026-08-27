@@ -335,15 +335,6 @@
   margin: 0 auto;
 }
 
-.book-detail-promo-eyebrow {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--ink-text);
-}
-
 .book-detail-promo-title {
   font-family: var(--heading);
   font-weight: 500;
@@ -351,7 +342,7 @@
   line-height: 1.12;
   letter-spacing: -0.02em;
   color: var(--ink-text);
-  margin: 14px 0 0;
+  margin: 0;
   max-width: 22ch;
 }
 

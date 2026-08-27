@@ -17,6 +17,7 @@ export function Marketing() {
   const [variant, setVariant] = useState(0);
   const [generated, setGenerated] = useState<{ caption: string, hashtags: string, post_idea: string, has_image: boolean } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [useAi, setUseAi] = useState(false);
   
   useEffect(() => {
     client.GET("/api/books", {}).then(res => res.data && setBooks(res.data));
@@ -51,7 +52,8 @@ export function Marketing() {
           subject_type: selectedSubject.type,
           subject_id: selectedSubject.id,
           tone: selectedTone,
-          variant: v
+          variant: v,
+          use_ai: useAi
         }
       });
       if (res.data) {
@@ -74,7 +76,7 @@ export function Marketing() {
     <section aria-labelledby="generator-heading" className="min-w-0 p-8 max-w-7xl mx-auto">
       <div className="max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--text)]">
-          Deterministic preview
+          {useAi ? "AI-assisted preview" : "Deterministic preview"}
         </p>
         <h2 id="generator-heading" className="mt-2 text-3xl font-semibold tracking-[-0.025em] text-[var(--text-h)]">
           Create social content
@@ -177,6 +179,18 @@ export function Marketing() {
               )}
             </div>
           </fieldset>
+
+          <label className="flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-raised)] px-3 py-2 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--accent)]">
+            <input
+              type="checkbox"
+              checked={useAi}
+              onChange={e => setUseAi(e.target.checked)}
+              className="size-5 shrink-0 accent-[var(--accent)]"
+            />
+            <span className="min-w-0 text-[var(--text-h)]">
+              Generate with AI <span className="text-[var(--text)]">(falls back to templating if unavailable)</span>
+            </span>
+          </label>
 
           {/* --ink/--ink-hover/--ink-text are fixed, non-theme-adaptive tokens (no
               dark-mode override in index.css), matching the same pairing already

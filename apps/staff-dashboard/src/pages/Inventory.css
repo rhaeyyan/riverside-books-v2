@@ -100,6 +100,15 @@
   outline-offset: 2px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .alert-card {
+    transition: none;
+  }
+  .alert-card:hover {
+    transform: none;
+  }
+}
+
 .alert-top {
   display: flex;
   align-items: center;
@@ -266,6 +275,16 @@
   background: var(--code-bg);
   font-weight: 600;
   user-select: none;
+}
+
+/* Faint zebra striping plus a hover state keep a long, dense table scannable
+   row-by-row; the status border-left already carries the real signal. */
+.inventory-table tbody tr:nth-child(even) {
+  background: var(--bg);
+}
+
+.inventory-table tbody tr:hover {
+  background: var(--code-bg);
 }
 
 .sort-btn {

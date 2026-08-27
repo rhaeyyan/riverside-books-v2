@@ -39,12 +39,15 @@ export function Messages() {
   return (
     <div className="messages-page">
       <div className="messages-header">
-        <h1>Messages</h1>
-        <p className="messages-subtitle">Anything the chatbot could not answer lands here.</p>
+        <div>
+          <h1>Messages</h1>
+          <p className="messages-subtitle" role="status" aria-live="polite">
+            {messages.length === 0
+              ? 'Anything the chatbot could not answer lands here.'
+              : `${messages.length} unread message${messages.length === 1 ? '' : 's'} · anything the chatbot could not answer lands here.`}
+          </p>
+        </div>
       </div>
-      <span className="sr-only" role="status" aria-live="polite">
-        {messages.length === 0 ? 'Inbox clear' : `${messages.length} unread message${messages.length === 1 ? '' : 's'}`}
-      </span>
       {messages.length === 0 ? (
         <div className="empty-state">
           <div className="empty-title">Inbox clear</div>
@@ -56,7 +59,7 @@ export function Messages() {
             <div key={m.message_id} className="message-card">
               <div className="message-header">
                 <div>
-                  <strong>{m.name}</strong>
+                  <strong className="sender-name">{m.name}</strong>
                   <span className="contact-info"> {m.contact}</span>
                 </div>
                 <div className="message-time">
@@ -67,7 +70,13 @@ export function Messages() {
                 {m.body}
               </div>
               <div className="message-actions">
-                <button onClick={() => markAsRead(m.message_id)}>Mark handled</button>
+                <button
+                  type="button"
+                  onClick={() => markAsRead(m.message_id)}
+                  aria-label={`Mark message from ${m.name} as handled`}
+                >
+                  Mark handled
+                </button>
               </div>
             </div>
           ))}

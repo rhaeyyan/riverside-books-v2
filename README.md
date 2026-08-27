@@ -282,3 +282,4 @@ npm run build      # Runs tsc typecheck & Vite build
 | --- | --- | --- |
 | **Manager** | `1234` | Full access to Inventory, Pre-orders, Messages, and Marketing |
 | **Bookseller** | `5678` | Standard operational staff access |
+

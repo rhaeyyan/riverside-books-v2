@@ -203,13 +203,15 @@ export function Marketing() {
                   <h3 className="text-xl font-semibold text-[var(--text-h)]">Draft {variant + 1}</h3>
                   <div className="flex gap-2">
                     <button
+                      type="button"
                       onClick={() => generate(variant + 1)}
                       disabled={isGenerating}
-                      className="text-sm font-medium text-[var(--text)] hover:text-[var(--text-h)] px-3 py-1.5 rounded-lg border border-[var(--border)] hover:bg-[var(--code-bg)]"
+                      className="text-sm font-medium text-[var(--text)] hover:text-[var(--text-h)] px-3 py-1.5 rounded-lg border border-[var(--border)] hover:bg-[var(--code-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-wait disabled:opacity-65"
                     >
                       Regenerate
                     </button>
                     <button
+                      type="button"
                       onClick={copyToClipboard}
                       /* --accent-hover, not --accent, at rest: --accent on --accent-bg
                          computes to ~4.36:1 in dark mode, below the 4.5:1 minimum for
@@ -217,7 +219,7 @@ export function Marketing() {
                          (~5.57 dark, ~7.24 light). hover darkens the background via
                          color-mix, matching the pattern already used for fixed-token
                          hover states elsewhere in this app (e.g. Preorders.css). */
-                      className="text-sm font-medium text-[var(--accent-hover)] px-3 py-1.5 rounded-lg border border-[var(--accent-border)] bg-[var(--accent-bg)] hover:bg-[color-mix(in_srgb,var(--accent)_18%,var(--bg-raised))]"
+                      className="text-sm font-medium text-[var(--accent-hover)] px-3 py-1.5 rounded-lg border border-[var(--accent-border)] bg-[var(--accent-bg)] hover:bg-[color-mix(in_srgb,var(--accent)_18%,var(--bg-raised))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                     >
                       Copy Caption
                     </button>

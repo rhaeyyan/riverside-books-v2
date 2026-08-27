@@ -59,7 +59,7 @@ export default function Support() {
           ) : null}
         </aside>
 
-        <section className="flex min-h-[560px] flex-col rounded-[32px] border border-[var(--border)] bg-[var(--bg)] p-5 shadow-[var(--shadow)]">
+        <section className="flex min-h-[400px] flex-col rounded-[32px] border border-[var(--border)] bg-[var(--bg)] p-5 shadow-[var(--shadow)]">
           <div
             aria-live="polite"
             className="flex flex-1 flex-col gap-4 overflow-y-auto"

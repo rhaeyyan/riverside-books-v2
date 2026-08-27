@@ -1,0 +1,14 @@
+[
+  {
+    "staff_id": "staff_001",
+    "email": "jordan@riversidebooks.example",
+    "name": "Jordan",
+    "role": "Manager"
+  },
+  {
+    "staff_id": "staff_002",
+    "email": "priya@riversidebooks.example",
+    "name": "Priya",
+    "role": "Bookseller"
+  }
+]

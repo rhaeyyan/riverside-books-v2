@@ -1,6 +1,6 @@
 {
   "name": "Riverside Books",
-  "address": "128 Main Street, Beacon, NY 12508",
+  "address": "128 Main Street, Standing Stone, NY 12508",
   "phone": "555-0142",
   "email": "hello@riversidebooks.com",
   "hours": {
@@ -99,7 +99,7 @@
         "secondhand",
         "buyback"
       ],
-      "answer": "We currently only sell new books and do not buy back or appraise used books. We recommend donating gently used books to the local Beacon Public Library."
+      "answer": "We currently only sell new books and do not buy back or appraise used books. We recommend donating gently used books to the local Standing Stone Public Library."
     },
     {
       "id": "faq_006",

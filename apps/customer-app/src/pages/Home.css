@@ -213,7 +213,7 @@
 /* Feature strip — numbered rule-grid restating real store facts */
 .browse-rule {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 40px;
   padding-bottom: 40px;
   margin-bottom: 40px;
@@ -294,8 +294,8 @@
 
 /* Promo band — full-bleed within the app shell, mirrors the loyalty program facts */
 .browse-promo {
-  margin: 0 -24px 40px;
-  padding: 52px 24px;
+  margin: 0 -24px 32px;
+  padding: 28px 24px;
   background: var(--accent);
   color: var(--ink-text);
 }
@@ -307,7 +307,7 @@
 
 .browse-promo-eyebrow {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -317,18 +317,18 @@
 .browse-promo-title {
   font-family: var(--heading);
   font-weight: 500;
-  font-size: clamp(26px, 4vw, 36px);
-  line-height: 1.12;
-  letter-spacing: -0.02em;
+  font-size: clamp(18px, 2.2vw, 24px);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
   color: var(--ink-text);
-  margin: 14px 0 0;
-  max-width: 22ch;
+  margin: 8px 0 0;
+  max-width: 44ch;
 }
 
 .browse-promo-desc {
-  margin: 14px 0 0;
-  font-size: 16px;
-  line-height: 1.55;
+  margin: 8px 0 0;
+  font-size: 14.5px;
+  line-height: 1.45;
   color: var(--ink-text);
   max-width: 46ch;
 }
@@ -336,12 +336,12 @@
 .browse-promo-cta {
   display: inline-flex;
   align-items: center;
-  margin-top: 22px;
-  padding: 13px 22px;
+  margin-top: 14px;
+  padding: 10px 18px;
   border-radius: 8px;
   background: var(--ink-text);
   color: var(--accent);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   transition: opacity 0.15s ease;

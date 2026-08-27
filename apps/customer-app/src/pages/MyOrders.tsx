@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { client } from '../api/client';
 import { formatMoney } from '../utils/format';
 import type { components } from '../api/types';
 import { Search, Clock, Calendar, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
+import { getCustomerSession, subscribeToCustomerSession } from '../lib/customerSession';
 import './MyOrders.css';
 
 type Order = components["schemas"]["Order"];
@@ -14,6 +15,53 @@ export default function MyOrders() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [session, setSession] = useState(() => getCustomerSession());
+  const [showManualLookup, setShowManualLookup] = useState(false);
+
+  // Shared by both the session auto-load and the manual phone-lookup path so
+  // the same loading/empty/error/list render below is always what's shown.
+  const loadOrdersForCustomer = async (customerId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: orderData, error: orderError } = await client.GET("/api/customers/{customer_id}/orders", {
+        params: { path: { customer_id: customerId } }
+      });
+      if (orderData) {
+        setOrders(orderData as Order[]);
+      } else if (orderError) {
+        setError("Could not retrieve orders for this account.");
+      }
+    } catch {
+      setError("Unable to connect to the store database. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (session) {
+      loadOrdersForCustomer(session.customer_id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reactive to sign-out (and cross-tab sign-in/out) happening while this
+  // page is already mounted — a one-time mount read misses a sign-out that
+  // fires from App.tsx's header without a navigation. When the session
+  // disappears out from under an already-loaded order list, fall back to the
+  // same "no session" state: clear the loaded orders and let the render
+  // below fall through to the manual lookup form.
+  useEffect(() => {
+    return subscribeToCustomerSession(() => {
+      const next = getCustomerSession();
+      setSession(next);
+      if (!next) {
+        setOrders(null);
+        setError(null);
+      }
+    });
+  }, []);
 
   const fetchOrders = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,14 +90,7 @@ export default function MyOrders() {
 
       if (custData) {
         const customerId = (custData as any).customer_id;
-        const { data: orderData, error: orderError } = await client.GET("/api/customers/{customer_id}/orders", {
-          params: { path: { customer_id: customerId } }
-        });
-        if (orderData) {
-          setOrders(orderData as Order[]);
-        } else if (orderError) {
-          setError("Could not retrieve orders for this account.");
-        }
+        await loadOrdersForCustomer(customerId);
       }
     } catch {
       setError("Unable to connect to the store database. Please try again.");
@@ -82,31 +123,58 @@ export default function MyOrders() {
           <h1 className="myorders-title">
             My Holds & Orders
           </h1>
-          <p className="myorders-subtitle">
-            Look up your reservations and holds using the phone number you provided.
-          </p>
+          {session && !showManualLookup ? (
+            <>
+              <p className="myorders-subtitle">
+                Showing holds and orders for {session.name}.
+              </p>
+              <button
+                type="button"
+                className="rule-link"
+                onClick={() => setShowManualLookup(true)}
+              >
+                Not you? Look up another number
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="myorders-subtitle">
+                Look up your reservations and holds using the phone number you provided.
+              </p>
 
-          <form onSubmit={fetchOrders} className="myorders-lookup-form">
-            <div className="myorders-input-wrapper">
-              <Search size={18} className="myorders-search-icon" aria-hidden="true" />
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="e.g. (845) 555-0142"
-                aria-label="Phone number"
-                required
-                className="myorders-phone-input"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="search-submit-btn"
-            >
-              {loading ? "Looking up..." : "Find My Holds"}
-            </button>
-          </form>
+              <form onSubmit={fetchOrders} className="myorders-lookup-form">
+                <div className="myorders-input-wrapper">
+                  <Search size={18} className="myorders-search-icon" aria-hidden="true" />
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. (845) 555-0142"
+                    aria-label="Phone number"
+                    required
+                    className="myorders-phone-input"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="search-submit-btn"
+                >
+                  {loading ? "Looking up..." : "Find My Holds"}
+                </button>
+              </form>
+
+              {session && (
+                <button
+                  type="button"
+                  className="rule-link"
+                  onClick={() => setShowManualLookup(false)}
+                >
+                  Back to my holds
+                </button>
+              )}
+            </>
+          )}
 
           {error && (
             <div style={{ padding: '14px 16px', background: 'var(--status-out-bg)', border: '1px solid var(--status-out)', borderRadius: '8px', color: 'var(--status-out)', fontSize: '14px', marginBottom: '24px' }} role="alert">

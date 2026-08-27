@@ -3,6 +3,15 @@ import { MessageCircle, X } from 'lucide-react';
 import { Bubble, QuickReply, TextField, TypingDots } from './ChatBubble';
 import { useChatSession } from '../hooks/useChatSession';
 
+// Home.tsx's "Ask a bookseller" CTAs dispatch this on `window` to jump the
+// panel straight to the escalation form, whether the panel is closed (open
+// it and skip the root greeting) or already open on the root tree (transition
+// in place). A same-weight sibling to the existing
+// `document.getElementById("chatbot-toggle")?.click()` DOM-coupling pattern,
+// just decoupled from a specific element id so it also works while the panel
+// is already open — no new state-management dependency.
+export const CHAT_ESCALATE_EVENT = 'riverside:chat-escalate';
+
 export default function ChatPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const {
@@ -20,6 +29,7 @@ export default function ChatPanel() {
     userInput,
     setUserInput,
     startChat,
+    startEscalation,
     handleOption,
     submitEscalation,
     submitInput
@@ -28,9 +38,39 @@ export default function ChatPanel() {
   const closeRef = useRef<HTMLButtonElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const hasOpened = useRef(false);
+  // Set by the CHAT_ESCALATE_EVENT listener just before opening the panel,
+  // so the isOpen-triggered effect below knows to route to the escalation
+  // form instead of the normal root-node startChat(). Consumed and cleared
+  // by that same effect.
+  const pendingEscalationRef = useRef(false);
+
+  // Direct launcher click (#chatbot-toggle) still lands here unchanged: opens
+  // on the root node via startChat(). A CHAT_ESCALATE_EVENT-driven open sets
+  // pendingEscalationRef first and is routed to startEscalation() instead —
+  // exactly one of the two runs per open.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (pendingEscalationRef.current) {
+      pendingEscalationRef.current = false;
+      startEscalation();
+    } else {
+      startChat();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen) startChat();
+    const handleEscalate = () => {
+      if (isOpen) {
+        // Already open (e.g. showing the root tree) — transition in place.
+        startEscalation();
+      } else {
+        pendingEscalationRef.current = true;
+        setIsOpen(true);
+      }
+    };
+    window.addEventListener(CHAT_ESCALATE_EVENT, handleEscalate);
+    return () => window.removeEventListener(CHAT_ESCALATE_EVENT, handleEscalate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 

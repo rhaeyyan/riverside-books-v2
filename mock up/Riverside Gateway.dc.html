@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+body{margin:0;background:#fbf7f0;color:#4a4038;font-family:Inter,system-ui,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#a63d2f;text-decoration:none}
+a:hover{color:#8a2f23}
+.rb-hero-title{font-size:clamp(46px,8.2vw,104px)}
+.rb-band-title{font-size:clamp(34px,5.4vw,66px)}
+.rb-rule{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 46px}
+.rb-talkers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px}
+.rb-hero{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+.rb-hero-photo image-slot{position:absolute;inset:0}
+@media (max-width:900px){.rb-rule{grid-template-columns:1fr;gap:0}}
+@media (max-width:760px){.rb-hero{grid-template-columns:1fr;grid-template-rows:220px auto}.rb-hero-copy{padding-top:40px !important}}
+@media (max-width:680px){.rb-talkers{grid-template-columns:1fr}}
+</style>
+</helmet>
+<div style="position:relative;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden">
+  <div style="position:fixed;inset:0;pointer-events:none;z-index:3;mix-blend-mode:multiply;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E&quot;);opacity:{{ grainOpacity }}"></div>
+
+  <header style="position:relative;z-index:4;width:100%;box-sizing:border-box;padding:20px 30px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+    <div style="font-family:Fraunces,Georgia,serif;font-weight:500;font-size:22px;color:#2f1739;letter-spacing:-.3px">Riverside Books</div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#6c6155;white-space:nowrap">
+      <span style="width:7px;height:7px;border-radius:50%;background:#d1893c;display:block"></span>Open today until {{ openUntil }}
+    </div>
+    <nav style="margin-left:auto;display:flex;align-items:center;gap:22px;font-size:14px;flex-wrap:wrap">
+      <a href="Riverside Customer App.dc.html" style="color:#4a4038">Browse</a>
+      <a href="Riverside Customer App.dc.html" style="color:#4a4038">My holds</a>
+      <a href="Riverside Customer App.dc.html" style="color:#4a4038">Stamp card</a>
+      <a href="Riverside Customer App.dc.html" style="color:#2f1739;border-bottom:1px solid #2f1739;padding-bottom:2px;white-space:nowrap" style-hover="color:#a63d2f;border-color:#a63d2f">Sign in</a>
+    </nav>
+  </header>
+
+  <section class="rb-hero" style="position:relative;width:100%;min-height:min(78vh,700px);display:grid;background:#2f1739;overflow:hidden">
+    <div class="rb-hero-photo" style="position:relative;overflow:hidden;background:#1f0f2b">
+      <svg viewBox="0 0 700 800" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%">
+        <defs>
+          <linearGradient id="bgv" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#3d1f4d"/><stop offset="1" stop-color="#241030"/>
+          </linearGradient>
+          <linearGradient id="spineA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c14a38"/><stop offset="1" stop-color="#8a2f22"/></linearGradient>
+          <linearGradient id="spineB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2a355"/><stop offset="1" stop-color="#b9782f"/></linearGradient>
+          <linearGradient id="spineC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d8c7c"/><stop offset="1" stop-color="#20574c"/></linearGradient>
+        </defs>
+        <rect width="700" height="800" fill="url(#bgv)"/>
+        <g stroke="#fbf7f0" stroke-opacity="0.05" stroke-width="1">
+          <path d="M 350 -50 L 900 800"/><path d="M 250 -50 L 800 800"/><path d="M 150 -50 L 700 800"/>
+          <path d="M 350 -50 L -200 800"/><path d="M 450 -50 L -100 800"/><path d="M 550 -50 L 0 800"/>
+        </g>
+
+        <g>
+          <rect x="60" y="150" width="60" height="270" rx="2" fill="url(#spineA)"/>
+          <rect x="60" y="150" width="60" height="8" fill="#fbf7f0" opacity="0.28"/>
+          <rect x="76" y="200" width="28" height="4" fill="#fbf7f0" opacity="0.6"/>
+          <rect x="76" y="214" width="28" height="4" fill="#fbf7f0" opacity="0.35"/>
+
+          <rect x="126" y="112" width="44" height="308" rx="2" fill="url(#spineB)"/>
+          <rect x="138" y="170" width="20" height="4" fill="#3d1f4d" opacity="0.45"/>
+
+          <rect x="176" y="186" width="72" height="234" rx="2" fill="url(#spineC)"/>
+          <rect x="196" y="240" width="32" height="4" fill="#e2a355" opacity="0.8"/>
+          <rect x="196" y="254" width="32" height="4" fill="#e2a355" opacity="0.45"/>
+
+          <rect x="254" y="140" width="38" height="280" rx="2" fill="#fbf7f0" opacity="0.9"/>
+          <rect x="254" y="196" width="38" height="10" fill="#c14a38"/>
+
+          <g transform="rotate(14 340 420)">
+            <rect x="300" y="176" width="66" height="248" rx="2" fill="url(#spineA)" opacity="0.95"/>
+            <rect x="318" y="230" width="30" height="4" fill="#fbf7f0" opacity="0.55"/>
+          </g>
+
+          <rect x="398" y="128" width="50" height="292" rx="2" fill="url(#spineB)"/>
+          <rect x="412" y="188" width="22" height="4" fill="#3d1f4d" opacity="0.45"/>
+
+          <rect x="454" y="168" width="76" height="252" rx="2" fill="url(#spineC)"/>
+          <rect x="476" y="224" width="34" height="4" fill="#e2a355" opacity="0.75"/>
+
+          <rect x="536" y="146" width="42" height="274" rx="2" fill="#fbf7f0" opacity="0.86"/>
+          <rect x="536" y="204" width="42" height="9" fill="#c14a38" opacity="0.9"/>
+
+          <rect x="40" y="420" width="580" height="9" fill="#e2a355" opacity="0.9"/>
+          <rect x="40" y="429" width="580" height="16" fill="#000" opacity="0.25"/>
+        </g>
+
+        <g>
+          <rect x="90" y="530" width="46" height="192" rx="2" fill="url(#spineB)" opacity="0.55"/>
+          <rect x="142" y="556" width="70" height="166" rx="2" fill="url(#spineC)" opacity="0.55"/>
+          <rect x="218" y="516" width="40" height="206" rx="2" fill="#fbf7f0" opacity="0.4"/>
+          <rect x="264" y="548" width="60" height="174" rx="2" fill="url(#spineA)" opacity="0.5"/>
+          <rect x="330" y="524" width="44" height="198" rx="2" fill="url(#spineB)" opacity="0.45"/>
+          <rect x="380" y="560" width="72" height="162" rx="2" fill="url(#spineC)" opacity="0.45"/>
+          <rect x="458" y="536" width="38" height="186" rx="2" fill="#fbf7f0" opacity="0.32"/>
+          <rect x="502" y="552" width="58" height="170" rx="2" fill="url(#spineA)" opacity="0.4"/>
+          <rect x="40" y="722" width="580" height="8" fill="#e2a355" opacity="0.45"/>
+        </g>
+      </svg>
+    </div>
+    <div class="rb-hero-copy" style="position:relative;z-index:2;align-self:end;padding:96px 30px 52px;box-sizing:border-box">
+      <div style="font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(251,247,240,.72)">128 Main Street · Beacon, New York</div>
+      <h1 class="rb-hero-title" style="font-family:Fraunces,Georgia,serif;font-weight:400;line-height:.94;letter-spacing:-.035em;color:#fbf7f0;margin:18px 0 0;max-width:16ch;text-wrap:balance">See what's on the shelf</h1>
+      <div style="display:flex;align-items:center;gap:26px;margin-top:34px;flex-wrap:wrap">
+        <a href="Riverside Customer App.dc.html" style="background:#a63d2f;color:#fbf7f0;font-size:16px;font-weight:600;padding:15px 26px;border-radius:6px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.22)" style-hover="background:#8a2f23">Browse the catalog →</a>
+        <a href="Riverside Customer App.dc.html" style="font-size:15px;font-weight:500;color:#fbf7f0;border-bottom:1px solid rgba(251,247,240,.4);padding-bottom:2px;white-space:nowrap" style-hover="color:#fbf7f0;border-color:#fbf7f0">Check a hold</a>
+      </div>
+    </div>
+  </section>
+
+  <section style="position:relative;z-index:2;width:100%;max-width:1180px;margin:0 auto;padding:74px 30px 8px;box-sizing:border-box">
+    <div class="rb-rule">
+      <div style="border-top:2px solid #2f1739;padding:20px 0 34px">
+        <div style="font-family:Fraunces,Georgia,serif;font-size:15px;color:#d1893c;letter-spacing:.14em">01</div>
+        <h3 style="font-family:Fraunces,Georgia,serif;font-size:29px;font-weight:400;line-height:1.12;letter-spacing:-.02em;color:#2f1739;margin:12px 0 0;max-width:15ch">Live stock, not a guess</h3>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#6c6155;max-width:32ch;text-wrap:pretty">Every title reads in stock, last copies, or out — the same count the till sees.</p>
+      </div>
+      <div style="border-top:1px solid #ddd2c2;padding:20px 0 34px">
+        <div style="font-family:Fraunces,Georgia,serif;font-size:15px;color:#d1893c;letter-spacing:.14em">02</div>
+        <h3 style="font-family:Fraunces,Georgia,serif;font-size:29px;font-weight:400;line-height:1.12;letter-spacing:-.02em;color:#2f1739;margin:12px 0 0;max-width:15ch">Held 48 hours</h3>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#6c6155;max-width:32ch;text-wrap:pretty">Reserve with a phone number. It waits behind the counter with your name on it.</p>
+      </div>
+      <div style="border-top:1px solid #ddd2c2;padding:20px 0 34px">
+        <div style="font-family:Fraunces,Georgia,serif;font-size:15px;color:#d1893c;letter-spacing:.14em">03</div>
+        <h3 style="font-family:Fraunces,Georgia,serif;font-size:29px;font-weight:400;line-height:1.12;letter-spacing:-.02em;color:#2f1739;margin:12px 0 0;max-width:15ch">Ask a bookseller</h3>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#6c6155;max-width:32ch;text-wrap:pretty">Hours, events, whether we have it. Answered in the shop's own words, day or night.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="position:relative;z-index:2;width:100%;background:#a63d2f;color:#fbf7f0;padding:78px 30px;box-sizing:border-box">
+    <div style="max-width:1180px;margin:0 auto">
+      <div style="font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(251,247,240,.7)">The reader card</div>
+      <h2 class="rb-band-title" style="font-family:Fraunces,Georgia,serif;font-weight:400;line-height:1;letter-spacing:-.03em;margin:16px 0 0;max-width:22ch;text-wrap:balance">Ten stamps, and the eleventh book is on us.</h2>
+      <p style="margin:20px 0 0;font-size:17.5px;line-height:1.55;color:rgba(251,247,240,.86);max-width:46ch;text-wrap:pretty">No plastic, no app to install. Your phone number is the card. Stamps land when you collect at the counter.</p>
+      <a href="Riverside Customer App.dc.html" style="display:inline-block;margin-top:28px;background:#fbf7f0;color:#a63d2f;font-size:15.5px;font-weight:600;padding:14px 24px;border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)" style-hover="background:#fff;color:#8a2f23">See my stamp card</a>
+    </div>
+  </section>
+
+  <section style="position:relative;z-index:2;width:100%;max-width:1180px;margin:0 auto;padding:76px 30px 20px;box-sizing:border-box">
+    <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:26px">
+      <h2 style="font-family:Fraunces,Georgia,serif;font-size:34px;font-weight:400;letter-spacing:-.025em;color:#2f1739;margin:0">What we're pressing on people</h2>
+      <span style="font-size:13px;color:#8a7e6f">Handwritten on the shelf this month</span>
+    </div>
+    <div class="rb-talkers">
+      <article style="display:flex;gap:22px;background:#fff;border:1px solid #eae1d4;border-radius:4px;padding:24px;box-shadow:inset 0 1px 0 #fff, 0 1px 0 rgba(36,29,22,.09)">
+        <div style="width:96px;flex:none;aspect-ratio:2/3;background:#f4efe6;border:1px solid #eae1d4;position:relative">
+          <image-slot id="gateway-talker-1" shape="rect" fit="cover" placeholder="Cover"></image-slot>
+        </div>
+        <div style="min-width:0">
+          <div style="font-family:Fraunces,Georgia,serif;font-size:20px;font-weight:500;color:#2f1739;line-height:1.2">Braiding Sweetgrass</div>
+          <div style="font-size:13.5px;color:#8a7e6f;margin-top:3px">Robin Wall Kimmerer</div>
+          <p style="font-family:Fraunces,Georgia,serif;font-style:italic;font-size:17px;line-height:1.5;color:#4a4038;margin:14px 0 0;text-wrap:pretty">I have re-shelved this four times and bought it back twice. Read the strawberry chapter and you'll understand.</p>
+          <div style="display:flex;align-items:center;gap:9px;margin-top:16px">
+            <span style="width:22px;height:1px;background:#d1893c;display:block"></span>
+            <span style="font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;color:#d1893c;font-weight:600">Nora, floor 2</span>
+          </div>
+        </div>
+      </article>
+      <article style="display:flex;gap:22px;background:#fff;border:1px solid #eae1d4;border-radius:4px;padding:24px;box-shadow:inset 0 1px 0 #fff, 0 1px 0 rgba(36,29,22,.09)">
+        <div style="width:96px;flex:none;aspect-ratio:2/3;background:#f4efe6;border:1px solid #eae1d4;position:relative">
+          <image-slot id="gateway-talker-2" shape="rect" fit="cover" placeholder="Cover"></image-slot>
+        </div>
+        <div style="min-width:0">
+          <div style="font-family:Fraunces,Georgia,serif;font-size:20px;font-weight:500;color:#2f1739;line-height:1.2">Lessons in Chemistry</div>
+          <div style="font-size:13.5px;color:#8a7e6f;margin-top:3px">Bonnie Garmus</div>
+          <p style="font-family:Fraunces,Georgia,serif;font-style:italic;font-size:17px;line-height:1.5;color:#4a4038;margin:14px 0 0;text-wrap:pretty">Funnier than the cover lets on, and angrier. Seven copies out the door last week — we keep a stack by the register.</p>
+          <div style="display:flex;align-items:center;gap:9px;margin-top:16px">
+            <span style="width:22px;height:1px;background:#d1893c;display:block"></span>
+            <span style="font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;color:#d1893c;font-weight:600">Ellis, front counter</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <footer style="position:relative;z-index:2;margin-top:auto;width:100%;max-width:1180px;margin-left:auto;margin-right:auto;padding:64px 30px 30px;box-sizing:border-box">
+    <div style="border-top:1px solid #ddd2c2;padding-top:20px;display:flex;align-items:center;gap:22px;font-size:13px;color:#8a7e6f;flex-wrap:wrap">
+      <span>Riverside Books · 128 Main Street, Beacon NY · Mon–Sat 10 AM–8 PM, Sun 11 AM–5 PM</span>
+      <sc-if value="{{ staffQuiet }}" hint-placeholder-val="{{ true }}">
+        <a href="Riverside Staff Dashboard.dc.html" style="margin-left:auto;color:#8a7e6f;border-bottom:1px solid #ddd2c2;padding-bottom:2px;white-space:nowrap" style-hover="color:#2f1739;border-color:#2f1739">Staff sign in</a>
+      </sc-if>
+      <sc-if value="{{ staffProminent }}" hint-placeholder-val="{{ false }}">
+        <a href="Riverside Staff Dashboard.dc.html" style="margin-left:auto;color:#fbf7f0;background:#2f1739;font-weight:600;padding:9px 16px;border-radius:6px;white-space:nowrap" style-hover="background:#45225a">Staff sign in →</a>
+      </sc-if>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;openUntil&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;20:00&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;paperGrain&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;staffLink&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Quiet link&quot;,&quot;Solid button&quot;],&quot;default&quot;:&quot;Quiet link&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const raw = this.props.openUntil ?? "20:00";
+    const [h, m] = raw.split(":").map(Number);
+    const period = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12;
+    const openUntil = m ? `${h12}:${String(m).padStart(2, "0")} ${period}` : `${h12} ${period}`;
+    const grain = this.props.paperGrain ?? true;
+    const prominent = this.props.staffLink === "Solid button";
+    return { openUntil, grainOpacity: grain ? 0.035 : 0, staffQuiet: !prominent, staffProminent: prominent };
+  }
+}
+</script>
+</body>
+</html>

@@ -9,22 +9,20 @@ This monorepo contains four interconnected products and a unified gateway landin
 ### Unified Gateway Landing Page (`/`)
 - Curated editorial landing page matching the physical bookstore's warm aesthetic.
 - Highlights real-time store hours, Beacon, NY address, and upcoming literary events.
-- **Customer Sign-In Modal**: Allows customers to sign in by phone/name from the homepage, automatically carrying their authenticated session into the customer app (`/shop`).
-- **Discreet Staff Entry**: Direct link to the PIN-protected staff dashboard.
+- **Customer Sign-In Modal**: Allows customers to sign in with email/password from the homepage, automatically carrying their authenticated session into the customer app (`/shop`).
+- **Discreet Staff Entry**: Direct link to the email/password-protected staff dashboard.
 
 ### Product A: Customer Ordering & Loyalty App (`/shop`)
 - **Shelf Catalog & Search**: Browse titles by category/genre with instant keyword search across title, author, and description.
 - **Live Shelf Availability**: Real-time stock status matching what the store register sees (In Stock, Low Stock count, or Out of Stock).
 - **48-Hour In-Store Holds**: Place pre-orders for in-store pickup without upfront credit card requirements. Holds expire automatically after 48 hours.
-- **Loyalty Stamp Card**: Phone-based customer lookup. Every physical book purchase earns 1 stamp; 10 stamps redeem a $10 store credit reward.
+- **Loyalty Stamp Card**: Tied to the signed-in customer's account. Every physical book purchase earns 1 stamp; 10 stamps redeem a $10 store credit reward.
 - **My Holds Management**: Real-time tracking of pending, ready-for-pickup, and fulfilled orders with hold countdown indicators.
 - **Integrated Customer Chat**: Embedded chat bubble with instant answers to common questions and a direct "Ask a bookseller" escalation form.
 - **Design & Polish**: Warm cream and ink editorial palette (Fraunces serif + Inter sans-serif) optimized across desktop and mobile screens.
 
 ### Product B: Staff Inventory & Ops Dashboard (`/staff`)
-- **PIN-Protected Authentication**: Access secured by staff PINs:
-  - **Manager**: `1234`
-  - **Bookseller**: `5678`
+- **Email/Password Authentication**: Access secured by per-account credentials, with `Manager` and `Bookseller` roles (see [Demo Logins](#demo-logins) below).
 - **Inventory Overview**: View real-time stock levels, filter by low-stock/out-of-stock, search by title/ISBN, and perform inline stock adjustments or restocks with screen-reader status announcements.
 - **Pre-orders Board**: Visual kanban-style fulfillment workflow for in-store holds:
   - Tracks orders through `Pending`, `Ready for Pickup`, `Fulfilled`, and `Expired` states.
@@ -86,7 +84,7 @@ riverside-books-v2/
 │   └── staff-dashboard/       # Product B: Staff Inventory & Ops Dashboard SPA (Vite + React)
 │       ├── src/
 │       │   ├── pages/         # Inventory, Preorders, Messages, Marketing
-│       │   ├── components/    # PIN SignIn, navigation layout
+│       │   ├── components/    # Email/password SignIn, navigation layout
 │       │   └── lib/           # Staff session management
 │       └── package.json
 ├── backend/
@@ -233,7 +231,7 @@ cd apps/staff-dashboard
 npm install
 npm run dev
 ```
-Runs at `http://localhost:5174` (Sign in with PIN `1234` or `5678`).
+Runs at `http://localhost:5174` (see [Demo Logins](#demo-logins) below to sign in).
 
 ---
 
@@ -287,9 +285,25 @@ npm run build      # Runs tsc typecheck & Vite build
 
 ---
 
-## Staff Demo Credentials
+## Demo Logins
 
-| Role | PIN | Access Permissions |
+Staff and customer sign-in are both email/password (see `scripts/seed.py`, the
+source of truth for these). Re-run `uv run python -m scripts.seed --db` if a
+login stops working — it never changes these credentials, only timestamps.
+
+### Staff (`/staff`)
+
+| Role | Email | Password | Access Permissions |
+| --- | --- | --- | --- |
+| **Manager** | `jordan@riversidebooks.example` | `manager1234` | Full access to Inventory, Pre-orders, Messages, and Marketing |
+| **Bookseller** | `priya@riversidebooks.example` | `bookseller1234` | Standard operational staff access |
+
+### Customer (`/shop`)
+
+Every seeded customer shares one demo password: `readerclub1`. For example:
+
+| Name | Email | Password |
 | --- | --- | --- |
-| **Manager** | `1234` | Full access to Inventory, Pre-orders, Messages, and Marketing |
-| **Bookseller** | `5678` | Standard operational staff access |
+| Elena Rostova | `elena.rostova@example.com` | `readerclub1` |
+
+Or use "Create an account" in the sign-in dialog to register a new one.

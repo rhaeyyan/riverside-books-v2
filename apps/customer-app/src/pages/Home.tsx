@@ -240,7 +240,6 @@ export default function Home() {
       <section className="browse-promo">
         <div className="browse-promo-inner">
           <div className="browse-promo-copy">
-            <p className="browse-promo-eyebrow">The reader card</p>
             <h2 className="browse-promo-title">Ten stamps, and the eleventh book is on us.</h2>
           </div>
           <Link to="/loyalty" className="browse-promo-cta">

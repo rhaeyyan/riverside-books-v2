@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { client } from '../api/client';
 import { formatMoney } from '../utils/format';
+import { prefersReducedMotion } from '../utils/motion';
 import type { components } from '../api/types';
 import { Search, Clock, Calendar, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
 import { getCustomerSession, subscribeToCustomerSession } from '../lib/customerSession';
 import './MyOrders.css';
 
 type Order = components["schemas"]["Order"];
+
+const DEMO_PHONE = "(555) 100-0005";
 
 export default function MyOrders() {
   const [phone, setPhone] = useState("");
@@ -17,10 +20,17 @@ export default function MyOrders() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [session, setSession] = useState(() => getCustomerSession());
   const [showManualLookup, setShowManualLookup] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  // Set true right before a lookup (session auto-load or manual submit)
+  // resolves into `orders`, so the scroll effect below only fires as the
+  // direct result of a lookup — not on later state changes to `orders`
+  // (e.g. handleCancel patching an item in place) and not on first mount.
+  const shouldScrollToResults = useRef(false);
 
   // Shared by both the session auto-load and the manual phone-lookup path so
   // the same loading/empty/error/list render below is always what's shown.
   const loadOrdersForCustomer = async (customerId: string) => {
+    shouldScrollToResults.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -62,6 +72,19 @@ export default function MyOrders() {
       }
     });
   }, []);
+
+  // Scroll the results into view once they arrive from a lookup (session
+  // auto-load or manual submit), not on initial mount and not on later
+  // in-place updates to `orders` (see the ref above).
+  useEffect(() => {
+    if (orders && shouldScrollToResults.current) {
+      shouldScrollToResults.current = false;
+      resultsRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    }
+  }, [orders]);
 
   const fetchOrders = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,6 +187,14 @@ export default function MyOrders() {
                 </button>
               </form>
 
+              <button
+                type="button"
+                className="myorders-demo-hint"
+                onClick={() => setPhone(DEMO_PHONE)}
+              >
+                Demo: try {DEMO_PHONE}
+              </button>
+
               {session && (
                 <button
                   type="button"
@@ -183,80 +214,19 @@ export default function MyOrders() {
           )}
         </div>
 
-        <div className="myorders-hero-art">
-          <svg
-            viewBox="0 0 400 400"
-            preserveAspectRatio="xMidYMid slice"
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient id="ordersBgv" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#3d1f4d" />
-                <stop offset="1" stopColor="#241030" />
-              </linearGradient>
-              <linearGradient id="ordersSpineA" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#c14a38" />
-                <stop offset="1" stopColor="#8a2f22" />
-              </linearGradient>
-              <linearGradient id="ordersSpineB" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#e2a355" />
-                <stop offset="1" stopColor="#b9782f" />
-              </linearGradient>
-              <linearGradient id="ordersSpineC" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#3d8c7c" />
-                <stop offset="1" stopColor="#20574c" />
-              </linearGradient>
-            </defs>
-
-            <rect width="400" height="400" fill="url(#ordersBgv)" />
-
-            <g stroke="#fbf7f0" strokeOpacity="0.05">
-              <path d="M 200 -20 L 520 460" />
-              <path d="M 120 -20 L 440 460" />
-              <path d="M 280 -20 L 600 460" />
-              <path d="M 40 -20 L 360 460" />
-            </g>
-
-            {/* Reserved shelf cubbies — one slot pulled and tagged for a hold */}
-            <g>
-              <rect x="40" y="56" width="326" height="6" fill="#fbf7f0" opacity="0.45" />
-              <rect x="40" y="56" width="6" height="164" fill="#fbf7f0" opacity="0.45" />
-              <rect x="120" y="56" width="6" height="164" fill="#fbf7f0" opacity="0.45" />
-              <rect x="200" y="56" width="6" height="164" fill="#fbf7f0" opacity="0.45" />
-              <rect x="280" y="56" width="6" height="164" fill="#fbf7f0" opacity="0.45" />
-              <rect x="360" y="56" width="6" height="164" fill="#fbf7f0" opacity="0.45" />
-
-              <rect x="52" y="86" width="62" height="120" rx="2" fill="url(#ordersSpineC)" opacity="0.85" />
-              <rect x="132" y="72" width="62" height="134" rx="2" fill="url(#ordersSpineA)" opacity="0.85" />
-
-              {/* Empty slot — the held title has already been pulled */}
-              <rect x="214" y="78" width="58" height="128" rx="2" fill="none" stroke="#fbf7f0" strokeOpacity="0.3" strokeDasharray="5 5" />
-              <path d="M 243 78 L 243 58" stroke="#fbf7f0" strokeOpacity="0.5" strokeWidth="1.5" />
-              <rect x="228" y="38" width="30" height="20" rx="3" fill="url(#ordersSpineB)" />
-              <circle cx="243" cy="48" r="2.2" fill="#241030" opacity="0.5" />
-
-              <rect x="292" y="80" width="62" height="126" rx="2" fill="url(#ordersSpineB)" opacity="0.85" />
-
-              <rect x="40" y="220" width="326" height="7" fill="#e2a355" opacity="0.85" />
-              <rect x="40" y="227" width="326" height="10" fill="#000000" opacity="0.22" />
-            </g>
-
-            {/* Register counter with the held book waiting, tagged */}
-            <g>
-              <rect x="0" y="252" width="400" height="148" fill="url(#ordersSpineB)" opacity="0.94" />
-              <rect x="0" y="252" width="400" height="8" fill="#fbf7f0" opacity="0.22" />
-
-              <g transform="rotate(-7 210 320)">
-                <rect x="150" y="296" width="118" height="16" rx="3" fill="#fbf7f0" opacity="0.85" />
-                <rect x="150" y="278" width="118" height="30" rx="4" fill="url(#ordersSpineA)" />
-                <rect x="162" y="288" width="60" height="4" fill="#fbf7f0" opacity="0.4" />
-              </g>
-
-              <path d="M 268 280 Q 292 258 288 236" fill="none" stroke="#241030" strokeOpacity="0.35" strokeWidth="2" />
-              <circle cx="286" cy="228" r="16" fill="url(#ordersSpineC)" stroke="#fbf7f0" strokeOpacity="0.5" strokeWidth="1.5" />
-              <circle cx="286" cy="228" r="2" fill="#fbf7f0" />
-            </g>
-          </svg>
+        <div className="myorders-status-legend">
+          <span className="myorders-status-chip myorders-status-chip--low">
+            <Clock size={13} aria-hidden="true" />
+            Pending hold
+          </span>
+          <span className="myorders-status-chip myorders-status-chip--in">
+            <CheckCircle2 size={13} aria-hidden="true" />
+            Ready for pickup
+          </span>
+          <span className="myorders-status-chip myorders-status-chip--out">
+            <XCircle size={13} aria-hidden="true" />
+            Cancelled
+          </span>
         </div>
       </section>
 
@@ -284,21 +254,8 @@ export default function MyOrders() {
         </div>
       </section>
 
-      <section className="myorders-promo">
-        <div className="myorders-promo-inner">
-          <p className="myorders-promo-eyebrow">The reader card</p>
-          <h2 className="myorders-promo-title">Ten stamps, and the eleventh book is on us.</h2>
-          <p className="myorders-promo-desc">
-            Earn 1 stamp for every book purchased. Collect 10 stamps to earn a free paperback of your choice!
-          </p>
-          <Link to="/loyalty" className="myorders-promo-cta">
-            See my stamp card
-          </Link>
-        </div>
-      </section>
-
       {orders && (
-        <div className="myorders-results" role="status" aria-live="polite">
+        <div className="myorders-results" role="status" aria-live="polite" ref={resultsRef}>
           {orders.length === 0 ? (
             <div className="empty-state" style={{ margin: '20px 0' }}>
               <BookOpen size={40} className="empty-state-icon" aria-hidden="true" />
@@ -320,6 +277,7 @@ export default function MyOrders() {
                     style={{
                       background: 'var(--bg-raised)',
                       border: '1px solid var(--border)',
+                      borderLeft: `3px solid ${statusAccentColor(o.status)}`,
                       borderRadius: '12px',
                       padding: '20px',
                       boxShadow: 'rgba(36, 29, 22, 0.04) 0 4px 10px'
@@ -399,6 +357,15 @@ export default function MyOrders() {
       )}
     </div>
   );
+}
+
+// Mirrors the token each state uses in OrderStatusBadge below, so the card's
+// left-edge accent echoes the same status color as its badge.
+function statusAccentColor(status: string): string {
+  if (status === 'pending') return 'var(--status-low)';
+  if (status === 'ready_for_pickup') return 'var(--status-in)';
+  if (status === 'cancelled') return 'var(--status-out)';
+  return 'var(--border)';
 }
 
 function OrderStatusBadge({ status }: { status: string }) {

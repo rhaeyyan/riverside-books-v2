@@ -60,7 +60,7 @@ function App() {
                 to="/support" 
                 className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : ''}`}
               >
-                Store Info
+                Support
               </NavLink>
             </nav>
 

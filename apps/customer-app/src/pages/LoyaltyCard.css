@@ -2,49 +2,46 @@
 
 .loyalty-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
   gap: 20px 44px;
   padding: 46px 0 30px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 26px;
 }
 
+/* Once a lookup resolves, the stamp card takes the second column — the slot
+   the static illustration used to occupy. Before that (nothing looked up
+   yet), the hero stays single-column rather than reserving empty space for
+   a card that isn't there yet. */
+.loyalty-hero--with-card {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
 .loyalty-hero-copy {
   min-width: 0;
-}
-
-/* Illustrated punch-card graphic — self-contained inline SVG, no external asset. */
-.loyalty-hero-art {
-  aspect-ratio: 1 / 1;
-  border-radius: 16px;
-  overflow: hidden;
-  background: var(--ink);
-  box-shadow: var(--shadow);
-}
-
-.loyalty-hero-art svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+  max-width: 560px;
 }
 
 @media (max-width: 760px) {
-  .loyalty-hero {
+  .loyalty-hero--with-card {
     grid-template-columns: 1fr;
-  }
-
-  .loyalty-hero-art {
-    display: none;
   }
 }
 
 .loyalty-eyebrow {
-  font-size: 12.5px;
-  letter-spacing: 0.2em;
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #6c6155;
-  margin: 0 0 10px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin: 0 0 14px;
 }
 
 .loyalty-title {
@@ -140,6 +137,48 @@
   cursor: not-allowed;
 }
 
+/* Small, clearly-secondary demo-data hint under the lookup form. A real
+   button (not just styled text) so it's keyboard-operable and prefills the
+   field rather than just being decorative copy. */
+.loyalty-demo-hint {
+  display: inline-flex;
+  margin-top: 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: #6c6155;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+}
+
+.loyalty-demo-hint:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent-border);
+}
+
+.loyalty-demo-hint:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.loyalty-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px;
+  margin-top: 20px;
+  background: var(--status-out-bg);
+  border: 1px solid var(--status-out);
+  border-radius: 8px;
+  color: var(--status-out);
+  font-size: 14px;
+}
+
 /* Feature strip — numbered rule-grid restating the program's real mechanics.
    Reuses the .rule-item/.rule-number/.rule-title/.rule-desc vocabulary
    already established (and already global) via Home.css; only the section
@@ -161,9 +200,202 @@
   }
 }
 
+/* Stamp card — the page's dynamic centerpiece. Was previously inline-styled
+   and buried below the rule strip; now lives in the hero's second column
+   (see .loyalty-hero--with-card above) and uses real classes like the rest
+   of this file. */
+.loyalty-card {
+  background: var(--bg-raised);
+  border: 2px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.loyalty-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 22px;
+}
+
+.loyalty-card-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a7e6f;
+  font-weight: 600;
+}
+
+.loyalty-card-name {
+  font-family: var(--heading);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text-h);
+  margin: 4px 0 0;
+}
+
+.loyalty-card-id {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--code-bg);
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: #6c6155;
+}
+
+.loyalty-stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.loyalty-stamp {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px dashed var(--border);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8a7e6f;
+  position: relative;
+  animation: loyalty-stamp-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.loyalty-stamp--filled {
+  border: 2px solid var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.loyalty-stamp--reward {
+  border: 2px dashed var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.loyalty-stamp-index {
+  font-size: 14px;
+  font-weight: 600;
+  color: #8a7e6f;
+}
+
+.loyalty-stamp-reward-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+@keyframes loyalty-stamp-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(var(--stamp-rotate, 0deg));
+  }
+}
+
+/* Secondary, more-glanceable "X/10" representation alongside the stamp
+   grid. Purely decorative (aria-hidden in the markup) — the accessible
+   count lives in .loyalty-progress-text-count right below it. */
+.loyalty-progress {
+  margin: 4px 0 22px;
+}
+
+.loyalty-progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.loyalty-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  width: var(--progress-target, 0%);
+  animation: loyalty-progress-fill-in 0.7s ease both;
+}
+
+@keyframes loyalty-progress-fill-in {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: var(--progress-target, 0%);
+  }
+}
+
+.loyalty-progress-text {
+  text-align: center;
+  margin: 18px 0;
+}
+
+.loyalty-progress-text-count {
+  font-size: 16px;
+  color: var(--text-h);
+  margin: 0;
+}
+
+.loyalty-progress-text-hint {
+  font-size: 13px;
+  color: #6c6155;
+  margin-top: 4px;
+}
+
+.loyalty-reward-banner {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: var(--accent);
+  color: var(--ink-text);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.loyalty-reward-banner-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.loyalty-reward-banner-desc {
+  font-size: 13px;
+  opacity: 0.92;
+  margin-top: 2px;
+}
+
+.loyalty-card-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #8a7e6f;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .loyalty-input, .loyalty-submit-btn {
-    transition: none !important;
+  .loyalty-input,
+  .loyalty-submit-btn,
+  .loyalty-demo-hint,
+  .loyalty-progress-fill,
+  .loyalty-stamp {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
   }
 }

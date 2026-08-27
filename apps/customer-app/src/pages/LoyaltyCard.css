@@ -63,51 +63,11 @@
   max-width: 480px;
 }
 
-.loyalty-lookup-form {
-  margin-top: 24px;
-  display: flex;
-  gap: 9px;
-  max-width: 460px;
-  width: 100%;
-  flex-wrap: wrap;
-}
-
-.loyalty-input-wrapper {
-  position: relative;
-  flex: 1;
-  min-width: 220px;
-  display: flex;
-  align-items: center;
-}
-
-.loyalty-input-icon {
-  position: absolute;
-  left: 14px;
-  color: #8a7e6f;
-  pointer-events: none;
-}
-
-.loyalty-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px 12px 42px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-raised);
-  font-size: 15px;
-  font-family: var(--mono);
-  color: var(--text-h);
-  min-height: 44px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.loyalty-input:focus-visible {
-  outline: 2px solid var(--accent-border);
-  outline-offset: 1px;
-  border-color: var(--accent);
-}
-
+/* Reused by the "Sign in to see your stamp card" CTA (see LoyaltyCard.tsx) —
+   originally the manual phone-lookup form's submit button, kept as the
+   page's one primary-accent button rather than duplicating the recipe. */
 .loyalty-submit-btn {
+  margin-top: 22px;
   padding: 12px 22px;
   border: 1px solid var(--accent);
   background: var(--accent);
@@ -135,35 +95,6 @@
 .loyalty-submit-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-}
-
-/* Small, clearly-secondary demo-data hint under the lookup form. A real
-   button (not just styled text) so it's keyboard-operable and prefills the
-   field rather than just being decorative copy. */
-.loyalty-demo-hint {
-  display: inline-flex;
-  margin-top: 10px;
-  padding: 0;
-  border: none;
-  background: none;
-  font-family: var(--mono);
-  font-size: 12.5px;
-  color: #6c6155;
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: var(--border);
-  text-underline-offset: 3px;
-}
-
-.loyalty-demo-hint:hover {
-  color: var(--accent);
-  text-decoration-color: var(--accent-border);
-}
-
-.loyalty-demo-hint:focus-visible {
-  outline: 2px solid var(--accent-border);
-  outline-offset: 3px;
-  border-radius: 2px;
 }
 
 .loyalty-error {
@@ -389,9 +320,7 @@
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .loyalty-input,
   .loyalty-submit-btn,
-  .loyalty-demo-hint,
   .loyalty-progress-fill,
   .loyalty-stamp {
     animation: none !important;

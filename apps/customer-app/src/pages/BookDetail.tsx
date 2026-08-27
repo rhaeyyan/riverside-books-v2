@@ -3,7 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { client } from '../api/client';
 import { formatMoney } from '../utils/format';
 import type { components } from '../api/types';
-import { ArrowLeft, CheckCircle2, MessageSquare, Clock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, MessageSquare, Clock, AlertCircle, LogIn } from 'lucide-react';
+import { getCustomerSession, subscribeToCustomerSession } from '../lib/customerSession';
+import { AUTH_OPEN_EVENT } from '../components/AuthDialog';
 import './BookDetail.css';
 
 type Book = components["schemas"]["Book"];
@@ -13,10 +15,12 @@ export default function BookDetail() {
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [coverError, setCoverError] = useState(false);
-  
-  const [phone, setPhone] = useState("");
-  const [name, setName] = useState("");
-  const [needsRegistration, setNeedsRegistration] = useState(false);
+
+  // PRD §5.3/§8.A.3 (v0.5): placing a hold requires being signed in --
+  // there is no more inline phone-lookup/registration on this page, that
+  // flow moved to AuthDialog (shared with MyOrders.tsx/LoyaltyCard.tsx,
+  // same reactive-session pattern).
+  const [session, setSession] = useState(() => getCustomerSession());
   const [orderId, setOrderId] = useState<string | null>(null);
   const [holdExpiresAt, setHoldExpiresAt] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -38,47 +42,19 @@ export default function BookDetail() {
     };
   }, [isbn]);
 
-  const handlePreOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (!book) return;
+  useEffect(() => {
+    return subscribeToCustomerSession(() => setSession(getCustomerSession()));
+  }, []);
 
-    const cleanPhone = phone.replace(/\D/g, "");
-    if (cleanPhone.length < 10) {
-      setError("Please enter a valid 10-digit phone number.");
-      return;
-    }
+  const handlePlaceHold = async () => {
+    setError(null);
+    if (!book || !session) return;
 
     setSubmitting(true);
-    let customerId = "";
-
     try {
-      if (needsRegistration && name.trim()) {
-        const { data: regData, error: regError } = await client.POST("/api/customers", {
-          body: { phone: cleanPhone, name: name.trim(), email: "" }
-        });
-        if (regError) {
-          setError("Could not register your phone number. Please check the format.");
-          setSubmitting(false);
-          return;
-        }
-        customerId = (regData as any).customer_id;
-        setNeedsRegistration(false);
-      } else {
-        const { data: custData, error: custError } = await client.POST("/api/customers/lookup", {
-          body: { phone: cleanPhone }
-        });
-        if (custError) {
-          setNeedsRegistration(true);
-          setSubmitting(false);
-          return;
-        }
-        customerId = (custData as any).customer_id;
-      }
-
       const { data, error: orderError, response: orderResponse } = await client.POST("/api/orders", {
         body: {
-          customer_id: customerId,
+          customer_id: session.customer_id,
           items: [{ isbn: book.isbn, quantity: 1 }],
           notes: "Customer hold"
         }
@@ -90,11 +66,11 @@ export default function BookDetail() {
           const res = await client.GET("/api/books/{isbn}", { params: { path: { isbn: book.isbn } } });
           if (res.data) setBook(res.data as Book);
         } else {
-          setError((orderError as any).detail || "Could not place hold. Please try again.");
+          setError("Could not place hold. Please try again.");
         }
       } else if (data) {
-        setOrderId((data as any).order_id);
-        setHoldExpiresAt((data as any).hold_expires_at);
+        setOrderId(data.order_id);
+        setHoldExpiresAt(data.hold_expires_at);
         const res = await client.GET("/api/books/{isbn}", { params: { path: { isbn: book.isbn } } });
         if (res.data) setBook(res.data as Book);
       }
@@ -240,60 +216,38 @@ export default function BookDetail() {
               <div className="hold-card">
                 <div className="hold-title">Hold a copy for 48 hours</div>
                 <p className="hold-subtitle">
-                  Free, no credit card needed. Your phone number is your pickup code.
+                  {session
+                    ? "Free, no credit card needed. We'll keep it behind the counter with your name on it."
+                    : "Free, no credit card needed. Sign in and it's one click."}
                 </p>
 
-                <form onSubmit={handlePreOrder} className="hold-form">
-                  {error && (
-                    <div className="form-error-alert" role="alert">
-                      <AlertCircle size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
-                      {error}
-                    </div>
-                  )}
-
-                  <div className="form-group">
-                    <label htmlFor="hold-phone" className="form-label">
-                      Phone Number
-                    </label>
-                    <input
-                      id="hold-phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="e.g. (845) 555-0142"
-                      required
-                      className="form-input phone-input"
-                      autoComplete="tel"
-                    />
+                {error && (
+                  <div className="form-error-alert" role="alert">
+                    <AlertCircle size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
+                    {error}
                   </div>
+                )}
 
-                  {needsRegistration && (
-                    <div className="form-group" style={{ animation: 'riseIn 0.2s ease' }}>
-                      <label htmlFor="customer-name" className="form-label">
-                        Your Full Name (First time with us?)
-                      </label>
-                      <input
-                        id="customer-name"
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="e.g. Jane Doe"
-                        required
-                        className="form-input"
-                        autoComplete="name"
-                      />
-                    </div>
-                  )}
-
+                {session ? (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handlePlaceHold}
                     disabled={submitting}
                     className="btn-hold-submit"
                   >
                     <Clock size={16} />
-                    {submitting ? "Placing hold..." : needsRegistration ? "Save & Place 48-Hour Hold" : "Place 48-Hour Hold"}
+                    {submitting ? "Placing hold..." : "Place 48-Hour Hold"}
                   </button>
-                </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new Event(AUTH_OPEN_EVENT))}
+                    className="btn-hold-submit"
+                  >
+                    <LogIn size={16} aria-hidden="true" />
+                    Sign in to place a hold
+                  </button>
+                )}
               </div>
             )}
           </div>

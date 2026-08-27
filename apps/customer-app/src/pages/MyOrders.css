@@ -53,76 +53,106 @@
   max-width: 460px;
 }
 
-.myorders-lookup-form {
-  display: flex;
-  gap: 10px;
-  margin-top: 22px;
-  max-width: 480px;
-  flex-wrap: wrap;
+/* Sign-in prompt shown when there's no session — replaces the old manual
+   phone-lookup form entirely (the endpoint it called, POST
+   /api/customers/lookup, no longer exists under the email/password identity
+   model). Opens the same AuthDialog the header's "Sign in" button does. */
+.myorders-signin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 12px 22px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--ink-text);
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  transition: background-color 0.15s ease;
 }
 
-.myorders-input-wrapper {
-  position: relative;
-  flex: 1;
-  min-width: 220px;
+.myorders-signin-btn:hover {
+  background: var(--accent-hover);
+}
+
+.myorders-signin-btn:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 2px;
+}
+
+/* Per-hold-item row: thumbnail + title/author instead of a bare ISBN.
+   Fallback treatment mirrors Home.css's .book-cover-fallback /
+   .book-fallback-initial, scaled down for a list row. */
+.myorders-item-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.myorders-item-row {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
-.myorders-search-icon {
-  position: absolute;
-  left: 14px;
-  color: #8a7e6f;
-  pointer-events: none;
+.myorders-item-thumb {
+  flex-shrink: 0;
+  width: 34px;
+  height: 50px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--code-bg);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.myorders-phone-input {
+.myorders-item-thumb-img {
   width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px 12px 42px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-raised);
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.myorders-item-thumb-fallback {
+  font-family: var(--heading);
   font-size: 15px;
-  font-family: var(--mono);
+  font-weight: 600;
+  color: rgba(36, 29, 22, 0.16);
+}
+
+.myorders-item-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.myorders-item-title {
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text-h);
-  min-height: 44px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.myorders-phone-input:focus-visible {
-  outline: 2px solid var(--accent-border);
-  outline-offset: 1px;
-  border-color: var(--accent);
-}
-
-/* Small, clearly-secondary demo-data hint under the lookup form. A real
-   button (not just styled text) so it's keyboard-operable and prefills the
-   field rather than just being decorative copy. */
-.myorders-demo-hint {
-  display: inline-flex;
-  margin-top: 10px;
-  padding: 0;
-  border: none;
-  background: none;
-  font-family: var(--mono);
-  font-size: 12.5px;
+.myorders-item-author {
+  font-size: 12px;
   color: #6c6155;
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: var(--border);
-  text-underline-offset: 3px;
 }
 
-.myorders-demo-hint:hover {
-  color: var(--accent);
-  text-decoration-color: var(--accent-border);
-}
-
-.myorders-demo-hint:focus-visible {
-  outline: 2px solid var(--accent-border);
-  outline-offset: 3px;
-  border-radius: 2px;
+.myorders-item-qty {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: #6c6155;
 }
 
 /* Status legend — replaces the old decorative hero illustration with a
@@ -192,8 +222,7 @@
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .myorders-phone-input,
-  .myorders-demo-hint {
+  .myorders-signin-btn {
     transition: none !important;
   }
 }

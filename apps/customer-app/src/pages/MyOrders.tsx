@@ -4,31 +4,29 @@ import { client } from '../api/client';
 import { formatMoney } from '../utils/format';
 import { prefersReducedMotion } from '../utils/motion';
 import type { components } from '../api/types';
-import { Search, Clock, Calendar, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
+import { Clock, Calendar, CheckCircle2, XCircle, BookOpen, LogIn } from 'lucide-react';
 import { getCustomerSession, subscribeToCustomerSession } from '../lib/customerSession';
+import { AUTH_OPEN_EVENT } from '../components/AuthDialog';
 import './MyOrders.css';
 
 type Order = components["schemas"]["Order"];
-
-const DEMO_PHONE = "(555) 100-0005";
+type Book = components["schemas"]["Book"];
 
 export default function MyOrders() {
-  const [phone, setPhone] = useState("");
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [session, setSession] = useState(() => getCustomerSession());
-  const [showManualLookup, setShowManualLookup] = useState(false);
+  const [bookDetails, setBookDetails] = useState<Record<string, Book>>({});
+  const [bookCoverErrors, setBookCoverErrors] = useState<Record<string, boolean>>({});
   const resultsRef = useRef<HTMLDivElement>(null);
-  // Set true right before a lookup (session auto-load or manual submit)
-  // resolves into `orders`, so the scroll effect below only fires as the
-  // direct result of a lookup — not on later state changes to `orders`
-  // (e.g. handleCancel patching an item in place) and not on first mount.
+  // Set true right before a session auto-load resolves into `orders`, so the
+  // scroll effect below only fires as the direct result of that load — not
+  // on later state changes to `orders` (e.g. handleCancel patching an item
+  // in place) and not on first mount.
   const shouldScrollToResults = useRef(false);
 
-  // Shared by both the session auto-load and the manual phone-lookup path so
-  // the same loading/empty/error/list render below is always what's shown.
   const loadOrdersForCustomer = async (customerId: string) => {
     shouldScrollToResults.current = true;
     setLoading(true);
@@ -58,24 +56,29 @@ export default function MyOrders() {
 
   // Reactive to sign-out (and cross-tab sign-in/out) happening while this
   // page is already mounted — a one-time mount read misses a sign-out that
-  // fires from App.tsx's header without a navigation. When the session
-  // disappears out from under an already-loaded order list, fall back to the
-  // same "no session" state: clear the loaded orders and let the render
-  // below fall through to the manual lookup form.
+  // fires from App.tsx's header without a navigation, and misses a sign-in
+  // completed through the new AuthDialog while this page is open. When the
+  // session disappears out from under an already-loaded order list, fall
+  // back to the same "no session" state: clear the loaded orders and let the
+  // render below fall through to the sign-in prompt. When a session appears
+  // (sign-in from this page's own prompt, or another tab), load its orders.
   useEffect(() => {
     return subscribeToCustomerSession(() => {
       const next = getCustomerSession();
       setSession(next);
-      if (!next) {
+      if (next) {
+        loadOrdersForCustomer(next.customer_id);
+      } else {
         setOrders(null);
         setError(null);
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Scroll the results into view once they arrive from a lookup (session
-  // auto-load or manual submit), not on initial mount and not on later
-  // in-place updates to `orders` (see the ref above).
+  // Scroll the results into view once they arrive from a session auto-load,
+  // not on initial mount and not on later in-place updates to `orders` (see
+  // the ref above).
   useEffect(() => {
     if (orders && shouldScrollToResults.current) {
       shouldScrollToResults.current = false;
@@ -86,41 +89,40 @@ export default function MyOrders() {
     }
   }, [orders]);
 
-  const fetchOrders = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const cleanPhone = phone.replace(/\D/g, "");
-    if (cleanPhone.length < 10) {
-      setError("Please enter a valid 10-digit phone number.");
-      return;
+  // Each order's items array only carries {isbn, quantity} — fetch the full
+  // Book (title, cover) per unique ISBN across all loaded orders so the list
+  // below can show a real thumbnail and title instead of a bare ISBN. Only
+  // fetches ISBNs not already in `bookDetails`, so a later in-place order
+  // update (handleCancel) doesn't re-fetch covers it already has.
+  useEffect(() => {
+    if (!orders || orders.length === 0) return;
+    const isbns = new Set<string>();
+    for (const o of orders) {
+      for (const item of o.items) isbns.add(item.isbn);
     }
+    const missing = Array.from(isbns).filter((isbn) => !(isbn in bookDetails));
+    if (missing.length === 0) return;
 
-    setLoading(true);
-    try {
-      const { data: custData, error: custError, response: custResponse } = await client.POST("/api/customers/lookup", {
-        body: { phone: cleanPhone }
-      });
-
-      if (custError) {
-        if (custResponse.status === 404) {
-          setError("No customer record found with that number. Have you placed a hold yet?");
-        } else {
-          setError("An error occurred while finding your account.");
+    let ignore = false;
+    Promise.all(
+      missing.map((isbn) =>
+        client.GET("/api/books/{isbn}", { params: { path: { isbn } } }).then(({ data }) => [isbn, data] as const)
+      )
+    ).then((results) => {
+      if (ignore) return;
+      setBookDetails((prev) => {
+        const next = { ...prev };
+        for (const [isbn, data] of results) {
+          if (data) next[isbn] = data as Book;
         }
-        setOrders(null);
-        return;
-      }
-
-      if (custData) {
-        const customerId = (custData as any).customer_id;
-        await loadOrdersForCustomer(customerId);
-      }
-    } catch {
-      setError("Unable to connect to the store database. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        return next;
+      });
+    });
+    return () => {
+      ignore = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders]);
 
   const handleCancel = async (orderId: string) => {
     setCancellingId(orderId);
@@ -146,69 +148,32 @@ export default function MyOrders() {
           <h1 className="myorders-title">
             My Holds & Orders
           </h1>
-          {session && !showManualLookup ? (
-            <>
-              <p className="myorders-subtitle">
-                Showing holds and orders for {session.name}.
-              </p>
-              <button
-                type="button"
-                className="rule-link"
-                onClick={() => setShowManualLookup(true)}
-              >
-                Not you? Look up another number
-              </button>
-            </>
+          {session ? (
+            <p className="myorders-subtitle">
+              Showing holds and orders for {session.name}.
+            </p>
           ) : (
             <>
               <p className="myorders-subtitle">
-                Look up your reservations and holds using the phone number you provided.
+                Sign in to see your holds and orders.
               </p>
-
-              <form onSubmit={fetchOrders} className="myorders-lookup-form">
-                <div className="myorders-input-wrapper">
-                  <Search size={18} className="myorders-search-icon" aria-hidden="true" />
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. (845) 555-0142"
-                    aria-label="Phone number"
-                    required
-                    className="myorders-phone-input"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="search-submit-btn"
-                >
-                  {loading ? "Looking up..." : "Find My Holds"}
-                </button>
-              </form>
-
               <button
                 type="button"
-                className="myorders-demo-hint"
-                onClick={() => setPhone(DEMO_PHONE)}
+                className="myorders-signin-btn"
+                onClick={() => window.dispatchEvent(new Event(AUTH_OPEN_EVENT))}
               >
-                Demo: try {DEMO_PHONE}
+                <LogIn size={16} aria-hidden="true" />
+                Sign in
               </button>
-
-              {session && (
-                <button
-                  type="button"
-                  className="rule-link"
-                  onClick={() => setShowManualLookup(false)}
-                >
-                  Back to my holds
-                </button>
-              )}
             </>
           )}
 
+          {loading && !orders && (
+            <p className="myorders-subtitle" style={{ marginTop: '16px' }}>Loading your holds…</p>
+          )}
+
           {error && (
-            <div style={{ padding: '14px 16px', background: 'var(--status-out-bg)', border: '1px solid var(--status-out)', borderRadius: '8px', color: 'var(--status-out)', fontSize: '14px', marginBottom: '24px' }} role="alert">
+            <div style={{ padding: '14px 16px', background: 'var(--status-out-bg)', border: '1px solid var(--status-out)', borderRadius: '8px', color: 'var(--status-out)', fontSize: '14px', marginTop: '20px', marginBottom: '4px' }} role="alert">
               {error}
             </div>
           )}
@@ -261,7 +226,7 @@ export default function MyOrders() {
               <BookOpen size={40} className="empty-state-icon" aria-hidden="true" />
               <h3 className="empty-state-title">No holds found</h3>
               <p className="empty-state-desc">
-                We don't see any holds or orders for that number. Browse our shelves to find your next great read!
+                We don't see any holds or orders on your account yet. Browse our shelves to find your next great read!
               </p>
               <Link to="/" className="btn-secondary" style={{ textDecoration: 'none' }}>
                 Browse Available Books
@@ -334,18 +299,39 @@ export default function MyOrders() {
                     )}
 
                     <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a7e6f', marginBottom: '8px', fontWeight: 600 }}>
+                      <div style={{ fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a7e6f', marginBottom: '10px', fontWeight: 600 }}>
                         Reserved Books ({o.items.length})
                       </div>
-                      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {o.items.map((item) => (
-                          <li key={item.isbn} style={{ fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
-                            <span>
-                              ISBN <span style={{ fontFamily: 'var(--mono)', fontSize: '13px' }}>{item.isbn}</span>
-                            </span>
-                            <span style={{ color: '#6c6155' }}>Qty: {item.quantity}</span>
-                          </li>
-                        ))}
+                      <ul className="myorders-item-list">
+                        {o.items.map((item) => {
+                          const book = bookDetails[item.isbn];
+                          const hasCover = Boolean(book?.cover_image_url) && !bookCoverErrors[item.isbn];
+                          return (
+                            <li key={item.isbn} className="myorders-item-row">
+                              <div className="myorders-item-thumb">
+                                {book && hasCover ? (
+                                  <img
+                                    src={book.cover_image_url}
+                                    alt={`Cover for ${book.title}`}
+                                    className="myorders-item-thumb-img"
+                                    onError={() => setBookCoverErrors((prev) => ({ ...prev, [item.isbn]: true }))}
+                                  />
+                                ) : (
+                                  <span className="myorders-item-thumb-fallback" aria-hidden="true">
+                                    {(book?.title ?? item.isbn).charAt(0).toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="myorders-item-meta">
+                                <span className="myorders-item-title">
+                                  {book ? book.title : <>ISBN <span style={{ fontFamily: 'var(--mono)', fontSize: '13px' }}>{item.isbn}</span></>}
+                                </span>
+                                {book && <span className="myorders-item-author">{book.author}</span>}
+                              </div>
+                              <span className="myorders-item-qty">Qty: {item.quantity}</span>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   </div>

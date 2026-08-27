@@ -42,6 +42,10 @@
   margin-bottom: 6px;
 }
 
+.signin-label--spaced {
+  margin-top: 16px;
+}
+
 .signin-input {
   width: 100%;
   box-sizing: border-box;
@@ -50,7 +54,6 @@
   border-radius: 8px;
   background: var(--bg-raised);
   font-size: 15px;
-  letter-spacing: 0.3em;
   color: var(--text-h);
 }
 
@@ -81,7 +84,7 @@
   transition: background-color 0.15s ease;
 }
 
-.signin-submit:hover {
+.signin-submit:hover:not(:disabled) {
   background: var(--ink-hover);
 }
 
@@ -90,10 +93,9 @@
   outline-offset: 2px;
 }
 
-.signin-demo-hint {
-  margin-top: 16px;
-  font-size: 11.5px;
-  color: var(--text);
+.signin-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .signin-back {

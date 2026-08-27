@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from backend.api.core.repositories import MessageRepository, StoreInfoRepository
 from backend.api.deps import get_message_repo, get_store_info_repo
 from backend.api.models import Message
-from backend.chatbot.gemini_reply import generate_draft_reply
+from backend.messages.gemini_reply import generate_draft_reply
 
 
 class DraftReplyResponse(BaseModel):

@@ -53,7 +53,7 @@ convention = "google"
 "backend/chatbot/tree.py" = ["E501"]
 "backend/chatbot/service.py" = ["E501"]
 "backend/marketing/service.py" = ["E501"]
-"backend/chatbot/gemini_reply.py" = ["E501"]
+"backend/messages/gemini_reply.py" = ["E501"]
 "tests/test_messages_gemini.py" = ["E501"]
 "backend/config.py" = ["E501"]
 # Embedded seed data — long book blurbs and policy strings are deliberate.

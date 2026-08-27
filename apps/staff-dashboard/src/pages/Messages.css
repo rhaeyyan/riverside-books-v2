@@ -14,6 +14,14 @@
   color: var(--text);
 }
 
+.messages-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -54,18 +62,26 @@
 
 .message-card {
   background: var(--bg-raised);
-  padding: 20px;
+  padding: 18px 20px;
   border-radius: 8px;
+  border-left: 3px solid var(--accent);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .message-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sender-name {
+  color: var(--text-h);
+  font-size: 15px;
 }
 
 .contact-info {
@@ -75,15 +91,17 @@
 }
 
 .message-time {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text);
+  white-space: nowrap;
 }
 
 .message-body {
-  color: var(--text);
+  color: var(--text-h);
   background: var(--code-bg);
   padding: 12px;
-  border-radius: 4px;
+  border-radius: 6px;
+  line-height: 1.5;
   white-space: pre-wrap;
 }
 
@@ -97,9 +115,11 @@
   color: var(--text);
   border: 1px solid var(--border);
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
+  font-size: 13px;
+  transition: background-color 0.15s ease;
 }
 
 .message-actions button:hover {
@@ -109,4 +129,10 @@
 .message-actions button:focus-visible {
   outline: 2px solid var(--accent-border);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message-actions button {
+    transition: none;
+  }
 }

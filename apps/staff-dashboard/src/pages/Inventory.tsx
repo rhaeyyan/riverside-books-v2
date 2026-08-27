@@ -312,7 +312,13 @@ export function Inventory() {
                 <td>{b.genre}</td>
                 <td>
                   {editingIsbn === b.isbn ? (
-                    <input type="number" value={editStockValue} onChange={e => setEditStockValue(e.target.value)} className="edit-stock-input" />
+                    <input
+                      type="number"
+                      value={editStockValue}
+                      onChange={e => setEditStockValue(e.target.value)}
+                      className="edit-stock-input"
+                      aria-label={`Stock count for ${b.title}`}
+                    />
                   ) : (
                     b.stock_count
                   )}
@@ -328,11 +334,11 @@ export function Inventory() {
                 <td>
                   {editingIsbn === b.isbn ? (
                     <div className="action-buttons">
-                      <button onClick={() => saveEdit(b)} title="Save"><Check size={16} /></button>
-                      <button onClick={cancelEdit} title="Cancel"><X size={16} /></button>
+                      <button type="button" onClick={() => saveEdit(b)} title="Save" aria-label={`Save stock count for ${b.title}`}><Check size={16} /></button>
+                      <button type="button" onClick={cancelEdit} title="Cancel" aria-label={`Cancel editing stock count for ${b.title}`}><X size={16} /></button>
                     </div>
                   ) : (
-                    <button onClick={() => startEdit(b)} title="Adjust count"><Edit2 size={16} /></button>
+                    <button type="button" onClick={() => startEdit(b)} title="Adjust count" aria-label={`Adjust stock count for ${b.title}`}><Edit2 size={16} /></button>
                   )}
                 </td>
               </tr>

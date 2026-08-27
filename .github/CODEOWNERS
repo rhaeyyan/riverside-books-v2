@@ -16,6 +16,8 @@
 
 # Product B: Staff Inventory & Ops Dashboard
 /apps/staff-dashboard/              @Cheewaiyip
+/backend/messages/                  @Cheewaiyip
+/tests/test_messages_gemini.py      @Cheewaiyip
 
 # Product C: Customer Support Chatbot
 /backend/chatbot/                   @humaali-create

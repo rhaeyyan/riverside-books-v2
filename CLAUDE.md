@@ -54,19 +54,52 @@ body and expect it to need the shared owner's review.
 
 ## Non-negotiables
 
-1. **No generative AI in Products C and D.** The chatbot is a decision tree
-   (`backend/chatbot/tree.py`) plus keyword matching; the marketing generator is
-   string templating (`backend/marketing/templates.py`). Adding a model call to
-   either is a rejected PR, not a design discussion.
+1. **Generative AI is banned in Products C and D by default, with two named
+   exceptions — nowhere else.** Product C's chatbot is still a decision tree
+   (`backend/chatbot/tree.py`) plus keyword matching, and Product D's marketing
+   generator is still string templating (`backend/marketing/templates.py`); a
+   model call anywhere else in either product is a rejected PR, not a design
+   discussion. As of 2026-08-27 there are exactly two carve-outs, both calling
+   the Gemini API directly over `httpx` (no new dependency, no SDK):
+   - **Marketing "Generate with AI"** — `backend/marketing/gemini_service.py`,
+     wired into `POST /api/marketing/generate` behind an opt-in `use_ai` flag
+     that defaults to `false`. Templating (`backend/marketing/service.py`)
+     stays the default path and the fallback: a missing `GEMINI_API_KEY` or
+     any Gemini failure falls straight back to the deterministic generator.
+   - **Staff inbox "Draft a reply"** — `backend/messages/gemini_reply.py`,
+     wired into `POST /api/messages/{message_id}/draft-reply`. No fallback:
+     it 400s with no key configured and 500s if the Gemini call fails. This is
+     a Product B feature (the staff dashboard's Messages inbox has the only
+     UI that calls it); it originally landed inside `backend/chatbot/`
+     (Product C's directory), which routed its PR to the wrong `CODEOWNERS`
+     reviewer — moved to its own `backend/messages/` package, now owned by
+     @Cheewaiyip alongside `tests/test_messages_gemini.py`. The shared
+     `backend/api/routers/messages.py` it's wired into stays unowned by any
+     one product (Product C's `POST /api/chat/escalate` writes to the same
+     message store that this reads from), so it isn't in that CODEOWNERS row.
+   Both read `gemini_api_key`/`gemini_model` off `backend/config.py` (shared,
+   `@rhaeyyan`) via `GEMINI_API_KEY`/`GEMINI_MODEL` env vars, documented in
+   `README.md` as of this writing (there is no `.env.example` in this repo —
+   `README.md`'s own inline `.env` snippets are the only environment-variable
+   reference). Neither the chatbot's decision tree nor the marketing template
+   engine were touched; the default, AI-off behavior of both products is
+   unchanged.
 2. **`docs/PRD.md` §5–7 is a contract.** Renaming a model field or changing an
    endpoint shape breaks another teammate's product at runtime with no compile
    error. Propose the change; do not just make it.
    `uv run python -m scripts.check_contract` compares the §6 field tables and
    the §7 route table against the Pydantic models and the OpenAPI schema. It
    reports drift that predates today, so read the output rather than the exit
-   code — what matters is whether **your** diff added a line to it.
-3. **No secrets, ever.** The suite runs on mock data and has no production
-   credentials. Nothing goes in `.env` that would matter if leaked.
+   code — what matters is whether **your** diff added a line to it. Neither
+   `POST /api/marketing/generate`'s new `use_ai` field nor the new
+   `POST /api/messages/{message_id}/draft-reply` route is in the PRD yet.
+3. **No secrets, ever — with one live exception.** The suite runs on mock data
+   and has no production database credentials; nothing else goes in `.env`
+   that would matter if leaked. `GEMINI_API_KEY` (non-negotiable 1) is the
+   exception: a real Google AI Studio key that would matter if leaked (quota
+   and billing abuse on whatever account it belongs to). Treat it like any
+   other real secret — local `.env` only, never committed, never logged
+   (`scripts/verify_gemini_key.py` masks it when printing it back).
 4. **`main` is protected.** Branch, PR, green CI, one owner approval. No direct
    pushes, no force pushes to shared branches, no history rewrites. A
    `PreToolUse` hook asks before each of those (see Hooks) — it is a backstop,

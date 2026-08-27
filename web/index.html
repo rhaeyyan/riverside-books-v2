@@ -54,19 +54,53 @@
     .quiet-link { color: var(--ink-text); border-bottom: 1px solid rgba(251, 247, 240, .4); transition: border-color .15s ease; }
     .quiet-link:hover { border-color: var(--ink-text); }
 
-    .footer-link { color: var(--muted-2); border-bottom: 1px solid var(--border-2); transition: color .15s ease, border-color .15s ease; }
-    .footer-link:hover { color: var(--ink); border-color: var(--ink); }
+    .btn-staff { color: var(--muted-2); background: transparent; border: 1px solid var(--border-2); transition: color .15s ease, border-color .15s ease; cursor: pointer; }
+    .btn-staff:hover { color: var(--ink); border-color: var(--ink); }
 
     @media (prefers-reduced-motion: reduce) {
-      a, .nav-link, .btn-primary, .btn-cream, .quiet-link, .footer-link { transition: none; }
+      a, .nav-link, .btn-primary, .btn-cream, .quiet-link, .btn-staff { transition: none; }
     }
+
+    #riverside-signin-dialog {
+      border: none;
+      border-radius: 10px;
+      padding: 28px;
+      max-width: 380px;
+      width: calc(100vw - 40px);
+      color: var(--text);
+      font-family: var(--sans);
+      box-shadow: 0 20px 60px rgba(47, 23, 57, .35);
+    }
+    #riverside-signin-dialog::backdrop { background: rgba(47, 23, 57, .55); }
+    #riverside-signin-dialog h2 { font-family: var(--heading); font-weight: 500; font-size: 22px; color: var(--ink); margin: 0; }
+    #riverside-signin-dialog p { font-size: 14px; line-height: 1.5; color: var(--muted); margin: 10px 0 0; }
+    #riverside-signin-dialog label { display: block; font-size: 13px; font-weight: 500; color: var(--ink); margin: 16px 0 6px; }
+    #riverside-signin-dialog input {
+      width: 100%; font: inherit; font-size: 15px; padding: 10px 12px; border-radius: 6px;
+      border: 1px solid var(--border-2); background: var(--bg); color: var(--text);
+    }
+    #riverside-signin-dialog input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    #riverside-signin-error {
+      margin-top: 14px; padding: 10px 12px; border-radius: 6px; font-size: 13.5px;
+      background: #fbeceb; color: #8a3226; border: 1px solid #e6c3bf;
+    }
+    #riverside-signin-submit {
+      margin-top: 20px; width: 100%; border: none; border-radius: 6px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer;
+    }
+    #riverside-signin-submit:disabled { opacity: .65; cursor: not-allowed; }
+    #riverside-signin-close {
+      position: absolute; top: 18px; right: 18px; background: none; border: none; font-size: 20px;
+      line-height: 1; color: var(--muted-2); cursor: pointer; padding: 4px;
+    }
+    #riverside-signin-close:hover { color: var(--ink); }
+    .riverside-dialog-head { position: relative; }
 
     .hero-title { font-size: clamp(40px, 7.5vw, 84px); }
     .band-title { font-size: clamp(30px, 5vw, 52px); }
 
     .rule {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0 40px;
     }
     .talkers {
@@ -102,6 +136,10 @@
       <a href="/shop/loyalty" class="nav-link">Stamp card</a>
       <a href="/docs" class="nav-link" style="color: var(--muted-2)">API docs</a>
     </nav>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <button type="button" id="riverside-signin-btn" class="btn-primary" style="font-size: 14px; font-weight: 600; padding: 9px 18px; border-radius: 6px; border: none; cursor: pointer; white-space: nowrap">Sign in</button>
+      <a href="/staff/" class="btn-staff" style="font-size: 13px; padding: 8px 14px; border-radius: 6px; text-decoration: none; white-space: nowrap">Staff</a>
+    </div>
   </header>
 
   <main>
@@ -171,16 +209,11 @@
     <div class="rule">
       <div style="border-top: 2px solid var(--ink); padding: 18px 0 30px">
         <div style="font-family: var(--heading); font-size: 15px; color: var(--amber); letter-spacing: 0.14em">01</div>
-        <h3 style="font-family: var(--heading); font-size: 26px; font-weight: 400; line-height: 1.12; letter-spacing: -0.02em; color: var(--ink); margin: 10px 0 0; max-width: 15ch">Live stock, not a guess</h3>
-        <p style="margin: 10px 0 0; font-size: 15.5px; line-height: 1.6; color: var(--muted); max-width: 32ch">Every title reads in stock, last copies, or out &mdash; the same count the till sees.</p>
-      </div>
-      <div style="border-top: 1px solid var(--border-2); padding: 18px 0 30px">
-        <div style="font-family: var(--heading); font-size: 15px; color: var(--amber); letter-spacing: 0.14em">02</div>
         <h3 style="font-family: var(--heading); font-size: 26px; font-weight: 400; line-height: 1.12; letter-spacing: -0.02em; color: var(--ink); margin: 10px 0 0; max-width: 15ch">Held 48 hours</h3>
         <p style="margin: 10px 0 0; font-size: 15.5px; line-height: 1.6; color: var(--muted); max-width: 32ch">Reserve with a phone number. It waits behind the counter with your name on it.</p>
       </div>
       <div style="border-top: 1px solid var(--border-2); padding: 18px 0 30px">
-        <div style="font-family: var(--heading); font-size: 15px; color: var(--amber); letter-spacing: 0.14em">03</div>
+        <div style="font-family: var(--heading); font-size: 15px; color: var(--amber); letter-spacing: 0.14em">02</div>
         <h3 style="font-family: var(--heading); font-size: 26px; font-weight: 400; line-height: 1.12; letter-spacing: -0.02em; color: var(--ink); margin: 10px 0 0; max-width: 15ch">Ask a bookseller</h3>
         <p style="margin: 10px 0 0; font-size: 15.5px; line-height: 1.6; color: var(--muted); max-width: 32ch">Hours, events, whether we have it. Answered in the shop's own words, day or night.</p>
       </div>
@@ -233,9 +266,169 @@
   <footer style="margin-top: auto; width: 100%; max-width: 1120px; margin-left: auto; margin-right: auto; padding: 56px 28px 28px; box-sizing: border-box">
     <div style="border-top: 1px solid var(--border-2); padding-top: 18px; display: flex; align-items: center; gap: 20px; font-size: 13px; color: var(--muted-2); flex-wrap: wrap">
       <span>Riverside Books &middot; 128 Main Street, Beacon NY &middot; Mon&ndash;Sat 10 AM&ndash;8 PM, Sun 11 AM&ndash;5 PM</span>
-      <a href="/staff/" class="footer-link" style="margin-left: auto; padding-bottom: 2px; text-decoration: none; white-space: nowrap">Staff sign in</a>
     </div>
   </footer>
 </div>
+
+<dialog id="riverside-signin-dialog">
+  <div class="riverside-dialog-head">
+    <h2>Sign in</h2>
+    <button type="button" id="riverside-signin-close" aria-label="Close">&times;</button>
+  </div>
+  <p id="riverside-signin-intro">Enter your phone number to find your holds and stamp card.</p>
+  <form id="riverside-signin-form" novalidate>
+    <label for="riverside-signin-phone">Phone number</label>
+    <input type="tel" id="riverside-signin-phone" name="phone" autocomplete="tel" required placeholder="e.g. (845) 555-0142" />
+    <div id="riverside-signin-name-wrap" hidden>
+      <label for="riverside-signin-name">Your name</label>
+      <input type="text" id="riverside-signin-name" name="name" autocomplete="name" placeholder="First and last name" />
+      <p>We don't have that number yet &mdash; tell us your name and we'll set up your account.</p>
+    </div>
+    <div id="riverside-signin-error" role="alert" hidden></div>
+    <button type="submit" id="riverside-signin-submit" class="btn-primary">Continue</button>
+  </form>
+</dialog>
+
+<script>
+(function () {
+  var dialog = document.getElementById('riverside-signin-dialog');
+  var openBtn = document.getElementById('riverside-signin-btn');
+  var closeBtn = document.getElementById('riverside-signin-close');
+  var form = document.getElementById('riverside-signin-form');
+  var phoneInput = document.getElementById('riverside-signin-phone');
+  var nameWrap = document.getElementById('riverside-signin-name-wrap');
+  var nameInput = document.getElementById('riverside-signin-name');
+  var errorBox = document.getElementById('riverside-signin-error');
+  var submitBtn = document.getElementById('riverside-signin-submit');
+  var needsRegistration = false;
+
+  function showError(message) {
+    errorBox.textContent = message;
+    errorBox.hidden = false;
+  }
+
+  function clearError() {
+    errorBox.hidden = true;
+    errorBox.textContent = '';
+  }
+
+  function resetButton() {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Continue';
+  }
+
+  function openDialog() {
+    clearError();
+    needsRegistration = false;
+    nameWrap.hidden = true;
+    form.reset();
+    resetButton();
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+    phoneInput.focus();
+  }
+
+  function closeDialog() {
+    if (typeof dialog.close === 'function') {
+      dialog.close();
+    } else {
+      dialog.removeAttribute('open');
+    }
+  }
+
+  function signInSuccess(customer) {
+    try {
+      localStorage.setItem('riverside_customer', JSON.stringify({
+        customer_id: customer.customer_id,
+        phone: customer.phone,
+        name: customer.name
+      }));
+    } catch (storageError) {
+      // Private browsing / storage disabled: proceed without persisting.
+    }
+    window.location.href = '/shop/orders';
+  }
+
+  function submitLookup(phone) {
+    fetch('/api/customers/lookup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phone })
+    }).then(function (res) {
+      if (res.status === 404) {
+        needsRegistration = true;
+        nameWrap.hidden = false;
+        resetButton();
+        nameInput.focus();
+        return null;
+      }
+      if (!res.ok) {
+        throw new Error('lookup-failed');
+      }
+      return res.json();
+    }).then(function (customer) {
+      if (customer) {
+        signInSuccess(customer);
+      }
+    }).catch(function () {
+      resetButton();
+      showError('We could not reach the store. Please try again.');
+    });
+  }
+
+  function submitRegistration(phone, name) {
+    if (!name) {
+      resetButton();
+      showError('Enter your name so we can set up your account.');
+      return;
+    }
+    fetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phone, name: name })
+    }).then(function (res) {
+      if (!res.ok) {
+        return res.json().catch(function () { return {}; }).then(function (body) {
+          throw new Error((body && body.detail) || 'register-failed');
+        });
+      }
+      return res.json();
+    }).then(function (customer) {
+      signInSuccess(customer);
+    }).catch(function (err) {
+      resetButton();
+      showError(typeof err.message === 'string' && err.message !== 'register-failed'
+        ? err.message
+        : 'We could not set up your account. Please try again.');
+    });
+  }
+
+  openBtn.addEventListener('click', openDialog);
+  closeBtn.addEventListener('click', closeDialog);
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    clearError();
+
+    var phone = phoneInput.value.trim();
+    if (!phone) {
+      showError('Enter a phone number to continue.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Please wait...';
+
+    if (!needsRegistration) {
+      submitLookup(phone);
+    } else {
+      submitRegistration(phone, nameInput.value.trim());
+    }
+  });
+})();
+</script>
 </body>
 </html>

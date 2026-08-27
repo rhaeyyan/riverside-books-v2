@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { client } from '../api/client';
 
 export function useChatSession() {
@@ -13,11 +13,27 @@ export function useChatSession() {
 
   const [userInput, setUserInput] = useState("");
 
+  // Mirrors isEscalating for synchronous reads inside in-flight requests.
+  // startChat() can still be awaiting its response when the user triggers
+  // CHAT_ESCALATE_EVENT (ChatPanel calls startEscalation() directly while
+  // the panel is already open) — without this, the stale response's
+  // setHistory/setCurrentNode would wipe the escalation bubble it just
+  // added while isEscalating stayed true, leaving the form and the history
+  // out of sync. Reading `isEscalating` itself inside the async closure
+  // would only ever see the value from when startChat() was called.
+  const isEscalatingRef = useRef(false);
+  useEffect(() => {
+    isEscalatingRef.current = isEscalating;
+  }, [isEscalating]);
+
   const startChat = async () => {
     if (history.length > 0 && history[0].text !== "Failed to connect. Please try again.") return;
     setIsLoading(true);
     try {
       const { data, error } = await client.POST("/api/chat/message", { body: { node_id: "root", input: null } });
+      // Escalation may have started while this request was in flight —
+      // don't let a stale root-node response clobber it.
+      if (isEscalatingRef.current) return;
       if (error) {
         setHistory([{ sender: 'bot', text: "Failed to connect. Please try again." }]);
         return;
@@ -27,10 +43,23 @@ export function useChatSession() {
         setHistory([{ sender: 'bot', text: (data as any).text }]);
       }
     } catch {
+      if (isEscalatingRef.current) return;
       setHistory([{ sender: 'bot', text: "Failed to connect. Please try again." }]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Entry point for the "Ask a bookseller" deep-link CTAs on Home.tsx: jumps
+  // straight to the escalation form, skipping the root-node greeting. Mirrors
+  // handleOption's `optId === "escalate"` branch, minus the user-facing quick
+  // reply label (there's no quick-reply click to echo here) and minus
+  // startChat's reconnect-avoidance guard, since this is an explicit
+  // user-initiated transition rather than a panel-open side effect.
+  const startEscalation = () => {
+    setHistory(h => [...h, { sender: 'bot', text: "Please provide your details below to leave a message." }]);
+    setIsEscalating(true);
+    setCurrentNode(null);
   };
 
   const handleOption = async (optId: string, optLabel: string) => {
@@ -124,6 +153,6 @@ export function useChatSession() {
     escContact, setEscContact,
     escBody, setEscBody,
     userInput, setUserInput,
-    startChat, handleOption, submitEscalation, submitInput
+    startChat, startEscalation, handleOption, submitEscalation, submitInput
   };
 }

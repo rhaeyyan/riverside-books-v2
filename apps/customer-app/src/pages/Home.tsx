@@ -4,6 +4,7 @@ import { client } from '../api/client';
 import { formatMoney } from '../utils/format';
 import type { components } from '../api/types';
 import { Search, X, MessageSquare, BookOpen } from 'lucide-react';
+import { CHAT_ESCALATE_EVENT } from '../components/ChatPanel';
 import './Home.css';
 
 type Book = components["schemas"]["Book"];
@@ -206,27 +207,20 @@ export default function Home() {
       <section className="browse-rule" aria-label="Why shop the shelf at Riverside Books">
         <div className="rule-item">
           <div className="rule-number" aria-hidden="true">01</div>
-          <h2 className="rule-title">Live stock, not a guess</h2>
-          <p className="rule-desc">
-            Every card below shows the same count the register sees — in stock, only a few copies left, or out.
-          </p>
-        </div>
-        <div className="rule-item">
-          <div className="rule-number" aria-hidden="true">02</div>
           <h2 className="rule-title">Held 48 hours</h2>
           <p className="rule-desc">
             Reserve a title and we'll keep it by the register with your name on it for two days.
           </p>
         </div>
         <div className="rule-item">
-          <div className="rule-number" aria-hidden="true">03</div>
+          <div className="rule-number" aria-hidden="true">02</div>
           <h2 className="rule-title">Ask a bookseller</h2>
           <p className="rule-desc">
             Can't find it on the shelf? Open the chat and ask — a real person answers.
           </p>
           <button
             type="button"
-            onClick={() => document.getElementById("chatbot-toggle")?.click()}
+            onClick={() => window.dispatchEvent(new Event(CHAT_ESCALATE_EVENT))}
             className="rule-link"
           >
             Ask a bookseller <span aria-hidden="true">&rarr;</span>
@@ -270,7 +264,7 @@ export default function Home() {
           <div className="empty-state-actions">
             <button
               type="button"
-              onClick={() => document.getElementById("chatbot-toggle")?.click()}
+              onClick={() => window.dispatchEvent(new Event(CHAT_ESCALATE_EVENT))}
               className="btn-secondary"
             >
               <MessageSquare size={16} />

@@ -214,7 +214,7 @@ class Message(BaseModel):
 
     message_id: str
     name: str
-    contact: str
+    contact: str = Field(pattern=EMAIL_PATTERN)
     body: str
     created_at: str
     status: Literal["new", "read"] = "new"

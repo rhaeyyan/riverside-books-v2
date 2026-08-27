@@ -986,7 +986,7 @@ MESSAGES: list[dict[str, Any]] = [
     {
         "message_id": "msg_002",
         "name": "Marcus Vance",
-        "contact": "5551234567",
+        "contact": "marcus.vance@example.com",
         "body": "Hello! Can I order a bulk set of 15 copies of 'The Alchemist' for our "
         "community youth reading group next month?",
         "status": "new",

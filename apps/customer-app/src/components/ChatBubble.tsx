@@ -108,6 +108,7 @@ export function TextField({
   placeholder,
   multiline = false,
   required = false,
+  type = 'text',
 }: {
   id: string;
   label: string;
@@ -116,6 +117,7 @@ export function TextField({
   placeholder?: string;
   multiline?: boolean;
   required?: boolean;
+  type?: string;
 }) {
   const shared = `w-full rounded-2xl border border-[var(--text)] bg-[var(--bg)] px-4 py-2.5 text-[15px] text-[var(--text-h)] placeholder:text-[var(--text)] ${FOCUS}`;
   return (
@@ -135,6 +137,7 @@ export function TextField({
       ) : (
         <input
           id={id}
+          type={type}
           required={required}
           value={value}
           placeholder={placeholder}

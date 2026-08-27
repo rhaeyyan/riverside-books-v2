@@ -626,7 +626,7 @@ class TestMessageRepository:
         msg = Message(
             message_id="msg_test_999",
             name="Jane Doe",
-            contact="555-0199",
+            contact="jane.doe@example.com",
             body="Can you hold a copy of Dune?",
             created_at="2026-08-25T14:00:00Z",
             status="new",

@@ -117,3 +117,11 @@ def test_escalated_message_lands_in_inbox(client: TestClient, msg_repo):
     final_msgs = msg_repo.get_all()
     assert len(final_msgs) == len(initial_msgs) + 1
     assert any(m.body == "Help me" for m in final_msgs)
+
+
+def test_escalation_rejects_non_email_contact(client: TestClient):
+    r = client.post(
+        "/api/chat/escalate",
+        json={"name": "Test User", "contact": "5551234567", "body": "Help me"},
+    )
+    assert r.status_code == 422

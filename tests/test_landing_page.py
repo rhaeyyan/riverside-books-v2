@@ -78,6 +78,11 @@ def test_header_has_customer_sign_in_and_discrete_staff_link(client: TestClient)
 def test_inline_script_references_customer_endpoints_and_storage_key(
     client: TestClient,
 ):
+    """§5.3 (v0.5): email/password login and registration, not phone lookup.
+
+    /api/customers/lookup no longer exists at all -- see
+    test_no_reference_to_removed_lookup_endpoint below.
+    """
     response = client.get("/")
     text = response.text
 
@@ -85,6 +90,25 @@ def test_inline_script_references_customer_endpoints_and_storage_key(
     inline_script = "\n".join(scripts)
 
     assert inline_script.strip() != "", "expected an inline <script> block"
-    assert "/api/customers/lookup" in inline_script
+    assert "/api/customers/login" in inline_script
     assert "/api/customers" in inline_script
     assert "riverside_customer" in inline_script
+
+
+def test_no_reference_to_removed_lookup_endpoint(client: TestClient):
+    """The v0.4 phone-lookup endpoint was removed outright in v0.5, not kept
+    alongside email/password -- nothing on the page should still call it."""
+    response = client.get("/")
+    assert "/api/customers/lookup" not in response.text
+
+
+def test_signin_dialog_has_email_and_password_fields(client: TestClient):
+    response = client.get("/")
+    text = response.text
+    dialog = _extract_between(text, 'id="riverside-signin-dialog"', "</dialog>")
+
+    assert re.search(r'type="email"', dialog), "expected an email input"
+    assert re.search(r'type="password"', dialog), "expected a password input"
+    assert "sign up" in dialog.lower(), (
+        "expected a way to switch to a sign-up flow in the dialog"
+    )

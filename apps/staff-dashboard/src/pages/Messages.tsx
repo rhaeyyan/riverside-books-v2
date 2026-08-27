@@ -7,6 +7,27 @@ type Message = components["schemas"]["Message"];
 
 export function Messages() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isDrafting, setIsDrafting] = useState<Record<string, boolean>>({});
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+
+  const handleDraftReply = async (messageId: string) => {
+    setIsDrafting(prev => ({ ...prev, [messageId]: true }));
+    try {
+      const res = await client.POST("/api/messages/{message_id}/draft-reply", {
+        params: { path: { message_id: messageId } }
+      });
+      if (res.data) {
+        setDrafts(prev => ({ ...prev, [messageId]: res.data.draft_text }));
+      } else {
+        alert("Failed to generate draft");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error calling draft endpoint");
+    } finally {
+      setIsDrafting(prev => ({ ...prev, [messageId]: false }));
+    }
+  };
 
   const fetchMessages = () => {
     client.GET("/api/messages", {}).then((res) => {
@@ -77,7 +98,26 @@ export function Messages() {
                 >
                   Mark handled
                 </button>
+                <button
+                  type="button"
+                  className="draft-reply-btn"
+                  onClick={() => handleDraftReply(m.message_id)}
+                  disabled={isDrafting[m.message_id]}
+                  aria-label={`Draft an AI reply to the message from ${m.name}`}
+                >
+                  {isDrafting[m.message_id] ? "Drafting..." : "Draft Reply with AI ✨"}
+                </button>
               </div>
+              {drafts[m.message_id] && (
+                <div className="draft-container">
+                  <label>Draft Reply:</label>
+                  <textarea 
+                    className="draft-textarea"
+                    defaultValue={drafts[m.message_id]} 
+                    rows={6}
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -230,13 +230,16 @@
   </section>
 
   <section style="width: 100%; max-width: 1120px; margin: 0 auto; padding: 64px 28px 16px; box-sizing: border-box">
-    <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 22px">
-      <h2 style="font-family: var(--heading); font-size: 28px; font-weight: 400; letter-spacing: -0.025em; color: var(--ink); margin: 0">What we're pressing on people</h2>
-      <span style="font-size: 13px; color: var(--muted-2)">Handwritten on the shelf this month</span>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 22px">
+      <h2 style="font-family: var(--heading); font-size: 28px; font-weight: 400; letter-spacing: -0.025em; color: var(--ink); margin: 0">Staff Selections</h2>
+      <div id="staff-picks-dots" role="group" aria-label="Staff selections, page" style="display: flex; align-items: center; gap: 8px"></div>
     </div>
-    <div class="talkers">
+    <div class="talkers" id="staff-picks-talkers">
       <article style="display: flex; gap: 20px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: 22px">
-        <div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">B</div>
+        <div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; position: relative">
+          <img src="https://covers.openlibrary.org/b/isbn/9781571313560-L.jpg" alt="Cover of Braiding Sweetgrass" style="width: 100%; height: 100%; object-fit: cover; display: block" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">B</div>
+        </div>
         <div style="min-width: 0">
           <div style="font-family: var(--heading); font-size: 19px; font-weight: 500; color: var(--ink); line-height: 1.2">Braiding Sweetgrass</div>
           <div style="font-size: 13px; color: var(--muted-2); margin-top: 3px">Robin Wall Kimmerer</div>
@@ -248,7 +251,10 @@
         </div>
       </article>
       <article style="display: flex; gap: 20px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: 22px">
-        <div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">L</div>
+        <div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; position: relative">
+          <img src="https://covers.openlibrary.org/b/isbn/9780385547345-L.jpg" alt="Cover of Lessons in Chemistry" style="width: 100%; height: 100%; object-fit: cover; display: block" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">L</div>
+        </div>
         <div style="min-width: 0">
           <div style="font-family: var(--heading); font-size: 19px; font-weight: 500; color: var(--ink); line-height: 1.2">Lessons in Chemistry</div>
           <div style="font-size: 13px; color: var(--muted-2); margin-top: 3px">Bonnie Garmus</div>
@@ -428,6 +434,152 @@
       submitRegistration(phone, nameInput.value.trim());
     }
   });
+})();
+
+(function () {
+  var PICKS = [
+    {
+      isbn: '9781571313560', title: 'Braiding Sweetgrass', author: 'Robin Wall Kimmerer',
+      quote: "I have re-shelved this four times and bought it back twice. Read the strawberry chapter and you'll understand.",
+      staff: 'Nora, floor 2'
+    },
+    {
+      isbn: '9780385547345', title: 'Lessons in Chemistry', author: 'Bonnie Garmus',
+      quote: 'Funnier than the cover lets on, and angrier. Seven copies out the door last week — we keep a stack by the register.',
+      staff: 'Ellis, front counter'
+    },
+    {
+      isbn: '9781250301697', title: 'The Silent Patient', author: 'Alex Michaelides',
+      quote: 'Read it in one sitting on my day off. The last thirty pages made me miss my bus stop.',
+      staff: 'Priya, mystery shelf'
+    },
+    {
+      isbn: '9780062316097', title: 'Sapiens', author: 'Yuval Noah Harari',
+      quote: 'Changed how I think about basically everything before I’d finished my coffee. Start here if you only read one big-idea book this year.',
+      staff: 'Jordan, staff picks table'
+    },
+    {
+      isbn: '9780316056861', title: 'Bossypants', author: 'Tina Fey',
+      quote: 'Laughed out loud on the train, which is not a normal thing I do on the train.',
+      staff: 'Marcus, break room'
+    },
+    {
+      isbn: '9780679406419', title: 'Maus', author: 'Art Spiegelman',
+      quote: "Still the best argument I know for why comics belong on the literature shelf, not the kids' one.",
+      staff: 'Nora, floor 2'
+    }
+  ];
+
+  var container = document.getElementById('staff-picks-talkers');
+  var dotsWrap = document.getElementById('staff-picks-dots');
+  if (!container || !dotsWrap) return;
+
+  var pageCount = Math.ceil(PICKS.length / 2);
+  var current = 0;
+  var timer = null;
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function cardHtml(pick) {
+    var initial = escapeHtml(pick.title.charAt(0).toUpperCase());
+    var title = escapeHtml(pick.title);
+    var cover = 'https://covers.openlibrary.org/b/isbn/' + encodeURIComponent(pick.isbn) + '-L.jpg';
+    return (
+      '<article style="display: flex; gap: 20px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: 22px">' +
+        '<div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; position: relative">' +
+          '<img src="' + cover + '" alt="Cover of ' + title + '" style="width: 100%; height: 100%; object-fit: cover; display: block" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\'">' +
+          '<div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">' + initial + '</div>' +
+        '</div>' +
+        '<div style="min-width: 0">' +
+          '<div style="font-family: var(--heading); font-size: 19px; font-weight: 500; color: var(--ink); line-height: 1.2">' + title + '</div>' +
+          '<div style="font-size: 13px; color: var(--muted-2); margin-top: 3px">' + escapeHtml(pick.author) + '</div>' +
+          '<p style="font-family: var(--heading); font-style: italic; font-size: 16px; line-height: 1.5; color: var(--text); margin: 12px 0 0">' + escapeHtml(pick.quote) + '</p>' +
+          '<div style="display: flex; align-items: center; gap: 8px; margin-top: 14px">' +
+            '<span style="width: 20px; height: 1px; background: var(--amber); display: block"></span>' +
+            '<span style="font-size: 12px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--amber); font-weight: 600">' + escapeHtml(pick.staff) + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</article>'
+    );
+  }
+
+  function renderDots() {
+    var html = '';
+    for (var i = 0; i < pageCount; i++) {
+      html += '<button type="button" class="talkers-dot" data-index="' + i + '" aria-label="Show staff picks, set ' + (i + 1) + ' of ' + pageCount + '"' +
+        (i === current ? ' aria-current="true"' : '') +
+        ' style="width: 8px; height: 8px; padding: 0; border-radius: 50%; border: none; cursor: pointer; background: ' + (i === current ? 'var(--accent)' : 'var(--border-2)') + '"></button>';
+    }
+    dotsWrap.innerHTML = html;
+    var buttons = dotsWrap.querySelectorAll('.talkers-dot');
+    for (var j = 0; j < buttons.length; j++) {
+      buttons[j].addEventListener('click', function (e) {
+        goTo(parseInt(e.currentTarget.getAttribute('data-index'), 10));
+        resetTimer();
+      });
+    }
+  }
+
+  function renderCards() {
+    var start = current * 2;
+    var pair = PICKS.slice(start, start + 2);
+    var html = pair.map(cardHtml).join('');
+    if (reduceMotion) {
+      container.innerHTML = html;
+    } else {
+      container.style.transition = 'opacity 0.3s ease';
+      container.style.opacity = '0';
+      window.setTimeout(function () {
+        container.innerHTML = html;
+        container.style.opacity = '1';
+      }, 220);
+    }
+  }
+
+  function goTo(index) {
+    current = ((index % pageCount) + pageCount) % pageCount;
+    renderCards();
+    renderDots();
+  }
+
+  function next() {
+    goTo(current + 1);
+  }
+
+  function startTimer() {
+    if (reduceMotion || pageCount <= 1 || timer) return;
+    timer = window.setInterval(next, 7000);
+  }
+
+  function stopTimer() {
+    if (timer) {
+      window.clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  function resetTimer() {
+    stopTimer();
+    startTimer();
+  }
+
+  container.addEventListener('mouseenter', stopTimer);
+  container.addEventListener('mouseleave', startTimer);
+  container.addEventListener('focusin', stopTimer);
+  container.addEventListener('focusout', function (e) {
+    if (!container.contains(e.relatedTarget)) startTimer();
+  });
+
+  // The container already has the first pair rendered server-side (works with
+  // JS disabled) -- only the dots and the timer are new here, so there's no
+  // redundant re-render/flash on load.
+  renderDots();
+  startTimer();
 })();
 </script>
 </body>

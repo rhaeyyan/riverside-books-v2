@@ -1,56 +1,38 @@
 /* MyOrders.css — Riverside Books Customer Holds & Orders
-   Mirrors the hero / feature-strip / promo pattern established in Home.css.
+   Mirrors the hero / feature-strip pattern established in Home.css, but the
+   hero is single-column here (see the design report — the old two-column
+   hero paired copy with a purely decorative illustration; the illustration
+   is gone and there's no dynamic replacement for this page the way
+   LoyaltyCard has, so the second column went away rather than sit empty).
    Reuses Home.css's shared, unprefixed .rule-item / .rule-number /
    .rule-title / .rule-desc classes rather than redefining them here — those
    classes are always loaded because Home.tsx is statically imported by
    App.tsx regardless of route. */
 
 .myorders-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 20px 44px;
-  padding: 46px 0 30px;
+  padding: 46px 0 34px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 26px;
 }
 
 .myorders-hero-copy {
   min-width: 0;
-}
-
-/* Illustrated "held book on a reserved shelf slot" graphic — self-contained
-   inline SVG, no external asset. */
-.myorders-hero-art {
-  aspect-ratio: 1 / 1;
-  border-radius: 16px;
-  overflow: hidden;
-  background: var(--ink);
-  box-shadow: var(--shadow);
-}
-
-.myorders-hero-art svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-@media (max-width: 760px) {
-  .myorders-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .myorders-hero-art {
-    display: none;
-  }
+  max-width: 620px;
 }
 
 .myorders-eyebrow {
-  font-size: 12.5px;
-  letter-spacing: 0.2em;
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #6c6155;
-  margin: 0 0 10px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin: 0 0 14px;
 }
 
 .myorders-title {
@@ -114,6 +96,70 @@
   border-color: var(--accent);
 }
 
+/* Small, clearly-secondary demo-data hint under the lookup form. A real
+   button (not just styled text) so it's keyboard-operable and prefills the
+   field rather than just being decorative copy. */
+.myorders-demo-hint {
+  display: inline-flex;
+  margin-top: 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: #6c6155;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+}
+
+.myorders-demo-hint:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent-border);
+}
+
+.myorders-demo-hint:focus-visible {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Status legend — replaces the old decorative hero illustration with a
+   compact, color-accented key. Colors echo the same status tokens used by
+   the order-status badges further down the page. */
+.myorders-status-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 34px;
+}
+
+.myorders-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.myorders-status-chip--low {
+  color: var(--status-low);
+  background: var(--status-low-bg);
+}
+
+.myorders-status-chip--in {
+  color: var(--status-in);
+  background: var(--status-in-bg);
+}
+
+.myorders-status-chip--out {
+  color: var(--status-out);
+  background: var(--status-out-bg);
+}
+
 /* Feature strip — reuses Home.css's .rule-item / .rule-number / .rule-title /
    .rule-desc. This wrapper only sets the grid; collapses to one column at
    the same 900px breakpoint Home.css uses for .browse-rule. */
@@ -137,71 +183,6 @@
   }
 }
 
-/* Promo band — full-bleed within the app shell, restates the stamp-card
-   facts from LoyaltyCard.tsx and mirrors .browse-promo. */
-.myorders-promo {
-  margin: 0 -24px 40px;
-  padding: 52px 24px;
-  background: var(--accent);
-  color: var(--ink-text);
-}
-
-.myorders-promo-inner {
-  max-width: 1052px;
-  margin: 0 auto;
-}
-
-.myorders-promo-eyebrow {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--ink-text);
-}
-
-.myorders-promo-title {
-  font-family: var(--heading);
-  font-weight: 500;
-  font-size: clamp(26px, 4vw, 36px);
-  line-height: 1.12;
-  letter-spacing: -0.02em;
-  color: var(--ink-text);
-  margin: 14px 0 0;
-  max-width: 22ch;
-}
-
-.myorders-promo-desc {
-  margin: 14px 0 0;
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--ink-text);
-  max-width: 46ch;
-}
-
-.myorders-promo-cta {
-  display: inline-flex;
-  align-items: center;
-  margin-top: 22px;
-  padding: 13px 22px;
-  border-radius: 8px;
-  background: var(--ink-text);
-  color: var(--accent);
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: opacity 0.15s ease;
-}
-
-.myorders-promo-cta:hover {
-  opacity: 0.88;
-}
-
-.myorders-promo-cta:focus-visible {
-  outline: 2px solid var(--ink-text);
-  outline-offset: 3px;
-}
-
 /* Results — keeps the existing order-card list at its original reading
    width; the list markup itself is untouched. */
 .myorders-results {
@@ -212,7 +193,7 @@
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .myorders-phone-input,
-  .myorders-promo-cta {
+  .myorders-demo-hint {
     transition: none !important;
   }
 }

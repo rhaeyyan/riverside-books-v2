@@ -283,7 +283,7 @@ class TestCustomerRepository:
             rewards_available=0,
             joined_date="2026-08-24",
         )
-        created = customer_repo.create(new_cust)
+        created = customer_repo.create(new_cust, password_hash="fake-hash-for-testing")
         assert isinstance(created, Customer)
         assert created.customer_id == "cust_999"
 
@@ -291,19 +291,41 @@ class TestCustomerRepository:
         assert fetched is not None
         assert fetched.name == "Grace Hopper"
 
-    def test_create_duplicate_phone_raises_error(
+    def test_create_duplicate_email_raises_error(
         self, customer_repo: CustomerRepository
     ) -> None:
-        """Ensure duplicate phone registrations raise ValueError."""
+        """Ensure duplicate email registrations raise ValueError.
+
+        §5.3, v0.5: email is now the identity key.
+        """
         first_cust = customer_repo.get_all()[0]
         duplicate = Customer(
             customer_id="cust_dup",
+            email=first_cust.email,
+            name="Duplicate Person",
+            joined_date="2026-08-24",
+        )
+        with pytest.raises(ValueError, match="already exists"):
+            customer_repo.create(duplicate, password_hash="fake-hash-for-testing")
+
+    def test_create_duplicate_phone_raises_error(
+        self, customer_repo: CustomerRepository
+    ) -> None:
+        """Ensure duplicate (non-null) phone still raises ValueError.
+
+        It's no longer the identity key, but it's still DB-unique as
+        pickup-contact info.
+        """
+        first_cust = customer_repo.get_all()[0]
+        duplicate = Customer(
+            customer_id="cust_dup",
+            email="someone-new@example.com",
             phone=first_cust.phone,
             name="Duplicate Person",
             joined_date="2026-08-24",
         )
         with pytest.raises(ValueError, match="already exists"):
-            customer_repo.create(duplicate)
+            customer_repo.create(duplicate, password_hash="fake-hash-for-testing")
 
     def test_update_loyalty(self, customer_repo: CustomerRepository) -> None:
         """Ensure updating stamps and rewards persists and returns updated Customer."""
@@ -460,9 +482,7 @@ class TestRepositoryConcurrencyAndLocking:
         assert final_book.reserved_count == expected_reserved
 
         # Clean up
-        book_repo.adjust_reserved_count(
-            isbn, delta=-(num_threads * deltas_per_thread)
-        )
+        book_repo.adjust_reserved_count(isbn, delta=-(num_threads * deltas_per_thread))
         book_repo.update_stock(isbn, stock_count=initial_book.stock_count)
 
     def test_concurrent_customer_loyalty_mutations(self) -> None:
@@ -590,9 +610,7 @@ class TestEventRepository:
 class TestMessageRepository:
     """Unit and behavioral tests for MessageRepository."""
 
-    def test_get_all_and_filtering(
-        self, message_repo: MessageRepository
-    ) -> None:
+    def test_get_all_and_filtering(self, message_repo: MessageRepository) -> None:
         """Ensure get_all returns messages and supports status filtering."""
         all_msgs = message_repo.get_all()
         assert len(all_msgs) >= 1
@@ -603,9 +621,7 @@ class TestMessageRepository:
         for msg in new_msgs:
             assert msg.status == "new"
 
-    def test_create_and_update_status(
-        self, message_repo: MessageRepository
-    ) -> None:
+    def test_create_and_update_status(self, message_repo: MessageRepository) -> None:
         """Ensure creating and updating status works cleanly."""
         msg = Message(
             message_id="msg_test_999",
@@ -624,4 +640,3 @@ class TestMessageRepository:
 
         updated = message_repo.update_status("msg_test_999", new_status="read")
         assert updated.status == "read"
-

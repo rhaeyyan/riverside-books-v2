@@ -11,6 +11,7 @@ from backend.api.core.repositories import (
     EventRepository,
     MessageRepository,
     OrderRepository,
+    StaffRepository,
     StoreInfoRepository,
 )
 
@@ -25,6 +26,11 @@ def get_book_repo() -> BookRepository:
 def get_customer_repo() -> CustomerRepository:
     """Provide CustomerRepository instance backed by Postgres."""
     return CustomerRepository()
+
+
+def get_staff_repo() -> StaffRepository:
+    """Provide StaffRepository instance backed by Postgres."""
+    return StaffRepository()
 
 
 def get_order_repo() -> OrderRepository:

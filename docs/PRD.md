@@ -50,10 +50,12 @@ Explicitly **out of scope** for Cycle 4. Listed so nobody builds them by acciden
 - **Portability across database engines.** One database, reached through the
   repository layer that already exists (§5.2). No dialect-abstraction layer, no
   second engine kept working "just in case."
-- **Server-side authentication, or any access control gating what the API
-  returns.** See §5.3 for the identity model that replaces it, including the
-  v0.4 staff PIN screen, which identifies who is using the dashboard and does
-  not gate access to it.
+- **Access control gating what the API returns**, beyond proving identity at
+  login. *Narrowed in v0.5:* real email/password authentication now exists
+  (§5.3) — that is no longer a non-goal — but it stops at the login endpoint.
+  No other route checks a token or session; `GET /customers/{id}/orders` and
+  every dashboard endpoint remain exactly as reachable by ID/URL as they were
+  in v0.4. Building that gate is still out of scope.
 - **Generative AI anywhere.** Products C and D are deterministic by mandate
   (§5.5).
 - **A native mobile app.** Products A and B are browser applications.
@@ -204,43 +206,59 @@ application uses a least-privileged role for request-time work; any elevated
 credential is reserved for running migrations and is never present in the running
 application's environment. See R8.
 
-### 5.3 Identity model (replaces authentication)
+### 5.3 Identity model
 
-- **Customers** are identified by **phone number**, normalised to digits only
-  (`5551234567`). A customer "signs in" by typing their number; if it matches a
-  record they see their orders and stamps, if not they are offered a one-field
-  registration (phone + name). There are no passwords and no sessions.
-- **Staff** are not authenticated server-side. The dashboard's API calls carry
-  no token or session and are exactly as reachable as they were in v0.3.1. The
-  dashboard is served from a machine inside the shop and is not reachable from
-  outside the shop's own network. That — not the absence of a database, and not
-  the PIN screen below — is what makes it acceptable. It remains an accepted,
-  documented risk (§11, R3), not an oversight.
+*Rewritten in v0.5 — real login exists now, on both sides. Read the whole
+section; v0.4's "identify, don't gate" framing is superseded, not just
+patched.*
 
-  *Corrected in v0.3.1.* This previously read "only acceptable because deployment
-  is local-only," citing a §2.2 non-goal that v0.3 struck. The reasoning was
-  always about **who can reach the dashboard**, and that is unchanged. What did
-  change is that the data no longer lives on that machine: with a hosted
-  database, anyone holding the connection string can read the store's data
-  without ever touching the UI. The exposure moved from the screen to the
-  credentials, which is why R8 exists. "Nobody can reach it" is now a claim
-  about the network, and it no longer covers the data.
+- **Customers** are identified by **email address**, verified against a
+  bcrypt-hashed password at `POST /customers/login`. Registration
+  (`POST /customers`) takes email, password (8+ chars), name, and an optional
+  phone. Phone is no longer unique-as-identity, but the database still keeps
+  it unique when provided, so two accounts can't collide on the same pickup
+  contact by accident.
+- **Staff** are identified the same way, at `POST /staff/login`, against a
+  `staff` table (§6.8) provisioned by seed data only — there is no
+  self-registration endpoint, matching how a real store's manager hands out
+  accounts rather than staff signing themselves up.
+- **What this is not.** Login is real (bcrypt, a genuine server-side check,
+  no plaintext password ever stored or returned), but nothing past it is
+  hardened: no rate-limiting on login attempts, no password-reset flow, no
+  email verification, no session/token expiry or rotation. §2.2's
+  access-control non-goal still holds for every *other* endpoint — proving
+  identity at login and gating every subsequent request are different
+  problems, and only the first one is in scope. `GET /customers/{id}/orders`,
+  every dashboard endpoint, and everything else remain reachable by anyone
+  holding the ID/URL, exactly as before. This is a deliberate, scoped
+  decision (demo-appropriate rigor), not an oversight — see the v0.5
+  changelog entry (Appendix B) for the reasoning and who decided it.
+- **Sessions are still client-only.** A successful login/register response is
+  stored by the frontend (`localStorage` for customers, `sessionStorage` for
+  staff — the staff session is deliberately per-tab, matching the old PIN
+  screen's behavior) and read back on load. There is no server-side session
+  table, no cookie, no `Authorization` header on subsequent requests. This
+  differs from v0.1–v0.4 only in *how the identity is established* (a
+  verified credential now, not a bare lookup) — what happens after
+  establishing it is unchanged.
 
-  *Added in v0.4:* the dashboard shows a **staff PIN screen** before rendering
-  any product content. A fixed set of PINs maps to a staff display name; a
-  match writes that name to `sessionStorage` and the screen is replaced by the
-  dashboard, which shows the name in the sidebar with a sign-out control. This
-  is client-side only — there is no PIN check on the backend, no
-  `Authorization` header, and no change to which API calls succeed or what they
-  return. It is the same shape as the customer identity model above (a
-  low-friction "who is this" prompt, not access control), and it does not
-  change the risk R3 describes: anyone on the shop network, PIN or not, can
-  already call every dashboard endpoint directly. The screen exists so the
-  sidebar can say *whose* session it is, the way Product A already needs to
-  answer "whose orders?". §2.2's non-goal is narrowed accordingly — see there.
+*Superseded history, kept for context:*
+
+*v0.1–v0.4:* customers were identified by phone number alone, normalised to
+digits only, with no password and no server-side check — "signing in" was
+typing a number that matched a record, or registering inline if it didn't.
+Staff were not authenticated server-side at all; v0.4 added a client-side PIN
+screen (fixed PIN→name map, `sessionStorage`, no backend check) purely to
+label *whose* dashboard session it was, not to gate anything — the reasoning
+that made this acceptable was the dashboard being unreachable from outside
+the shop network (§11, R3), corrected in v0.3.1 to note that a hosted
+database changes *where* the exposure lives (see R8) without changing that
+specific risk's reasoning.
 
 *Why this is in the PRD:* Product A cannot show "your stamps" or "your pre-orders"
-without answering "whose?". This was the largest gap in v0.1.
+without answering "whose?". This was the largest gap in v0.1. v0.5 answers it
+with a real credential instead of a bare lookup, at the PRD owner's direction
+— see Appendix B.
 
 ### 5.4 Stock accounting: on-hand vs. available
 
@@ -323,6 +341,7 @@ its heading so existing references still resolve:
 | `events.json` | `events` |
 | `store_info.json` | `store_info` (single row) |
 | `messages.json` | `messages` |
+| `staff.json` *(new in v0.5)* | `staff` (§6.8) |
 
 Nullability, indexes, and foreign keys are not specified here. They are decided in
 the migration that creates each table and reviewed with it — §6 governs names and
@@ -348,12 +367,15 @@ types, which is what the four products depend on.
 
 ### 6.2 `customers.json`
 
+*Identity key changed in v0.5 — see §5.3.*
+
 | Field | Type | Notes |
 |---|---|---|
 | `customer_id` | string | **Primary key.** `cust_001` |
-| `phone` | string | **Unique.** Digits only, 10 chars. The identity key |
+| `email` | string | **Unique, required.** The identity key as of v0.5 |
 | `name` | string | |
-| `email` | string | Optional, may be `""` |
+| `phone` | string \| null | Optional. Digits only, 10 chars when present. Unique when present, but no longer the identity key — pickup-contact info only |
+| `password_hash` | string | **Not an API field.** bcrypt hash, storage-only — the `Customer` response model does not declare this field, so it cannot appear in any API response even by omission of an explicit exclude. Listed here because §6's own definition ("field names in the API and in every product") doesn't cover it, and a reader of this table should still know it exists |
 | `stamps` | int | `0`–`9`. Rolls to a reward at 10 |
 | `rewards_available` | int | Unredeemed free books |
 | `joined_date` | string | `YYYY-MM-DD` |
@@ -428,6 +450,20 @@ must produce. One of them now needs care: "one order already past
 own. A seed script must generate it **relative to the run time**, or the expired
 case silently stops being expired — and §10's walkthrough stops demonstrating it.
 
+### 6.8 `staff` (new in v0.5)
+
+Had no server-side table at all before v0.5 — the v0.4 PIN screen was
+client-side only (§5.3). Provisioned by seed data, no self-registration
+endpoint exists.
+
+| Field | Type | Notes |
+|---|---|---|
+| `staff_id` | string | **Primary key.** `staff_001` |
+| `email` | string | **Unique, required.** The identity key |
+| `name` | string | |
+| `role` | enum | `Manager` \| `Bookseller` |
+| `password_hash` | string | **Not an API field** — same storage-only treatment as `customers.password_hash` above, for the same reason |
+
 ---
 
 ## 7. API Contract
@@ -440,8 +476,8 @@ codes with a `{"detail": "..."}` body.
 | `GET` | `/books` | Search catalogue. Params: `q` (title/author/ISBN), `in_stock_only`, `limit`, `offset` | A, B, C, D |
 | `GET` | `/books/{isbn}` | Single book with derived `available_count` and `stock_status` | A, B, C, D |
 | `PATCH` | `/books/{isbn}/stock` | Adjust on-hand count. Body: `{"stock_count": int}` | B |
-| `POST` | `/customers/lookup` | Body: `{"phone": str}` → customer or `404` | A |
-| `POST` | `/customers` | Register. Body: `{"phone": str, "name": str, "email": str?}` | A |
+| `POST` | `/customers` | Register. Body: `{"email": str, "password": str, "name": str, "phone": str?}` → `Customer` or `400` (duplicate email/phone). *Changed in v0.5: was `{"phone", "name", "email"?}`, no password* | A |
+| `POST` | `/customers/login` | *New in v0.5.* Body: `{"email": str, "password": str}` → `Customer` or `401` | A |
 | `GET` | `/customers/{customer_id}/loyalty` | `{stamps, rewards_available, stamps_to_next_reward}` | A |
 | `POST` | `/customers/{customer_id}/rewards/redeem` | Decrement `rewards_available` | A, B |
 | `GET` | `/customers/{customer_id}/orders` | That customer's orders, newest first | A |
@@ -455,6 +491,7 @@ codes with a `{"detail": "..."}` body.
 | `POST` | `/chat/message` | Body: `{"node_id": str, "input": str?}` → deterministic reply | C |
 | `POST` | `/chat/escalate` | Body: `{"name", "contact", "body"}` → writes a message | C |
 | `GET` | `/messages` | Staff inbox. Param: `status` | B |
+| `POST` | `/staff/login` | *New in v0.5.* Body: `{"email": str, "password": str}` → `{staff_id, email, name, role}` or `401`. No registration endpoint — seed data only (§5.3, §6.8) | B |
 | `GET` | `/marketing/tones` | Available tones and which subject types support them | D |
 | `POST` | `/marketing/generate` | Body: `{"subject_type", "subject_id", "tone", "variant"?}` | D |
 
@@ -488,11 +525,14 @@ demonstrable in a five-minute walkthrough.
 2. **Stock display** — "In stock (4 copies)" / "Only 1 left" / "Out of stock",
    driven by `stock_status` from §5.6. Uses `available_count`, never
    `stock_count`.
-3. **Pre-order** — from a book page, a customer enters their phone number and
-   places a hold. Registers inline if the number is unknown. Confirmation shows
-   the order ID and the exact pickup deadline.
-4. **My orders** — after a phone lookup, list that customer's orders with status
-   and, for pending holds, time remaining. Pending and ready orders can be
+3. **Pre-order** — from a book page, a signed-in customer places a hold in one
+   step. A customer who isn't signed in is prompted to sign in or create an
+   account (§5.3) first — email + password, not the v0.4 inline phone
+   registration. Confirmation shows the order ID and the exact pickup
+   deadline.
+4. **My orders** — once signed in, list that customer's orders with status
+   and, for pending holds, time remaining, plus each held item's title and
+   cover thumbnail (not just its ISBN). Pending and ready orders can be
    cancelled.
 5. **Loyalty card** — visual stamp card showing `stamps`/10 and any
    `rewards_available`. Stamps are earned per **book collected**, awarded when an
@@ -695,15 +735,15 @@ making all four products blocked on them. Two workable options:
 The suite is done for Cycle 4 when this walkthrough runs end to end without a
 restart:
 
-1. In Product A, search a title and see it in stock. Place a hold with a phone
-   number.
+1. In Product A, sign in (or create an account) and search a title and see it
+   in stock. Place a hold.
 2. In Product B, the new pre-order appears in Pending; the title's available count
    has dropped by one and on-hand has not.
 3. In Product C, ask whether that title is in stock — the count matches B.
 4. In Product B, move the order to Ready, then Completed. On-hand drops; the
    customer's stamps increase by the number of books.
-5. In Product A, look up that phone number and see the completed order and the new
-   stamp count.
+5. In Product A, refresh My Orders and see the completed order (with its cover
+   thumbnail) and the new stamp count.
 6. In Product B, open Product D, pick that book with tone "cozy", and get a caption
    with correct title and author. Change to "urgent" and get different text. Repeat
    "cozy" and get the original text back verbatim.
@@ -718,7 +758,7 @@ restart:
 |---|---|---|---|
 | R1 | Data model churn after products are built | High — reworks all four | §6 frozen and committed before product code starts |
 | R2 | ~~Concurrent writes to JSON corrupt the file~~ **Superseded in v0.3:** read-modify-write sequences ported to SQL without transactions | High — silently wrong stock counts, the exact bug §5.4 exists to prevent | Each of the nine `get_lock` sites in `repositories.py` rewritten as an explicit transaction or atomic update, with a concurrency test per site. Not a mechanical port |
-| R3 | No staff authentication *(server-side; the v0.4 PIN screen is client-side identification, not a gate — see §5.3)* | Low for the dashboard, which is unreachable from outside the shop network; high if it is ever served publicly | Accepted risk, on the basis in §5.3 — reachability, not storage. **Must be revisited before the dashboard is served anywhere public.** Note the v0.3 caveat: the *data* is now reachable off-site by anyone holding the connection string, so the store's exposure no longer depends on this row alone — see R8 |
+| R3 | No *endpoint-level* staff authentication *(v0.5 adds a real login at `POST /staff/login`, §5.3, but nothing past it checks a token — every other dashboard endpoint is exactly as reachable by URL as before)* | Low for the dashboard, which is unreachable from outside the shop network; high if it is ever served publicly | Accepted risk, on the basis in §5.3 — reachability, not storage. **Must be revisited before the dashboard is served anywhere public** (that revisit means adding request-level gating on every endpoint, not just a login screen — login and access control are different problems, §5.3). Note the v0.3 caveat: the *data* is now reachable off-site by anyone holding the connection string, so the store's exposure no longer depends on this row alone — see R8 |
 | R4 | C and D have no host UI and slip late | High — two products undemoable | Resolve §12 Q1 in week one |
 | R5 | `backend/api/` unowned, blocking everyone | High | §9 Option 1 on day one |
 | R6 | Node not installed on dev machines | Blocks A and B entirely | Verify Node 20+ before frontend work starts |
@@ -750,8 +790,12 @@ restart:
 These were unspecified in v0.1 and have been decided here so work can start.
 Each is reversible, but reversing one after products are built is expensive.
 
-1. **Phone number is the customer identity key** (§5.3) — chosen because §4.2's
-   own research points at it.
+1. ~~**Phone number is the customer identity key** (§5.3) — chosen because
+   §4.2's own research points at it.~~ — **revised in v0.5.** Email +
+   bcrypt-verified password is the identity key now; phone is optional
+   pickup-contact info. §4.2's research about *what the loyalty card is keyed
+   to at the register* (a phone number, spoken aloud, no app) is unaffected —
+   this assumption was specifically about *web login*, which is what changed.
 2. ~~**A single FastAPI process owns all state** (§5.1)~~ — **revised in v0.3.**
    The database is the system of record and `backend/api/` is its only writer
    (§5.1). The live-stock claim now rests on transactions rather than on there
@@ -765,15 +809,19 @@ Each is reversible, but reversing one after products are built is expensive.
 6. **Catalogue is books only** (§2.2) — cards and gifts answered by policy text.
 7. **Product D variants are explicit and deterministic** (§8.D.4) — "random
    template" would break §5.5 and make D untestable.
-8. **Staff are unauthenticated server-side** (§5.3, R3) — unchanged in v0.3,
-   rebased on dashboard reachability rather than on the absence of a database.
-   **v0.4** adds a client-side staff PIN screen for identification only; it
-   does not gate the API and does not change R3.
+8. ~~**Staff are unauthenticated server-side** (§5.3, R3)~~ — **revised in
+   v0.5.** Staff now log in with email + bcrypt-verified password
+   (`POST /staff/login`, §6.8) instead of the v0.4 client-side PIN screen.
+   R3's underlying risk is otherwise unchanged: login proves identity, it does
+   not gate any other dashboard endpoint, which remains exactly as reachable
+   by URL as before. "Server-side authentication" now exists at the login
+   step only — see §5.3 for the precise boundary.
 
 ## Appendix B — Changelog
 
 | Version | Date | Changes |
 |---|---|---|
+| 0.5 | 2026-08-27 | **Real email/password authentication, replacing the phone/PIN identity model entirely.** §2.2's access-control non-goal narrowed further: login is now real (bcrypt-verified, server-side) for both customers and staff, but everything past login is unchanged — no endpoint gates on a token, matching the existing risk in R3. §5.3 rewritten (old text kept as superseded history in the same section). §6.2 `customers`: `email` (not `phone`) is now the unique, required identity key; `phone` becomes optional pickup-contact info; new `password_hash` column (storage-only, never an API field — the `Customer` response model doesn't declare it, so it can't leak via `response_model`). New §6.8 `staff` table — v0.4's PIN screen had no server-side table at all; staff accounts are seed-provisioned only, no self-registration endpoint. §7: `POST /customers/lookup` removed outright (not kept alongside the new flow); `POST /customers` body shape changed (adds required `password`, optional `phone` instead of required); new `POST /customers/login` and `POST /staff/login`. §8.A.3/4 updated: pre-order and My Orders now require sign-in instead of a phone lookup; My Orders also gains per-item book title + cover thumbnail (previously ISBN only). §10 walkthrough updated to sign-in instead of phone lookup. Appendix A #1 and #8 revised (both explicitly reversed, not just narrowed — see the strikethrough + note in each). R3 reworded: the login screen is now real, but the underlying risk (no per-endpoint gating) is unchanged, so the "must be revisited before public" mitigation still stands and now explicitly says what "revisited" means. Migration: `supabase/migrations/20260827030000_email_password_auth.sql` truncates `customers`/`orders`/`order_items` before adding the new constraints — demo data with no real customer to preserve (R8), immediately repopulated by `scripts/seed.py --db`. Decided by @rhaeyyan (PRD owner), after being told this reverses a decision Appendix A explicitly flagged as "reversible, but reversing one after products are built is expensive" — confirmed as the intended tradeoff, not an oversight |
 | 0.4 | 2026-08-25 | **Narrowed the authentication non-goal.** §2.2's "Authentication, passwords, or sessions" bullet now reads "server-side authentication, or any access control gating what the API returns." §5.3 adds a client-side staff PIN screen (fixed PIN→name map, `sessionStorage`, no backend check) that identifies who is using the dashboard without gating it — same shape as the existing customer identity model. R3 and decision #8 reworded to make explicit that "no staff authentication" was always about the server side; the risk itself is unchanged, since every dashboard endpoint remains exactly as reachable as before. Decided by @rhaeyyan (PRD owner) to match the approved Staff Dashboard design mockup |
 | 0.1 | 2026-08-24 | Initial draft: summary, market research, per-product feature lists, technical constraints |
 | 0.2 | 2026-08-24 | Added goals/non-goals, personas, binding architecture decisions (§5), canonical data model (§6), API contract (§7), user stories + acceptance criteria + edge cases per product, ownership matrix, demo acceptance, risks, open questions. Resolved: customer identity, stock accounting, hold expiry, two-tier stock thresholds, determinism of Product D, C/D client surfaces. Reconciled the app-fatigue finding against Product A |

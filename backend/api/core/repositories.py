@@ -19,6 +19,7 @@ from backend.api.models import (
     Event,
     Message,
     Order,
+    StaffMember,
     StoreInfo,
     normalize_isbn,
     normalize_phone,
@@ -260,7 +261,7 @@ class CustomerRepository:
             List of Customer domain models.
         """
         sql = """
-            SELECT customer_id, phone, name, email, stamps,
+            SELECT customer_id, email, name, phone, stamps,
                    rewards_available, joined_date::text AS joined_date
             FROM customers
             ORDER BY customer_id ASC
@@ -278,7 +279,7 @@ class CustomerRepository:
             Customer domain model, or None if not found.
         """
         sql = """
-            SELECT customer_id, phone, name, email, stamps,
+            SELECT customer_id, email, name, phone, stamps,
                    rewards_available, joined_date::text AS joined_date
             FROM customers
             WHERE customer_id = %s
@@ -297,7 +298,7 @@ class CustomerRepository:
         """
         norm_phone = normalize_phone(phone)
         sql = """
-            SELECT customer_id, phone, name, email, stamps,
+            SELECT customer_id, email, name, phone, stamps,
                    rewards_available, joined_date::text AS joined_date
             FROM customers
             WHERE phone = %s
@@ -305,30 +306,73 @@ class CustomerRepository:
         row = db.fetch_one(sql, (norm_phone,), conn=self.conn)
         return Customer.model_validate(row) if row else None
 
-    def create(self, customer: Customer) -> Customer:
+    def get_by_email(self, email: str) -> Customer | None:
+        """Retrieve a customer by their identity email (case-insensitive).
+
+        Args:
+            email: Email address to look up.
+
+        Returns:
+            Customer domain model, or None if not found.
+        """
+        sql = """
+            SELECT customer_id, email, name, phone, stamps,
+                   rewards_available, joined_date::text AS joined_date
+            FROM customers
+            WHERE lower(email) = lower(%s)
+        """
+        row = db.fetch_one(sql, (email,), conn=self.conn)
+        return Customer.model_validate(row) if row else None
+
+    def get_password_hash(self, email: str) -> tuple[str, str] | None:
+        """Retrieve a customer's ID and password hash for login verification.
+
+        Kept separate from get_by_email so the hash never travels through a
+        Customer instance (which does not declare the field at all).
+
+        Args:
+            email: Email address to look up.
+
+        Returns:
+            (customer_id, password_hash) tuple, or None if not found.
+        """
+        sql = (
+            "SELECT customer_id, password_hash FROM customers "
+            "WHERE lower(email) = lower(%s)"
+        )
+        row = db.fetch_one(sql, (email,), conn=self.conn)
+        return (row["customer_id"], row["password_hash"]) if row else None
+
+    def create(self, customer: Customer, password_hash: str) -> Customer:
         """Persist a new customer record into the database.
 
         Args:
             customer: Customer domain model instance to persist.
+            password_hash: bcrypt hash of the customer's chosen password.
 
         Returns:
             The created Customer instance.
 
         Raises:
-            ValueError: If a customer with the same phone or customer_id exists.
+            ValueError: If a customer with the same email, customer_id, or
+                (non-null) phone exists. Phone is optional contact info, not
+                the identity key, but the DB keeps it unique when provided so
+                two accounts don't share a pickup contact by accident -- this
+                surfaces that as the same clean error the caller already
+                expects, instead of an unhandled 500.
         """
-        norm_phone = normalize_phone(customer.phone)
+        norm_phone = normalize_phone(customer.phone) if customer.phone else None
         check_sql = """
-            SELECT customer_id, phone FROM customers
-            WHERE phone = %s OR customer_id = %s
+            SELECT customer_id, email FROM customers
+            WHERE lower(email) = lower(%s) OR customer_id = %s
         """
         existing = db.fetch_one(
-            check_sql, (norm_phone, customer.customer_id), conn=self.conn
+            check_sql, (customer.email, customer.customer_id), conn=self.conn
         )
         if existing:
-            if existing["phone"] == norm_phone:
+            if existing["email"].lower() == customer.email.lower():
                 raise ValueError(
-                    f"Customer with phone '{customer.phone}' already exists."
+                    f"Customer with email '{customer.email}' already exists."
                 )
             raise ValueError(
                 f"Customer with ID '{customer.customer_id}' already exists."
@@ -336,26 +380,32 @@ class CustomerRepository:
 
         sql = """
             INSERT INTO customers (
-                customer_id, phone, name, email, stamps,
+                customer_id, email, name, phone, password_hash, stamps,
                 rewards_available, joined_date
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s
             )
         """
-        with db.transaction(self.conn) as conn:
-            conn.execute(
-                sql,
-                (
-                    customer.customer_id,
-                    norm_phone,
-                    customer.name,
-                    customer.email,
-                    customer.stamps,
-                    customer.rewards_available,
-                    customer.joined_date,
-                ),
-            )
-        return customer
+        try:
+            with db.transaction(self.conn) as conn:
+                conn.execute(
+                    sql,
+                    (
+                        customer.customer_id,
+                        customer.email,
+                        customer.name,
+                        norm_phone,
+                        password_hash,
+                        customer.stamps,
+                        customer.rewards_available,
+                        customer.joined_date,
+                    ),
+                )
+        except UniqueViolation as err:
+            raise ValueError(
+                f"Customer with phone '{customer.phone}' already exists."
+            ) from err
+        return customer.model_copy(update={"phone": norm_phone})
 
     def update_loyalty(
         self, customer_id: str, stamps: int, rewards_available: int
@@ -377,7 +427,7 @@ class CustomerRepository:
             UPDATE customers
             SET stamps = %s, rewards_available = %s
             WHERE customer_id = %s
-            RETURNING customer_id, phone, name, email, stamps,
+            RETURNING customer_id, email, name, phone, stamps,
                       rewards_available, joined_date::text AS joined_date
         """
         with db.transaction(self.conn) as conn:
@@ -386,6 +436,74 @@ class CustomerRepository:
             if not row:
                 raise KeyError(f"Customer with ID '{customer_id}' not found.")
             return Customer.model_validate(row)
+
+
+class StaffRepository:
+    """Repository encapsulating staff account operations (§5.3, v0.5).
+
+    Provisioned by seed data only -- create() exists for scripts/seed.py, not
+    for any API endpoint, matching the "no self-registration" scope decision.
+    """
+
+    def __init__(self, conn: Connection | None = None) -> None:
+        """Initialize repository with optional database connection.
+
+        Args:
+            conn: Optional psycopg Connection instance. If omitted, queries use
+                the active scoped connection or the connection pool.
+        """
+        self.conn = conn
+
+    def get_by_email(self, email: str) -> StaffMember | None:
+        """Retrieve a staff account by email (case-insensitive).
+
+        Args:
+            email: Email address to look up.
+
+        Returns:
+            StaffMember domain model, or None if not found.
+        """
+        sql = """
+            SELECT staff_id, email, name, role
+            FROM staff
+            WHERE lower(email) = lower(%s)
+        """
+        row = db.fetch_one(sql, (email,), conn=self.conn)
+        return StaffMember.model_validate(row) if row else None
+
+    def get_password_hash(self, email: str) -> tuple[str, str] | None:
+        """Retrieve a staff member's ID and password hash for login verification.
+
+        Args:
+            email: Email address to look up.
+
+        Returns:
+            (staff_id, password_hash) tuple, or None if not found.
+        """
+        sql = "SELECT staff_id, password_hash FROM staff WHERE lower(email) = lower(%s)"
+        row = db.fetch_one(sql, (email,), conn=self.conn)
+        return (row["staff_id"], row["password_hash"]) if row else None
+
+    def create(self, staff: StaffMember, password_hash: str) -> StaffMember:
+        """Persist a new staff account (seed data only, no API endpoint).
+
+        Args:
+            staff: StaffMember domain model instance to persist.
+            password_hash: bcrypt hash of the account's password.
+
+        Returns:
+            The created StaffMember instance.
+        """
+        sql = """
+            INSERT INTO staff (staff_id, email, name, role, password_hash)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        with db.transaction(self.conn) as conn:
+            conn.execute(
+                sql,
+                (staff.staff_id, staff.email, staff.name, staff.role, password_hash),
+            )
+        return staff
 
 
 class OrderRepository:
@@ -587,9 +705,7 @@ class OrderRepository:
             raise KeyError(f"Order with ID '{order_id}' not found.")
         return updated
 
-    def get_expired_pending_orders(
-        self, now_iso: str | None = None
-    ) -> list[Order]:
+    def get_expired_pending_orders(self, now_iso: str | None = None) -> list[Order]:
         """Retrieve all pending orders whose hold reservation has expired.
 
         Args:

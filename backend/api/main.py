@@ -14,6 +14,7 @@ from backend.api.routers import (
     marketing,
     messages,
     orders,
+    staff,
     store,
 )
 from backend.config import settings
@@ -36,6 +37,7 @@ app.include_router(store.router, prefix="/api/store", tags=["store"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(messages.router, prefix="/api/messages", tags=["messages"])
 app.include_router(marketing.router, prefix="/api/marketing", tags=["marketing"])
+app.include_router(staff.router, prefix="/api/staff", tags=["staff"])
 
 
 class SPAStaticFiles(StaticFiles):
@@ -58,9 +60,7 @@ class SPAStaticFiles(StaticFiles):
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _mount_dir(
-    path: str, dist_dir: Path, name: str, *, spa_fallback: bool
-) -> None:
+def _mount_dir(path: str, dist_dir: Path, name: str, *, spa_fallback: bool) -> None:
     """Mount a directory if present; a no-op otherwise (e.g. under pytest).
 
     spa_fallback=True falls back to index.html for unmatched sub-paths, for

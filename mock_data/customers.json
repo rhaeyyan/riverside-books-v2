@@ -6,7 +6,7 @@
     "email": "alice.walker@example.com",
     "stamps": 0,
     "rewards_available": 0,
-    "joined_date": "2026-08-01"
+    "joined_date": "2026-08-03"
   },
   {
     "customer_id": "cust_002",
@@ -15,7 +15,7 @@
     "email": "ben.martinez@example.com",
     "stamps": 3,
     "rewards_available": 0,
-    "joined_date": "2026-06-15"
+    "joined_date": "2026-06-17"
   },
   {
     "customer_id": "cust_003",
@@ -24,7 +24,7 @@
     "email": "clara.oswald@example.com",
     "stamps": 5,
     "rewards_available": 0,
-    "joined_date": "2026-05-20"
+    "joined_date": "2026-05-22"
   },
   {
     "customer_id": "cust_004",
@@ -33,7 +33,7 @@
     "email": "david.kim@example.com",
     "stamps": 7,
     "rewards_available": 0,
-    "joined_date": "2026-03-10"
+    "joined_date": "2026-03-12"
   },
   {
     "customer_id": "cust_005",
@@ -42,7 +42,7 @@
     "email": "elena.rostova@example.com",
     "stamps": 9,
     "rewards_available": 0,
-    "joined_date": "2026-02-14"
+    "joined_date": "2026-02-16"
   },
   {
     "customer_id": "cust_006",
@@ -51,7 +51,7 @@
     "email": "franklin.wright@example.com",
     "stamps": 2,
     "rewards_available": 1,
-    "joined_date": "2026-01-05"
+    "joined_date": "2026-01-07"
   },
   {
     "customer_id": "cust_007",
@@ -60,16 +60,16 @@
     "email": "grace.hopper@example.com",
     "stamps": 0,
     "rewards_available": 2,
-    "joined_date": "2025-11-12"
+    "joined_date": "2025-11-14"
   },
   {
     "customer_id": "cust_008",
     "phone": "5551000008",
     "name": "Henry Zhao",
-    "email": "",
+    "email": "henry.zhao@example.com",
     "stamps": 4,
     "rewards_available": 0,
-    "joined_date": "2026-07-22"
+    "joined_date": "2026-07-24"
   },
   {
     "customer_id": "cust_009",
@@ -78,7 +78,7 @@
     "email": "ivy.chen@example.com",
     "stamps": 1,
     "rewards_available": 0,
-    "joined_date": "2026-08-10"
+    "joined_date": "2026-08-12"
   },
   {
     "customer_id": "cust_010",
@@ -87,6 +87,6 @@
     "email": "james.sterling@example.com",
     "stamps": 8,
     "rewards_available": 0,
-    "joined_date": "2026-04-02"
+    "joined_date": "2026-04-04"
   }
 ]

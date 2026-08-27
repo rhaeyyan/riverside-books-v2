@@ -27,9 +27,7 @@ from backend.config import settings
 logger = logging.getLogger(__name__)
 
 _pool: ConnectionPool | None = None
-_current_conn: ContextVar[Connection | None] = ContextVar(
-    "_current_conn", default=None
-)
+_current_conn: ContextVar[Connection | None] = ContextVar("_current_conn", default=None)
 
 
 def get_pool() -> ConnectionPool:
@@ -50,12 +48,22 @@ def get_pool() -> ConnectionPool:
             conninfo=settings.database_url,
             min_size=1,
             max_size=10,
-            # Supabase's session pooler sits in front of Postgres, so a
-            # connection that has been idle can be closed underneath us.
-            # Checking it on checkout turns a stale handle into a retry rather
-            # than a request-time error.
+            # Supabase's pooler sits in front of Postgres, so a connection
+            # that has been idle can be closed underneath us. Checking it on
+            # checkout turns a stale handle into a retry rather than a
+            # request-time error.
             check=ConnectionPool.check_connection,
-            kwargs={"row_factory": dict_row},
+            # DATABASE_URL points at Supabase's Transaction pooler (PgBouncer
+            # in transaction mode — see README's deploy section), which
+            # multiplexes each logical connection across different backend
+            # Postgres connections mid-session. psycopg3's server-side
+            # prepared statements (auto-enabled after a statement repeats a
+            # few times) don't survive that swap: a later query can land on a
+            # backend connection that already has a same-named prepared
+            # statement from a *different* pooled client, raising
+            # DuplicatePreparedStatement. Disabling server-side prepare is
+            # the standard fix for this pooler mode.
+            kwargs={"row_factory": dict_row, "prepare_threshold": None},
             open=True,
         )
     return _pool
@@ -162,9 +170,7 @@ def fetch_all(
         return pool_conn.execute(sql, params).fetchall()
 
 
-def execute(
-    sql: str, params: Any = None, conn: Connection | None = None
-) -> None:
+def execute(sql: str, params: Any = None, conn: Connection | None = None) -> None:
     """Execute a single statement without returning rows.
 
     Args:

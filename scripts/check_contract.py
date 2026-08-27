@@ -46,6 +46,7 @@ SECTION_TO_MODEL = {
     "6.4": "Event",
     "6.5": "StoreInfo",
     "6.6": "Message",
+    "6.8": "StaffMember",
 }
 
 # Drift that is real, understood, and deliberately not "fixed" by editing one
@@ -58,6 +59,18 @@ ACCEPTED: dict[str, str] = {
         "rather than in the §6.1 table, because it never appears in the JSON."
     ),
     "field:Book.stock_status": "Same as available_count -- derived per §5.4/§5.6.",
+    "field:Customer.password_hash": (
+        "Deliberately absent from the Customer model (§5.3, §6.2 v0.5): it's a "
+        "real DB column, documented in the §6.2 table so a reader knows it "
+        "exists, but never a field on the Pydantic model any API response "
+        "uses -- so response_model cannot leak it even by omission of an "
+        "explicit exclude. §6's own definition of scope ('field names in the "
+        "API and in every product') doesn't cover it either way."
+    ),
+    "field:StaffMember.password_hash": (
+        "Same reasoning and same deliberate omission as "
+        "field:Customer.password_hash above, for the §6.8 staff table."
+    ),
 }
 
 

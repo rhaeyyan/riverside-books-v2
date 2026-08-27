@@ -72,16 +72,40 @@ class Book(BaseModel):
         return "in_stock"
 
 
+EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+
+
 class Customer(BaseModel):
-    """Domain model representing a bookstore customer and loyalty card."""
+    """Domain model representing a bookstore customer and loyalty card.
+
+    email is the identity key (§5.3, v0.5) and is verified against
+    password_hash at login. password_hash deliberately has no field here:
+    the repository layer reads/writes it at the DB row level, but a Customer
+    instance built for an API response can never carry it, since the field
+    does not exist on this model for response_model to (mis)handle.
+    """
 
     customer_id: str
-    phone: str = Field(pattern=r"^\d{10}$")
+    email: str = Field(pattern=EMAIL_PATTERN)
     name: str
-    email: str = ""
+    phone: str | None = Field(default=None, pattern=r"^\d{10}$")
     stamps: int = Field(ge=0, le=9, default=0)
     rewards_available: int = Field(ge=0, default=0)
     joined_date: str
+
+
+class StaffMember(BaseModel):
+    """Domain model representing a staff account (§5.3, v0.5).
+
+    Provisioned by seed data only -- no self-registration. password_hash is
+    handled the same way as on Customer: it exists at the DB row level, never
+    on this model, so it cannot leak through an API response.
+    """
+
+    staff_id: str
+    email: str = Field(pattern=EMAIL_PATTERN)
+    name: str
+    role: Literal["Manager", "Bookseller"]
 
 
 class OrderItem(BaseModel):

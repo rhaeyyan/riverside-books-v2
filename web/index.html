@@ -93,9 +93,14 @@
       line-height: 1; color: var(--muted-2); cursor: pointer; padding: 4px;
     }
     #riverside-signin-close:hover { color: var(--ink); }
+    .quiet-link-dark {
+      display: block; margin-top: 16px; width: 100%; text-align: center; background: none; border: none;
+      padding: 4px; font-size: 13.5px; color: var(--muted); text-decoration: underline; cursor: pointer;
+    }
+    .quiet-link-dark:hover { color: var(--ink); }
     .riverside-dialog-head { position: relative; }
 
-    .hero-title { font-size: clamp(40px, 7.5vw, 84px); }
+    .hero-title { font-size: clamp(52px, 9.5vw, 108px); }
     .band-title { font-size: clamp(30px, 5vw, 52px); }
 
     .rule {
@@ -143,7 +148,7 @@
   </header>
 
   <main>
-  <section class="hero-grid" style="position: relative; width: 100%; min-height: min(70vh, 620px); display: grid; background: var(--ink); overflow: hidden">
+  <section class="hero-grid" style="position: relative; width: 100%; min-height: min(64vh, 580px); display: grid; background: var(--ink); overflow: hidden">
     <div style="position: relative; overflow: hidden; background: #1f0f2b">
       <svg viewBox="0 0 700 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
         <defs>
@@ -196,7 +201,7 @@
       </svg>
     </div>
     <div class="hero-copy" style="position: relative; z-index: 2; align-self: end; padding: 80px 28px 46px; box-sizing: border-box">
-      <div style="font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(251,247,240,.72)">128 Main Street &middot; Beacon, New York</div>
+      <div style="font-size: 13px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(251,247,240,.78)">128 Main Street &middot; Standing Stone, New York</div>
       <h1 class="hero-title" style="font-family: var(--heading); font-weight: 400; line-height: 0.96; letter-spacing: -0.035em; color: var(--ink-text); margin: 16px 0 0; max-width: 16ch">See what's on the shelf</h1>
       <div style="display: flex; align-items: center; gap: 24px; margin-top: 30px; flex-wrap: wrap">
         <a href="/shop/" class="btn-primary" style="font-size: 16px; font-weight: 600; padding: 14px 24px; border-radius: 6px; text-decoration: none; white-space: nowrap">Browse the catalog &rarr;</a>
@@ -230,13 +235,16 @@
   </section>
 
   <section style="width: 100%; max-width: 1120px; margin: 0 auto; padding: 64px 28px 16px; box-sizing: border-box">
-    <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 22px">
-      <h2 style="font-family: var(--heading); font-size: 28px; font-weight: 400; letter-spacing: -0.025em; color: var(--ink); margin: 0">What we're pressing on people</h2>
-      <span style="font-size: 13px; color: var(--muted-2)">Handwritten on the shelf this month</span>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 22px">
+      <h2 style="font-family: var(--heading); font-size: 28px; font-weight: 400; letter-spacing: -0.025em; color: var(--ink); margin: 0">Staff Selections</h2>
+      <div id="staff-picks-dots" role="group" aria-label="Staff selections, page" style="display: flex; align-items: center; gap: 8px"></div>
     </div>
-    <div class="talkers">
+    <div class="talkers" id="staff-picks-talkers">
       <article style="display: flex; gap: 20px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: 22px">
-        <div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">B</div>
+        <div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; position: relative">
+          <img src="https://covers.openlibrary.org/b/isbn/9781571313560-L.jpg" alt="Cover of Braiding Sweetgrass" style="width: 100%; height: 100%; object-fit: cover; display: block" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">B</div>
+        </div>
         <div style="min-width: 0">
           <div style="font-family: var(--heading); font-size: 19px; font-weight: 500; color: var(--ink); line-height: 1.2">Braiding Sweetgrass</div>
           <div style="font-size: 13px; color: var(--muted-2); margin-top: 3px">Robin Wall Kimmerer</div>
@@ -248,7 +256,10 @@
         </div>
       </article>
       <article style="display: flex; gap: 20px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: 22px">
-        <div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">L</div>
+        <div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; position: relative">
+          <img src="https://covers.openlibrary.org/b/isbn/9780385547345-L.jpg" alt="Cover of Lessons in Chemistry" style="width: 100%; height: 100%; object-fit: cover; display: block" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">L</div>
+        </div>
         <div style="min-width: 0">
           <div style="font-family: var(--heading); font-size: 19px; font-weight: 500; color: var(--ink); line-height: 1.2">Lessons in Chemistry</div>
           <div style="font-size: 13px; color: var(--muted-2); margin-top: 3px">Bonnie Garmus</div>
@@ -265,42 +276,54 @@
 
   <footer style="margin-top: auto; width: 100%; max-width: 1120px; margin-left: auto; margin-right: auto; padding: 56px 28px 28px; box-sizing: border-box">
     <div style="border-top: 1px solid var(--border-2); padding-top: 18px; display: flex; align-items: center; gap: 20px; font-size: 13px; color: var(--muted-2); flex-wrap: wrap">
-      <span>Riverside Books &middot; 128 Main Street, Beacon NY &middot; Mon&ndash;Sat 10 AM&ndash;8 PM, Sun 11 AM&ndash;5 PM</span>
+      <span>Riverside Books &middot; 128 Main Street, Standing Stone NY &middot; Mon&ndash;Sat 10 AM&ndash;8 PM, Sun 11 AM&ndash;5 PM</span>
     </div>
   </footer>
 </div>
 
 <dialog id="riverside-signin-dialog">
   <div class="riverside-dialog-head">
-    <h2>Sign in</h2>
+    <h2 id="riverside-signin-heading">Sign in</h2>
     <button type="button" id="riverside-signin-close" aria-label="Close">&times;</button>
   </div>
-  <p id="riverside-signin-intro">Enter your phone number to find your holds and stamp card.</p>
+  <p id="riverside-signin-intro">Sign in to see your holds and stamp card.</p>
   <form id="riverside-signin-form" novalidate>
-    <label for="riverside-signin-phone">Phone number</label>
-    <input type="tel" id="riverside-signin-phone" name="phone" autocomplete="tel" required placeholder="e.g. (845) 555-0142" />
     <div id="riverside-signin-name-wrap" hidden>
       <label for="riverside-signin-name">Your name</label>
       <input type="text" id="riverside-signin-name" name="name" autocomplete="name" placeholder="First and last name" />
-      <p>We don't have that number yet &mdash; tell us your name and we'll set up your account.</p>
+    </div>
+    <label for="riverside-signin-email">Email</label>
+    <input type="email" id="riverside-signin-email" name="email" autocomplete="email" required placeholder="you@example.com" />
+    <label for="riverside-signin-password">Password</label>
+    <input type="password" id="riverside-signin-password" name="password" autocomplete="current-password" required placeholder="At least 8 characters" />
+    <div id="riverside-signin-phone-wrap" hidden>
+      <label for="riverside-signin-phone">Phone <span style="font-weight: 400; color: var(--muted)">(optional, for pickup calls)</span></label>
+      <input type="tel" id="riverside-signin-phone" name="phone" autocomplete="tel" placeholder="e.g. (845) 555-0142" />
     </div>
     <div id="riverside-signin-error" role="alert" hidden></div>
-    <button type="submit" id="riverside-signin-submit" class="btn-primary">Continue</button>
+    <button type="submit" id="riverside-signin-submit" class="btn-primary">Sign in</button>
+    <button type="button" id="riverside-signin-toggle" class="quiet-link-dark">Don't have an account? Sign up</button>
   </form>
 </dialog>
 
 <script>
 (function () {
   var dialog = document.getElementById('riverside-signin-dialog');
+  var heading = document.getElementById('riverside-signin-heading');
+  var intro = document.getElementById('riverside-signin-intro');
   var openBtn = document.getElementById('riverside-signin-btn');
   var closeBtn = document.getElementById('riverside-signin-close');
   var form = document.getElementById('riverside-signin-form');
-  var phoneInput = document.getElementById('riverside-signin-phone');
+  var emailInput = document.getElementById('riverside-signin-email');
+  var passwordInput = document.getElementById('riverside-signin-password');
   var nameWrap = document.getElementById('riverside-signin-name-wrap');
   var nameInput = document.getElementById('riverside-signin-name');
+  var phoneWrap = document.getElementById('riverside-signin-phone-wrap');
+  var phoneInput = document.getElementById('riverside-signin-phone');
   var errorBox = document.getElementById('riverside-signin-error');
   var submitBtn = document.getElementById('riverside-signin-submit');
-  var needsRegistration = false;
+  var toggleBtn = document.getElementById('riverside-signin-toggle');
+  var mode = 'signin'; // 'signin' | 'signup'
 
   function showError(message) {
     errorBox.textContent = message;
@@ -312,23 +335,38 @@
     errorBox.textContent = '';
   }
 
+  function applyMode() {
+    var isSignup = mode === 'signup';
+    nameWrap.hidden = !isSignup;
+    phoneWrap.hidden = !isSignup;
+    nameInput.required = isSignup;
+    passwordInput.autocomplete = isSignup ? 'new-password' : 'current-password';
+    heading.textContent = isSignup ? 'Sign up' : 'Sign in';
+    intro.textContent = isSignup
+      ? 'Create an account to hold books and collect stamps.'
+      : 'Sign in to see your holds and stamp card.';
+    submitBtn.textContent = isSignup ? 'Create account' : 'Sign in';
+    toggleBtn.textContent = isSignup
+      ? 'Already have an account? Sign in'
+      : "Don't have an account? Sign up";
+  }
+
   function resetButton() {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Continue';
+    submitBtn.textContent = mode === 'signup' ? 'Create account' : 'Sign in';
   }
 
   function openDialog() {
     clearError();
-    needsRegistration = false;
-    nameWrap.hidden = true;
+    mode = 'signin';
     form.reset();
-    resetButton();
+    applyMode();
     if (typeof dialog.showModal === 'function') {
       dialog.showModal();
     } else {
       dialog.setAttribute('open', '');
     }
-    phoneInput.focus();
+    emailInput.focus();
   }
 
   function closeDialog() {
@@ -343,8 +381,9 @@
     try {
       localStorage.setItem('riverside_customer', JSON.stringify({
         customer_id: customer.customer_id,
-        phone: customer.phone,
-        name: customer.name
+        email: customer.email,
+        name: customer.name,
+        phone: customer.phone || null
       }));
     } catch (storageError) {
       // Private browsing / storage disabled: proceed without persisting.
@@ -352,53 +391,53 @@
     window.location.href = '/shop/orders';
   }
 
-  function submitLookup(phone) {
-    fetch('/api/customers/lookup', {
+  function submitLogin(email, password) {
+    fetch('/api/customers/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: phone })
+      body: JSON.stringify({ email: email, password: password })
     }).then(function (res) {
-      if (res.status === 404) {
-        needsRegistration = true;
-        nameWrap.hidden = false;
-        resetButton();
-        nameInput.focus();
-        return null;
+      if (res.status === 401) {
+        throw new Error('Incorrect email or password.');
       }
       if (!res.ok) {
-        throw new Error('lookup-failed');
+        throw new Error('login-failed');
       }
       return res.json();
-    }).then(function (customer) {
-      if (customer) {
-        signInSuccess(customer);
-      }
-    }).catch(function () {
+    }).then(signInSuccess).catch(function (err) {
       resetButton();
-      showError('We could not reach the store. Please try again.');
+      showError(typeof err.message === 'string' && err.message !== 'login-failed'
+        ? err.message
+        : 'We could not reach the store. Please try again.');
     });
   }
 
-  function submitRegistration(phone, name) {
+  function submitRegistration(email, password, name, phone) {
     if (!name) {
       resetButton();
       showError('Enter your name so we can set up your account.');
       return;
     }
+    var body = { email: email, password: password, name: name };
+    if (phone) body.phone = phone;
     fetch('/api/customers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: phone, name: name })
+      body: JSON.stringify(body)
     }).then(function (res) {
       if (!res.ok) {
         return res.json().catch(function () { return {}; }).then(function (body) {
-          throw new Error((body && body.detail) || 'register-failed');
+          var detail = body && body.detail;
+          var message = typeof detail === 'string'
+            ? detail
+            : Array.isArray(detail) && detail[0] && detail[0].msg
+              ? detail[0].msg
+              : 'register-failed';
+          throw new Error(message);
         });
       }
       return res.json();
-    }).then(function (customer) {
-      signInSuccess(customer);
-    }).catch(function (err) {
+    }).then(signInSuccess).catch(function (err) {
       resetButton();
       showError(typeof err.message === 'string' && err.message !== 'register-failed'
         ? err.message
@@ -409,25 +448,183 @@
   openBtn.addEventListener('click', openDialog);
   closeBtn.addEventListener('click', closeDialog);
 
+  toggleBtn.addEventListener('click', function () {
+    mode = mode === 'signin' ? 'signup' : 'signin';
+    clearError();
+    applyMode();
+    (mode === 'signup' ? nameInput : emailInput).focus();
+  });
+
   form.addEventListener('submit', function (event) {
     event.preventDefault();
     clearError();
 
-    var phone = phoneInput.value.trim();
-    if (!phone) {
-      showError('Enter a phone number to continue.');
+    var email = emailInput.value.trim();
+    var password = passwordInput.value;
+    if (!email || !password) {
+      showError('Enter your email and password to continue.');
+      return;
+    }
+    if (mode === 'signup' && password.length < 8) {
+      showError('Password must be at least 8 characters.');
       return;
     }
 
     submitBtn.disabled = true;
     submitBtn.textContent = 'Please wait...';
 
-    if (!needsRegistration) {
-      submitLookup(phone);
+    if (mode === 'signin') {
+      submitLogin(email, password);
     } else {
-      submitRegistration(phone, nameInput.value.trim());
+      submitRegistration(email, password, nameInput.value.trim(), phoneInput.value.trim());
     }
   });
+})();
+
+(function () {
+  var PICKS = [
+    {
+      isbn: '9781571313560', title: 'Braiding Sweetgrass', author: 'Robin Wall Kimmerer',
+      quote: "I have re-shelved this four times and bought it back twice. Read the strawberry chapter and you'll understand.",
+      staff: 'Nora, floor 2'
+    },
+    {
+      isbn: '9780385547345', title: 'Lessons in Chemistry', author: 'Bonnie Garmus',
+      quote: 'Funnier than the cover lets on, and angrier. Seven copies out the door last week — we keep a stack by the register.',
+      staff: 'Ellis, front counter'
+    },
+    {
+      isbn: '9781250301697', title: 'The Silent Patient', author: 'Alex Michaelides',
+      quote: 'Read it in one sitting on my day off. The last thirty pages made me miss my bus stop.',
+      staff: 'Priya, mystery shelf'
+    },
+    {
+      isbn: '9780062316097', title: 'Sapiens', author: 'Yuval Noah Harari',
+      quote: 'Changed how I think about basically everything before I’d finished my coffee. Start here if you only read one big-idea book this year.',
+      staff: 'Jordan, staff picks table'
+    },
+    {
+      isbn: '9780316056861', title: 'Bossypants', author: 'Tina Fey',
+      quote: 'Laughed out loud on the train, which is not a normal thing I do on the train.',
+      staff: 'Marcus, break room'
+    },
+    {
+      isbn: '9780679406419', title: 'Maus', author: 'Art Spiegelman',
+      quote: "Still the best argument I know for why comics belong on the literature shelf, not the kids' one.",
+      staff: 'Nora, floor 2'
+    }
+  ];
+
+  var container = document.getElementById('staff-picks-talkers');
+  var dotsWrap = document.getElementById('staff-picks-dots');
+  if (!container || !dotsWrap) return;
+
+  var pageCount = Math.ceil(PICKS.length / 2);
+  var current = 0;
+  var timer = null;
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function cardHtml(pick) {
+    var initial = escapeHtml(pick.title.charAt(0).toUpperCase());
+    var title = escapeHtml(pick.title);
+    var cover = 'https://covers.openlibrary.org/b/isbn/' + encodeURIComponent(pick.isbn) + '-L.jpg';
+    return (
+      '<article style="display: flex; gap: 20px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 4px; padding: 22px">' +
+        '<div style="width: 88px; flex: none; aspect-ratio: 2/3; background: var(--code-bg); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; position: relative">' +
+          '<img src="' + cover + '" alt="Cover of ' + title + '" style="width: 100%; height: 100%; object-fit: cover; display: block" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\'">' +
+          '<div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-family: var(--heading); font-size: 32px; color: rgba(47,23,57,.2)">' + initial + '</div>' +
+        '</div>' +
+        '<div style="min-width: 0">' +
+          '<div style="font-family: var(--heading); font-size: 19px; font-weight: 500; color: var(--ink); line-height: 1.2">' + title + '</div>' +
+          '<div style="font-size: 13px; color: var(--muted-2); margin-top: 3px">' + escapeHtml(pick.author) + '</div>' +
+          '<p style="font-family: var(--heading); font-style: italic; font-size: 16px; line-height: 1.5; color: var(--text); margin: 12px 0 0">' + escapeHtml(pick.quote) + '</p>' +
+          '<div style="display: flex; align-items: center; gap: 8px; margin-top: 14px">' +
+            '<span style="width: 20px; height: 1px; background: var(--amber); display: block"></span>' +
+            '<span style="font-size: 12px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--amber); font-weight: 600">' + escapeHtml(pick.staff) + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</article>'
+    );
+  }
+
+  function renderDots() {
+    var html = '';
+    for (var i = 0; i < pageCount; i++) {
+      html += '<button type="button" class="talkers-dot" data-index="' + i + '" aria-label="Show staff picks, set ' + (i + 1) + ' of ' + pageCount + '"' +
+        (i === current ? ' aria-current="true"' : '') +
+        ' style="width: 8px; height: 8px; padding: 0; border-radius: 50%; border: none; cursor: pointer; background: ' + (i === current ? 'var(--accent)' : 'var(--border-2)') + '"></button>';
+    }
+    dotsWrap.innerHTML = html;
+    var buttons = dotsWrap.querySelectorAll('.talkers-dot');
+    for (var j = 0; j < buttons.length; j++) {
+      buttons[j].addEventListener('click', function (e) {
+        goTo(parseInt(e.currentTarget.getAttribute('data-index'), 10));
+        resetTimer();
+      });
+    }
+  }
+
+  function renderCards() {
+    var start = current * 2;
+    var pair = PICKS.slice(start, start + 2);
+    var html = pair.map(cardHtml).join('');
+    if (reduceMotion) {
+      container.innerHTML = html;
+    } else {
+      container.style.transition = 'opacity 0.3s ease';
+      container.style.opacity = '0';
+      window.setTimeout(function () {
+        container.innerHTML = html;
+        container.style.opacity = '1';
+      }, 220);
+    }
+  }
+
+  function goTo(index) {
+    current = ((index % pageCount) + pageCount) % pageCount;
+    renderCards();
+    renderDots();
+  }
+
+  function next() {
+    goTo(current + 1);
+  }
+
+  function startTimer() {
+    if (reduceMotion || pageCount <= 1 || timer) return;
+    timer = window.setInterval(next, 7000);
+  }
+
+  function stopTimer() {
+    if (timer) {
+      window.clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  function resetTimer() {
+    stopTimer();
+    startTimer();
+  }
+
+  container.addEventListener('mouseenter', stopTimer);
+  container.addEventListener('mouseleave', startTimer);
+  container.addEventListener('focusin', stopTimer);
+  container.addEventListener('focusout', function (e) {
+    if (!container.contains(e.relatedTarget)) startTimer();
+  });
+
+  // The container already has the first pair rendered server-side (works with
+  // JS disabled) -- only the dots and the timer are new here, so there's no
+  // redundant re-render/flash on load.
+  renderDots();
+  startTimer();
 })();
 </script>
 </body>

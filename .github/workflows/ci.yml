@@ -51,8 +51,10 @@ jobs:
           PGPASSWORD: password
         run: |
           sudo apt-get install -y postgresql-client
-          psql -h localhost -U postgres -d riverside -f supabase/migrations/20260825210000_init_schema.sql
-          psql -h localhost -U postgres -d riverside -f supabase/migrations/20260825220000_review_fixes.sql
+          for f in $(ls supabase/migrations/*.sql | sort); do
+            echo "Applying $f"
+            psql -h localhost -U postgres -d riverside -f "$f"
+          done
 
       - name: Seed
         env:

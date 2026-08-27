@@ -1,3 +1,4 @@
+import logging
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -7,6 +8,8 @@ from backend.api.core.repositories import MessageRepository, StoreInfoRepository
 from backend.api.deps import get_message_repo, get_store_info_repo
 from backend.api.models import Message
 from backend.messages.gemini_reply import generate_draft_reply
+
+logger = logging.getLogger(__name__)
 
 
 class DraftReplyResponse(BaseModel):
@@ -56,7 +59,10 @@ def draft_reply(
         return DraftReplyResponse(draft_text=draft)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     except Exception:
+        logger.exception("Unexpected error generating a draft reply for %s", message_id)
         raise HTTPException(
             status_code=500, detail="Failed to generate draft from Gemini"
         )

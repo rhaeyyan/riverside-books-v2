@@ -75,10 +75,37 @@ def generate_draft_reply(message: Message, store_info: StoreInfo) -> str:
         },
     }
 
-    resp = httpx.post(url, json=payload, timeout=12.0)
-    resp.raise_for_status()
+    try:
+        resp = httpx.post(url, json=payload, timeout=12.0)
+        resp.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        # Gemini's error body names the actual problem (bad model name,
+        # invalid key, quota exceeded, ...) -- surface it instead of a bare
+        # "500", but never the URL itself, which carries the API key.
+        try:
+            api_message = e.response.json()["error"]["message"]
+        except Exception:
+            api_message = e.response.text[:300]
+        logger.error(
+            "Gemini API request failed (%s): %s", e.response.status_code, api_message
+        )
+        raise RuntimeError(f"Gemini API error: {api_message}") from e
+    except httpx.HTTPError as e:
+        logger.error("Gemini API request failed: %s", e)
+        raise RuntimeError(f"Could not reach Gemini: {e}") from e
 
     data = resp.json()
-    raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
+    candidates = data.get("candidates") or []
+    if not candidates:
+        block_reason = data.get("promptFeedback", {}).get("blockReason")
+        logger.error(
+            "Gemini returned no candidates (blockReason=%s): %s", block_reason, data
+        )
+        raise RuntimeError(
+            f"Gemini declined to respond (blockReason={block_reason})"
+            if block_reason
+            else "Gemini returned no candidates"
+        )
 
+    raw_text = candidates[0]["content"]["parts"][0]["text"]
     return raw_text.strip()

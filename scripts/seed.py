@@ -865,7 +865,7 @@ CUSTOMERS: list[dict[str, Any]] = [
         "customer_id": "cust_008",
         "phone": "5551000008",
         "name": "Henry Zhao",
-        "email": "",
+        "email": "henry.zhao@example.com",
         "stamps": 4,
         "rewards_available": 0,
         "joined_days_ago": 34,
@@ -887,6 +887,34 @@ CUSTOMERS: list[dict[str, Any]] = [
         "stamps": 8,
         "rewards_available": 0,
         "joined_days_ago": 145,
+    },
+]
+
+# Shared by every seeded customer (§5.3, v0.5) -- a demo dataset, so one
+# documented password for all ten accounts is more useful for a demo than
+# ten different ones nobody would remember. Never written to a JSON file;
+# only ever used in-memory by write_db to compute password_hash.
+DEMO_CUSTOMER_PASSWORD = "readerclub1"
+
+# Staff accounts (§5.3, v0.5). Same two people/roles the v0.4 PIN screen had
+# (Jordan/Manager was PIN 1234, Priya/Bookseller was PIN 5678) -- provisioned
+# by seed data only, no self-registration endpoint exists. "password" here is
+# stripped before anything reaches a JSON file; only write_db reads it, to
+# compute password_hash.
+STAFF: list[dict[str, Any]] = [
+    {
+        "staff_id": "staff_001",
+        "email": "jordan@riversidebooks.example",
+        "name": "Jordan",
+        "role": "Manager",
+        "password": "manager1234",
+    },
+    {
+        "staff_id": "staff_002",
+        "email": "priya@riversidebooks.example",
+        "name": "Priya",
+        "role": "Bookseller",
+        "password": "bookseller1234",
     },
 ]
 
@@ -1080,7 +1108,7 @@ ORDERS: list[dict[str, Any]] = [
 
 STORE_INFO: dict[str, Any] = {
     "name": "Riverside Books",
-    "address": "128 Main Street, Beacon, NY 12508",
+    "address": "128 Main Street, Standing Stone, NY 12508",
     "phone": "555-0142",
     "email": "hello@riversidebooks.com",
     "hours": {
@@ -1170,7 +1198,7 @@ STORE_INFO: dict[str, Any] = {
             ],
             "answer": "We currently only sell new books and do not buy back or "
             "appraise used books. We recommend donating gently used books "
-            "to the local Beacon Public Library.",
+            "to the local Standing Stone Public Library.",
         },
         {
             "id": "faq_006",
@@ -1208,6 +1236,11 @@ def build_seed(now: datetime | None = None) -> dict[str, Any]:
         c = dict(c)
         joined = now - timedelta(days=c.pop("joined_days_ago"))
         customers.append(c | {"joined_date": joined.strftime("%Y-%m-%d")})
+
+    # password stripped -- write_db computes password_hash from
+    # DEMO_CUSTOMER_PASSWORD / each STAFF entry's own "password" directly,
+    # never from this dict, so no plaintext reaches a committed JSON file.
+    staff = [{k: v for k, v in s.items() if k != "password"} for s in STAFF]
 
     events = []
     for e in EVENTS:
@@ -1249,6 +1282,7 @@ def build_seed(now: datetime | None = None) -> dict[str, Any]:
     return {
         "inventory.json": books,
         "customers.json": customers,
+        "staff.json": staff,
         "orders.json": orders,
         "events.json": events,
         "messages.json": messages,
@@ -1351,6 +1385,7 @@ def write_db(seed: dict[str, Any]) -> None:
         print("psycopg not installed, skipping database seed")
         return
 
+    from backend.api.core.auth import hash_password
     from backend.config import settings
 
     if not settings.database_url:
@@ -1374,7 +1409,8 @@ def write_db(seed: dict[str, Any]) -> None:
     with conn, conn.transaction():
         # Clear all data
         conn.execute(
-            "TRUNCATE TABLE messages, store_info, events, order_items, orders, customers, books CASCADE"
+            "TRUNCATE TABLE messages, store_info, events, order_items, orders, "
+            "customers, staff, books CASCADE"
         )
 
         # Books
@@ -1392,15 +1428,34 @@ def write_db(seed: dict[str, Any]) -> None:
             books,
         )
 
-        # Customers
+        # Customers -- one shared demo password (DEMO_CUSTOMER_PASSWORD),
+        # hashed once and reused, since every seeded account uses it by design.
         customers = seed["customers.json"]
+        demo_password_hash = hash_password(DEMO_CUSTOMER_PASSWORD)
+        customer_rows = [{**c, "password_hash": demo_password_hash} for c in customers]
         conn.cursor().executemany(
             """INSERT INTO customers (
-                    customer_id, phone, name, email, stamps, rewards_available, joined_date
+                    customer_id, phone, name, email, password_hash, stamps, rewards_available, joined_date
                 ) VALUES (
-                    %(customer_id)s, %(phone)s, %(name)s, %(email)s, %(stamps)s, %(rewards_available)s, %(joined_date)s
+                    %(customer_id)s, %(phone)s, %(name)s, %(email)s, %(password_hash)s, %(stamps)s, %(rewards_available)s, %(joined_date)s
                 )""",
-            customers,
+            customer_rows,
+        )
+
+        # Staff -- each account hashes its own password from the STAFF
+        # module list (seed["staff.json"] has password already stripped).
+        staff_passwords = {s["staff_id"]: s["password"] for s in STAFF}
+        staff_rows = [
+            {**s, "password_hash": hash_password(staff_passwords[s["staff_id"]])}
+            for s in seed["staff.json"]
+        ]
+        conn.cursor().executemany(
+            """INSERT INTO staff (
+                    staff_id, email, name, role, password_hash
+                ) VALUES (
+                    %(staff_id)s, %(email)s, %(name)s, %(role)s, %(password_hash)s
+                )""",
+            staff_rows,
         )
 
         # Orders

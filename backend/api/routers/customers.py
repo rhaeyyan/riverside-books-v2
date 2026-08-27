@@ -2,23 +2,26 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from backend.api.core.auth import hash_password, verify_password
 from backend.api.core.repositories import CustomerRepository, OrderRepository
 from backend.api.deps import get_customer_repo, get_order_repo, release_expired_holds
-from backend.api.models import Customer, Order, normalize_phone
+from backend.api.models import EMAIL_PATTERN, Customer, Order
 
 router = APIRouter()
 
 
-class CustomerLookup(BaseModel):
-    phone: str
-
-
 class CustomerRegister(BaseModel):
-    phone: str
+    email: str = Field(pattern=EMAIL_PATTERN)
+    password: str = Field(min_length=8)
     name: str
-    email: str | None = ""
+    phone: str | None = None
+
+
+class CustomerLogin(BaseModel):
+    email: str = Field(pattern=EMAIL_PATTERN)
+    password: str
 
 
 class LoyaltyResponse(BaseModel):
@@ -27,45 +30,43 @@ class LoyaltyResponse(BaseModel):
     stamps_to_next_reward: int
 
 
-@router.post("/lookup", response_model=Customer)
-def lookup_customer(
-    payload: CustomerLookup, repo: CustomerRepository = Depends(get_customer_repo)
-):
-    phone = normalize_phone(payload.phone)
-    customer = repo.get_by_phone(phone)
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-    return customer
-
-
 @router.post("", response_model=Customer)
 def register_customer(
     payload: CustomerRegister, repo: CustomerRepository = Depends(get_customer_repo)
 ):
-    phone = normalize_phone(payload.phone)
-    if len(phone) != 10:
+    if repo.get_by_email(payload.email):
         raise HTTPException(
-            status_code=400, detail="Phone number must be 10 digits"
-        )
-    if repo.get_by_phone(phone):
-        raise HTTPException(
-            status_code=400, detail="Customer with this phone already exists"
+            status_code=400, detail="An account with this email already exists"
         )
 
-    # Simple ID generation
     customer_id = f"cust_{uuid4().hex[:8]}"
     now_str = datetime.now(UTC).strftime("%Y-%m-%d")
 
     new_customer = Customer(
         customer_id=customer_id,
-        phone=phone,
+        email=payload.email,
         name=payload.name,
-        email=payload.email or "",
+        phone=payload.phone,
         stamps=0,
         rewards_available=0,
         joined_date=now_str,
     )
-    return repo.create(new_customer)
+    return repo.create(new_customer, hash_password(payload.password))
+
+
+@router.post("/login", response_model=Customer)
+def login_customer(
+    payload: CustomerLogin, repo: CustomerRepository = Depends(get_customer_repo)
+):
+    found = repo.get_password_hash(payload.email)
+    if not found or not verify_password(payload.password, found[1]):
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+
+    customer_id, _ = found
+    customer = repo.get_by_id(customer_id)
+    if not customer:
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+    return customer
 
 
 @router.get("/{customer_id}", response_model=Customer)

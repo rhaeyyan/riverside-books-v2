@@ -33,7 +33,7 @@ function App() {
                 <BookOpen size={22} className="brand-icon" aria-hidden="true" />
                 <span className="brand-name">Riverside Books</span>
               </div>
-              <span className="brand-location">Beacon, New York</span>
+              <span className="brand-location">Standing Stone, New York</span>
             </Link>
 
             <nav className="header-nav" aria-label="Main Navigation">
@@ -93,7 +93,7 @@ function App() {
           <div className="footer-inner">
             <div className="footer-brand">
               <span className="footer-title">Riverside Books</span>
-              <p className="footer-meta">412 Main Street, Beacon, NY 12508 · (845) 555-0142</p>
+              <p className="footer-meta">128 Main Street, Standing Stone, NY 12508 · (845) 555-0142</p>
               <p className="footer-hours">Open Mon–Sat 10 AM – 8 PM · Sun 11 AM – 6 PM</p>
             </div>
             <div className="footer-links">

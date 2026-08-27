@@ -72,7 +72,7 @@ export default function Home() {
     <div>
       <section className="browse-hero">
         <div className="browse-hero-copy">
-          <p className="browse-eyebrow">412 Main Street, Beacon, NY 12508</p>
+          <p className="browse-eyebrow">128 Main Street, Standing Stone, NY 12508</p>
           <h1 className="browse-title">See what's on the shelf before you walk over.</h1>
           <p className="browse-subtitle">
             Stock counts come straight off the counter. Reserve a copy and we'll keep it by the register for 48 hours.

@@ -118,3 +118,44 @@ We provide a unified build script (`render-build.sh`) that installs Python and N
    - `CORS_ORIGINS`: *(Optional)* Allowed CORS origins if accessing the API externally.
 
 Once deployed, the unified FastAPI application serves all four products seamlessly with live PostgreSQL persistence.
+
+> **Supabase connection strings — use the pooler, not the direct connection.**
+> Supabase's "Direct connection" host (`db.<project-ref>.supabase.co:5432`) is
+> IPv6-only, and Render's network doesn't support outbound IPv6 — the
+> connection just hangs (no error, no fast failure) until it eventually times
+> out. Use the **Transaction pooler** connection string instead (Supabase
+> dashboard → **Connect** → connection type **Transaction pooler**), which
+> looks like:
+> ```
+> postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres
+> ```
+> Note the username changes too (`postgres.<project-ref>`, not just
+> `postgres`). If your password has special characters, percent-encode them
+> (`@` → `%40`, `:` → `%3A`, `/` → `%2F`, etc.) or the connection string will
+> parse incorrectly.
+
+### Managing the deploy from the command line
+
+The [Render CLI](https://render.com/docs/cli) covers everything above (and viewing logs) without leaving the terminal — useful for debugging a deploy that isn't behaving, since the dashboard's log viewer is slower to work with for anything beyond a quick glance.
+
+**Install** (macOS/Linux):
+```bash
+brew install render
+# or
+curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
+```
+Windows and manual downloads: see the [releases page](https://github.com/render-oss/cli/releases).
+
+**Authenticate** (opens a browser to authorize the CLI, then lets you pick the workspace):
+```bash
+render login
+```
+
+**Common commands:**
+```bash
+render services                          # list services in the active workspace, with their IDs
+render logs --resources <serviceID> --tail=true   # stream logs live — the fastest way to see a real traceback
+render deploys create <serviceID>        # trigger a manual deploy (e.g. after changing an env var)
+```
+
+Run `render <command> --help` for the full flag list on any subcommand — env var management in particular (`render services update`) is easiest to get exactly right by checking `--help` rather than guessing at flag names, since the CLI has changed shape across versions.
